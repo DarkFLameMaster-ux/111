@@ -31,6 +31,8 @@ cmd /c backend\start-subscription.cmd
 
 显示后端 API：`http://127.0.0.1:8777/api/health`；订阅后端健康检查：`http://127.0.0.1:8781/health`。
 
+本机已注册两个登录自启任务：`reslib`（显示后端 `8777`）和 `reslib-subscription`（订阅后端 `8781`）。两者都使用资源库现有的独立 `.venv`，不依赖系统 Python。
+
 当静态前端部署在 GitHub Pages 或其他域名时，用构建时变量指向后端：
 
 ```powershell
