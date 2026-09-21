@@ -144,7 +144,12 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
-    print(f"订阅后端监听 http://{HOST}:{PORT}")
+    message = f"订阅后端监听 http://{HOST}:{PORT}"
+    # 计划任务用 pythonw 启动时没有控制台，启动信息写进既有订阅日志。
+    if sys.stdout is None:
+        subscribe.log(message)
+    else:
+        print(message)
     httpd.serve_forever()
 
 
