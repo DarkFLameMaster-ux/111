@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="config.js"></script>
+  <title>资源订阅控制台</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,"Microsoft YaHei",sans-serif;background:#101114;color:#eee}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 0,#243044,#101114 42%)}
+    main{max-width:1080px;margin:0 auto;padding:38px 20px 60px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:28px}
+    h1{font-size:clamp(28px,5vw,48px);margin:0 0 8px;letter-spacing:-.04em}.muted{color:#9da7b8}.pill{border:1px solid #3c8cff55;border-radius:999px;padding:7px 12px;color:#92c1ff;background:#17243a}
+    .panel{background:#171a20d9;border:1px solid #ffffff12;border-radius:18px;padding:20px;box-shadow:0 18px 50px #0005;margin:16px 0}
+    form{display:flex;gap:10px;flex-wrap:wrap}input,button{font:inherit;border-radius:10px;border:1px solid #ffffff1c;padding:11px 13px;background:#0f1115;color:#fff}input{flex:1;min-width:210px}button{cursor:pointer;background:#2369d1;border-color:#448cff}button.secondary{background:#242a35;border-color:#ffffff20}button.danger{background:#652936;border-color:#ad4257}
+    .row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:14px 0;border-top:1px solid #ffffff10}.row:first-child{border-top:0}.title{font-weight:700;font-size:17px}.meta{font-size:13px;color:#9da7b8;margin-top:5px}.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.empty{padding:24px;text-align:center;color:#9da7b8}
+    #toast{position:fixed;right:20px;bottom:20px;background:#202630;color:#fff;border:1px solid #ffffff2a;border-radius:10px;padding:12px 15px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}.show{opacity:1!important;transform:none!important}
+    @media(max-width:650px){.hero{display:block}.actions{justify-content:flex-start;margin-top:10px}}
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero"><div><div class="pill">订阅资源 · 独立前端</div><h1>漫画更新控制台</h1><div class="muted">管理订阅、立即检查新话，并把下载写回现有资源库作品目录。</div></div><div id="health" class="muted">连接中…</div></section>
+  <section class="panel"><h2>添加订阅</h2><form id="addForm"><input id="name" required placeholder="作品名，例如：上伊那牡丹"><input id="slug" placeholder="可选：包子漫画 slug"><button>添加订阅</button></form><div id="search" class="muted" style="margin-top:12px"></div></section>
+  <section class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>当前订阅</h2><div class="actions"><button id="checkAll">立即检查全部</button><button id="refresh" class="secondary">刷新</button></div></div><div id="list"><div class="empty">正在读取…</div></div></section>
+</main><div id="toast"></div>
+<script>
+const API=String(window.RESLIB_SUB_API_BASE||'').replace(/\/+$/,''); const url=p=>API+(p.startsWith('/')?p:'/'+p);
+const $=s=>document.querySelector(s); const toast=m=>{const e=$('#toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2600)};
+async function req(path, options){const r=await fetch(url(path),{headers:{'Content-Type':'application/json'},...options});const j=await r.json();if(!r.ok||j.error)throw Error(j.error||('HTTP '+r.status));return j}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function health(){try{const j=await req('/health');$('#health').textContent=`在线 · ${j.enabled||0}/${j.subscriptions||0} 个启用`}catch(e){$('#health').textContent='后端未连接'}}
+function render(subs){const entries=Object.entries(subs||{});if(!entries.length){$('#list').innerHTML='<div class="empty">还没有订阅。添加一个作品开始吧。</div>';return}$('#list').innerHTML=entries.map(([name,s])=>{const fresh=(s.last_new||[]).join('、')||'暂无新话';const err=s.last_error?`<span style="color:#ff9aa8">${esc(s.last_error)}</span>`:'';return `<div class="row"><div><div class="title">${esc(name)} ${s.enabled===false?'<span class="muted">（已停用）</span>':''}</div><div class="meta">已知 ${s.known||0} 话 · 最近检查 ${s.last_check?new Date(s.last_check*1000).toLocaleString():'从未'} · ${esc(fresh)} ${err}</div></div><div class="actions"><button class="secondary" data-action="toggle" data-name="${esc(name)}">${s.enabled===false?'启用':'停用'}</button><button data-action="check" data-name="${esc(name)}">检查</button><button class="danger" data-action="remove" data-name="${esc(name)}">删除</button></div></div>`}).join('')}
+async function load(){try{const j=await req('/api/subscriptions');render(j.subscriptions);await health()}catch(e){$('#list').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>'}}
+$('#addForm').onsubmit=async e=>{e.preventDefault();try{const j=await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'add',name:$('#name').value,slug:$('#slug').value||undefined})});if(!j.ok)throw Error('添加失败');$('#name').value='';$('#slug').value='';toast('订阅已添加');await load()}catch(x){toast(x.message)}};
+$('#list').onclick=async e=>{const b=e.target.closest('button[data-action]');if(!b)return;const name=b.dataset.name;try{if(b.dataset.action==='remove'){if(!confirm('确定删除订阅「'+name+'」？'))return;await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'remove',name})});toast('已删除')}else if(b.dataset.action==='toggle'){const disable=b.textContent.includes('停用');await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'toggle',name,enabled:disable?false:true})});toast(disable?'已停用':'已启用')}else{await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'check',name,download:true})});toast('检查完成')}await load()}catch(x){toast(x.message)}};
+$('#checkAll').onclick=async()=>{try{await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'check',download:true})});toast('全部检查完成');await load()}catch(x){toast(x.message)}};$('#refresh').onclick=load;load();
+</script></body></html>
