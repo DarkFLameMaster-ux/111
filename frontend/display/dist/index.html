@@ -1,0 +1,3769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script src="config.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>月影黑猫 · 资源库</title>
+<style>
+/* ------------------------------------------------------------------
+   设计取自 Spotify 设计系统（popular-web-designs / templates/spotify.md）
+   核心：near-black 沉浸 + 内容优先（封面是唯一色彩源）+ 药丸/圆形几何
+        + 字重对比（700/400）而非字号变化 + 重阴影（深色背景上轻阴影看不见）
+
+   字体：原站用 SpotifyMixUI（自有无衬线）。
+   这里刻意不引 Google Fonts —— 这是本机离线工具，国内拉 CDN 字体会卡住整个页面。
+   按该系统的原则，字重/字号/字距比具体字体更决定观感，故用系统 CJK 栈。
+   ------------------------------------------------------------------ */
+:root{
+  --bg:#121212;         /* 最深背景 */
+  --surface:#181818;    /* 卡片/侧栏 */
+  --surface2:#1f1f1f;   /* 按钮/交互面 */
+  --card:#252525;       /* 抬升卡片 */
+  --fg:#ffffff;
+  --dim:#b3b3b3;
+  --border:#4d4d4d;
+  --accent:#1ed760;     /* 唯一品牌色：只用于播放/激活/主操作 */
+  --neg:#f3727f;
+  --warn:#ffa42b;
+  --blue:#539df5;
+  --r-card:8px;
+  --r-sm:6px;
+  --pill:500px;
+  --full:9999px;
+  --shadow-lg:rgba(0,0,0,.5) 0 8px 24px;
+  --shadow-md:rgba(0,0,0,.3) 0 8px 8px;
+  --font:"Segoe UI Variable Display","Segoe UI","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font:14px/1.5 var(--font);
+  -webkit-font-smoothing:antialiased;
+  display:grid;grid-template-columns:210px 1fr;grid-template-rows:1fr auto;
+}
+
+/* ---------------- 侧栏 ---------------- */
+aside{
+  grid-row:1/3;background:var(--bg);border-right:1px solid #1f1f1f;
+  padding:20px 12px;display:flex;flex-direction:column;gap:4px;
+}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 10px 22px;font-weight:700;font-size:15px;letter-spacing:.2px}
+.brand .dot{width:22px;height:22px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#000;font-size:13px;flex:0 0 auto}
+nav button{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:transparent;border:0;color:var(--dim);cursor:pointer;
+  font:400 14px/1 var(--font);padding:10px 12px;border-radius:var(--r-sm);
+}
+nav button:hover{color:var(--fg);background:#1a1a1a}
+nav button.on{color:var(--fg);font-weight:700;background:var(--surface2)}
+nav button .n{margin-left:auto;font:400 12px/1 var(--mono);color:var(--dim)}
+
+/* ---------------- 目录树（全局侧栏 + 播放器侧栏共用） ---------------- */
+.treepane{flex:1 1 auto;min-height:0;overflow:auto;margin:12px -6px 0;padding:0 6px}
+.treepane::-webkit-scrollbar{width:7px}
+.tgroup{margin-bottom:1px}
+.thead{display:flex;align-items:center;gap:7px;width:100%;background:none;border:0;
+  color:var(--dim);cursor:pointer;font:600 11.5px var(--font);font-family:inherit;
+  padding:7px 8px;border-radius:var(--r-sm);text-align:left;letter-spacing:.6px}
+.thead:hover{background:#1a1a1a;color:var(--fg)}
+.thead .car{flex:0 0 auto;width:9px;font-size:8px;color:var(--dim);
+  transition:transform .15s;display:inline-block}
+.thead.open .car{transform:rotate(90deg)}
+.thead .cn{margin-left:auto;font:400 11px var(--mono);color:var(--dim)}
+.titems{display:none;margin:1px 0 7px}
+.titems.open{display:block}
+.titem{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;
+  color:var(--dim);cursor:pointer;font:400 12.5px var(--font);font-family:inherit;
+  padding:6px 8px 6px 21px;border-radius:var(--r-sm);text-align:left;line-height:1.4}
+.titem:hover{background:#1a1a1a;color:var(--fg)}
+.titem.cur{color:var(--accent);font-weight:600}
+.titem .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.titem .tm{flex:0 0 auto;font:400 10.5px var(--mono);color:var(--dim)}
+.titem.cur .tm{color:var(--accent);opacity:.75}
+
+aside .foot{margin-top:auto;padding:12px 10px 0;border-top:1px solid #1f1f1f;color:var(--dim);font-size:11.5px;line-height:1.6}
+aside .foot .copyurl{
+  display:flex;align-items:center;gap:6px;width:100%;background:var(--surface2);
+  border:0;border-radius:var(--r-sm);padding:7px 9px;color:var(--blue);
+  font:400 10.5px var(--mono);cursor:pointer;text-align:left;
+}
+aside .foot .copyurl:hover{background:#2a2a2a}
+aside .foot .copyurl #opdsUrl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+aside .foot .cp{color:var(--dim);font-family:var(--font);font-size:10px;flex:0 0 auto}
+
+/* ---------------- 主区 ---------------- */
+main{overflow:auto;padding:0 0 20px}
+.topbar{
+  position:sticky;top:0;z-index:6;background:linear-gradient(var(--bg) 78%,transparent);
+  padding:18px 26px 14px;display:flex;align-items:center;gap:14px;
+}
+.topbar h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-.2px}
+.topbar .sub{color:var(--dim);font-size:13px}
+.spacer{flex:1}
+.searchbox{position:relative}
+.searchbox input{
+  background:var(--surface2);color:var(--fg);border:0;
+  border-radius:var(--pill);padding:9px 16px 9px 34px;width:230px;font:400 13px var(--font);
+  box-shadow:rgb(124,124,124) 0 0 0 1px inset;
+}
+.searchbox input::placeholder{color:#8a8a8a}
+.searchbox input:focus{outline:0;box-shadow:var(--accent) 0 0 0 1px inset}
+.searchbox .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8a8a8a;font-size:13px}
+.view{padding:0 26px}
+
+/* ---------------- 卡片网格 ---------------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:18px}
+.card{
+  background:var(--surface);border:0;border-radius:var(--r-card);padding:12px;
+  cursor:pointer;text-align:left;color:inherit;font-family:var(--font);
+  transition:background .18s ease, box-shadow .18s ease;
+}
+.card:hover{background:var(--surface2);box-shadow:var(--shadow-md)}
+.cover{
+  aspect-ratio:1/1;width:100%;border-radius:var(--r-sm);overflow:hidden;
+  background:#2a2a2a;position:relative;margin-bottom:12px;
+  box-shadow:var(--shadow-md);
+}
+.cover img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.cover .gen{
+  position:absolute;inset:0;display:grid;place-items:center;padding:10px;
+  font-weight:700;font-size:15px;color:rgba(255,255,255,.92);text-align:center;
+  line-height:1.25;word-break:break-word;
+}
+.card .t{font-weight:700;font-size:14.5px;margin:0 0 5px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .m{color:var(--dim);font-size:12px;margin:0}
+.badge{display:inline-block;background:var(--surface2);border-radius:var(--full);
+  padding:2px 9px;font:400 11px/1.5 var(--font);color:var(--dim);margin:6px 4px 0 0}
+.badge.w{color:var(--warn)}
+.badge.a{color:var(--accent)}
+
+/* ---------------- 详情 ---------------- */
+.dhead{display:flex;gap:22px;align-items:flex-end;margin-bottom:26px}
+.dhead .cover{width:180px;flex:0 0 180px;margin:0}
+.dhead .info{min-width:0}
+.dhead .kicker{color:var(--dim);font-size:12px;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:8px}
+.dhead h2{margin:0 0 10px;font-size:38px;font-weight:700;line-height:1.1;letter-spacing:-.6px}
+.dhead .meta{color:var(--dim);font-size:13px;margin-bottom:14px}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.playcircle{
+  width:52px;height:52px;border-radius:50%;border:0;cursor:pointer;
+  background:var(--accent);color:#000;font-size:19px;display:grid;place-items:center;
+  box-shadow:var(--shadow-md);transition:transform .12s ease;
+}
+.playcircle:hover{transform:scale(1.05)}
+.pillbtn{
+  background:var(--surface2);border:0;color:var(--fg);cursor:pointer;
+  border-radius:var(--full);padding:9px 18px;font:700 12.5px var(--font);
+  letter-spacing:1.4px;text-transform:uppercase;
+}
+.pillbtn:hover{background:#2a2a2a}
+.pillbtn.ghost{background:transparent;box-shadow:var(--border) 0 0 0 1px inset;color:var(--fg)}
+.pillbtn.ghost:hover{box-shadow:#7c7c7c 0 0 0 1px inset;background:#1a1a1a}
+.back{background:transparent;border:0;color:var(--dim);cursor:pointer;
+  font:400 13px var(--font);padding:6px 0;margin-bottom:8px}
+.back:hover{color:var(--fg)}
+
+.sec{font-size:18px;font-weight:600;margin:0 0 14px}
+.eps{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.ep{
+  background:var(--surface);border:0;border-radius:var(--r-sm);color:var(--fg);
+  cursor:pointer;padding:11px 6px;font:700 13px var(--font);text-align:center;
+  position:relative;transition:background .15s ease;
+}
+.ep:hover{background:var(--card)}
+.ep .s{display:block;font:400 10px var(--font);color:var(--dim);margin-top:3px}
+.ep.seen::after{content:"";position:absolute;left:8px;right:8px;bottom:4px;height:2px;
+  background:var(--accent);border-radius:2px;opacity:.55}
+.ep.sp{background:transparent;box-shadow:var(--border) 0 0 0 1px inset;color:var(--dim);font-weight:400}
+.ep.sp:hover{color:var(--fg)}
+.ep .pg{display:block;font:400 10px var(--mono);color:#8a8a8a;margin-top:3px}
+.resourceList{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:22px}
+.resourceItem{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;
+  background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-sm);
+  color:var(--dim);cursor:pointer;padding:10px 12px;font:400 12px var(--font)}
+.resourceItem:hover{background:var(--card);color:var(--fg)}
+.resourceDetails{margin:-4px 0 22px}
+.resourceDetails summary{display:inline-block;cursor:pointer;color:var(--accent);font-size:12px;padding:4px 0 10px}
+.resourceSwitch{display:flex;gap:8px;overflow-x:auto;padding:4px 0 14px;margin-bottom:2px;scrollbar-width:thin}
+.resourceTab{flex:0 0 auto;background:var(--surface);border:1px solid rgba(255,255,255,.08);border-radius:var(--full);
+  color:var(--dim);cursor:pointer;padding:8px 13px;font:600 12px var(--font);white-space:nowrap}
+.resourceTab:hover{color:var(--fg);background:var(--card)}
+.resourceTab.on{background:var(--accent);border-color:var(--accent);color:#07130b}
+.versionPicker{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.versionPicker label{color:var(--dim);font-size:12px;white-space:nowrap}
+.versionSelect{min-width:150px;max-width:100%;background:var(--surface);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--full);color:var(--fg);cursor:pointer;padding:8px 30px 8px 13px;font:600 12px var(--font)}
+.versionSelect:hover{background:var(--card);border-color:rgba(255,255,255,.2)}
+.versionSelect:focus{outline:2px solid rgba(30,215,96,.45);outline-offset:1px}
+
+/* ---------------- 音乐：可读的曲目列表 ---------------- */
+.musicHero{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:18px;
+  margin:2px 0 24px;padding:20px 22px;border-radius:var(--r-card);
+  background:linear-gradient(120deg,#1d3025 0%,#18231d 48%,var(--surface) 100%);
+  box-shadow:var(--shadow-md);border:1px solid rgba(30,215,96,.12)
+}
+.musicHero h2{margin:0;font-size:28px;line-height:1.15;letter-spacing:-.4px}
+.musicHero p{margin:6px 0 0;color:#c6d6ca;font-size:12.5px}
+.musicHeroStats{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.musicChip{padding:6px 10px;border-radius:var(--full);background:rgba(0,0,0,.23);
+  color:#d7e9db;font:400 11px var(--mono);white-space:nowrap}
+.musicGroup{margin:0 0 26px}
+.musicGroupHead{display:flex;align-items:baseline;gap:10px;margin:0 0 9px}
+.musicGroupTitle{font-size:17px;font-weight:700;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.musicGroupMeta{color:var(--dim);font:400 11px var(--mono);white-space:nowrap}
+.musicList{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:8px 12px}
+.musicRow{min-width:0;display:grid;grid-template-columns:30px minmax(0,1fr) auto auto 26px 26px;
+  align-items:center;gap:10px;padding:9px 11px;border:0;border-radius:var(--r-sm);
+  background:var(--surface);color:var(--fg);cursor:pointer;text-align:left;font-family:var(--font);
+  transition:background .15s ease,transform .15s ease,box-shadow .15s ease}
+.musicRow:hover{background:var(--card);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.musicRow.seen{box-shadow:inset 2px 0 0 var(--accent)}
+.musicRow .idx{color:#8f8f8f;font:400 11px var(--mono);text-align:center}
+.musicRow .name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.musicRow .fmt{color:var(--accent);font:700 10px var(--mono);letter-spacing:.5px}
+.musicRow .bytes{color:#8f8f8f;font:400 10.5px var(--mono);white-space:nowrap}
+.musicRow .play{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;
+  background:var(--accent);color:#07140b;font-size:11px;opacity:.86}
+.musicRow:hover .play{opacity:1}
+.musicRow .queueAdd{width:24px;height:24px;border:0;border-radius:50%;background:transparent;color:var(--dim);
+  font:400 17px/20px var(--font);cursor:pointer;padding:0;opacity:.65}
+.musicRow:hover .queueAdd{opacity:1}.musicRow .queueAdd:hover{color:var(--accent);background:#23372a}
+@media(max-width:720px){
+  .musicHero{align-items:flex-start;flex-direction:column;padding:17px}
+  .musicHeroStats{justify-content:flex-start}
+  .musicList{grid-template-columns:1fr}
+  .musicRow{grid-template-columns:28px minmax(0,1fr) auto 30px 24px}
+  .musicRow .bytes{display:none}
+}
+
+/* ---------------- 体检 ---------------- */
+.issue{
+  background:var(--surface);border-radius:var(--r-card);padding:14px 16px;margin-bottom:10px;
+  box-shadow:inset 3px 0 0 var(--warn);
+}
+.issue.info{box-shadow:inset 3px 0 0 var(--blue)}
+.issue.ok{box-shadow:inset 3px 0 0 var(--accent)}
+.issue .t{font-weight:700;font-size:14px}
+.issue .m{color:var(--dim);font-size:13px;margin-top:4px}
+.issue .h{color:var(--blue);font-size:12.5px;margin-top:6px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--surface);border-radius:var(--r-card);padding:16px}
+.stat .v{font-size:26px;font-weight:700;line-height:1.1}
+.stat .l{color:var(--dim);font-size:12px;margin-top:4px}
+
+/* ---------------- 底部正在播放 ---------------- */
+.nowbar{
+  grid-column:2/3;background:var(--surface);border-top:1px solid #222;
+  padding:10px 22px;display:flex;align-items:center;gap:14px;min-height:62px;
+  box-shadow:var(--shadow-lg);
+}
+.nowbar .lbl{color:var(--dim);font-size:11px;letter-spacing:1.4px;text-transform:uppercase}
+.nowbar .tt{font-weight:700;font-size:13.5px;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+.nowbar .sub{color:var(--dim);font-size:11.5px}
+.nowbar.mini{opacity:.55}
+.nowbar.musicActive{visibility:hidden}
+
+/* ---------------- 音乐播放器：底部紧凑栏 ---------------- */
+#musicbar{display:none;position:fixed;left:210px;right:0;bottom:0;z-index:80;
+  padding:8px 14px 7px;background:rgba(13,13,13,.97);border-top:1px solid #2a2a2a;
+  box-shadow:var(--shadow-lg)}
+#musicbar.on{display:block}
+.musicbarMain{display:flex;align-items:center;gap:5px;min-width:0}
+.musicbarMain .vpb{width:30px;height:30px;font-size:15px}
+.musicbarTrack{min-width:120px;max-width:28vw;flex:0 1 300px;margin:0 8px}
+.musicbarTitle{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.musicbarOrig{color:var(--dim);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.musicbarTime{color:var(--dim);font:400 10.5px var(--mono);white-space:nowrap;margin-left:auto}
+#musicSeek{min-width:80px;flex:1;accent-color:var(--accent);cursor:pointer}
+#musicVol{width:70px;flex:0 0 auto;accent-color:var(--accent);cursor:pointer}
+.musicbarInfo{padding:2px 0 0 105px;color:var(--dim);font:400 10px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.musicQueuePanel{display:none;position:absolute;right:12px;bottom:74px;width:min(390px,calc(100vw - 230px));
+  max-height:58vh;overflow:auto;padding:10px;background:#121212;border:1px solid #333;border-radius:10px;
+  box-shadow:var(--shadow-lg)}
+.musicQueuePanel.on{display:block}
+.musicQueueHead{display:flex;align-items:center;justify-content:space-between;padding:1px 3px 8px;
+  color:var(--dim);font-size:11px;border-bottom:1px solid #2a2a2a;margin-bottom:4px}
+.musicQueueHead button{border:0;background:none;color:var(--dim);font:400 11px var(--font);cursor:pointer}
+.musicQueueHead button:hover{color:var(--fg)}
+.musicQueuePanel .queueItem{grid-template-columns:24px minmax(0,1fr) 24px}
+@media(max-width:820px){
+  #musicbar{left:0;padding:7px 8px}
+  .musicbarTrack{max-width:34vw;margin:0 3px}
+  .musicbarTime{display:none}
+  #musicVol{display:none}
+  .musicbarInfo{padding-left:0}
+  .musicQueuePanel{right:6px;width:min(390px,calc(100vw - 12px))}
+}
+
+/* ---------------- 阅读器：贴合屏幕、不滚动、双页、从右往左 ---------------- */
+#reader{position:fixed;inset:0;background:#07080a;z-index:60;display:none;
+  flex-direction:column;overflow:hidden}
+#reader.on{display:flex}
+#rbar{flex:0 0 auto;display:flex;align-items:center;gap:9px;
+  padding:9px 14px;border-bottom:1px solid #1b1b1b}
+#rbar .ttl{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:30vw}
+#rbar .pg{font:400 12.5px var(--mono);color:var(--dim);white-space:nowrap}
+#rbar .spacer{flex:1}
+.ricon{background:var(--surface2);border:0;color:var(--fg);width:36px;height:36px;
+  border-radius:50%;cursor:pointer;font-size:15px;display:grid;place-items:center;flex:0 0 auto}
+.ricon:hover{background:#2a2a2a}
+.ricon:disabled{opacity:.28;cursor:default}
+/* 换话按钮：只给窄屏（≤820px），悬浮在屏幕左缘、垂直居中。
+   宽屏不放 —— 那里有「选话」下拉，滚屏模式还能用 ←/→。
+   悬浮而不是塞进顶栏，是因为单手拿手机时拇指就落在左中部。
+   做成方角 + 描边，跟圆形的「‹ ›」翻页键区分开：
+   一眼能分辨「换一整话」和「翻一页」。
+   尺寸按手指定（46x44）—— 34px 会点偏。半透明免得盖住漫画。 */
+#chapFloat{
+  display:none;position:fixed;left:8px;top:50%;transform:translateY(-50%);
+  z-index:70;flex-direction:column;gap:10px;
+}
+.chapnav{
+  width:46px;height:44px;display:grid;place-items:center;
+  background:rgba(22,22,22,.6);border:0;border-radius:12px;cursor:pointer;
+  color:var(--fg);font:700 20px/1 var(--font);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);
+  backdrop-filter:blur(3px);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;      /* 去掉移动端 300ms 点击延迟 */
+}
+.chapnav:active{background:rgba(46,46,46,.85)}
+.chapnav:disabled{opacity:.15;pointer-events:none}
+/* 全屏沉浸时跟着一起收起，别破坏「整屏只有漫画」 */
+#reader.full #chapFloat{opacity:0;pointer-events:none}
+.rtoggle{background:transparent;border:0;color:var(--dim);cursor:pointer;
+  font:400 12px var(--font);padding:6px 11px;border-radius:var(--full);
+  box-shadow:var(--border) 0 0 0 1px inset;white-space:nowrap}
+.rtoggle:hover{color:var(--fg);background:#1a1a1a}
+.rtoggle.on{background:var(--accent);color:#000;font-weight:700;box-shadow:none}
+
+/* 书页舞台：撑满剩余高度。overflow:hidden —— 一页/两页始终整幅可见，永不滚动 */
+#rstage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;
+  padding:8px;overflow:hidden;cursor:pointer}
+/* 「一屏」= 一页或一对页。尺寸由 layoutSpread() 用 JS 精确算后写成像素，
+   不靠 CSS 百分比 —— 百分比在 flex 里对不定高的容器解析不可靠，
+   之前正是它导致两页各占半宽、图在各自半宽里居中，中间空出巨大黑沟。 */
+.spread{display:flex;align-items:flex-start;justify-content:center;
+  border-radius:3px;overflow:hidden;background:#0b0b0b;
+  box-shadow:0 10px 40px rgba(0,0,0,.7)}
+.spread.rtl{flex-direction:row-reverse}   /* 首屏那页落到右边：日漫从右往左 */
+.spread img{display:block;-webkit-user-drag:none;user-select:none;-webkit-user-select:none}
+.rfoot{flex:0 0 auto;text-align:center;color:#6b7280;font-size:11.5px;padding:4px 12px 9px}
+/* 阅读器开着的时候锁住背后页面的滚动，免得滚轮把背景滚走 */
+body.reading{overflow:hidden}
+
+/* 阅读器主体：左目录 + 右书页。跟播放器的 #vpBody / #vpSide 同一套几何，
+   尺寸和观感保持一致，两个「全屏层」看起来才像同一个东西。 */
+#rBody{flex:1 1 auto;min-height:0;display:flex;flex-direction:row}
+#rSide{flex:0 0 236px;width:236px;background:#0d0d0d;
+  border-right:1px solid #1b1b1b;display:flex;flex-direction:column;
+  min-height:0;overflow:hidden}
+#rSide.off{display:none}
+#rSide .st{flex:0 0 auto;padding:11px 12px 2px;color:var(--dim);
+  font:600 11.5px var(--font);letter-spacing:.6px}
+#rSide .treepane{margin:6px 0 0;padding:0 7px 10px}
+/* 话数一多本话列表会顶掉下面的作品树，所以它自己封顶并滚动 */
+#rChapPane{flex:0 1 auto;max-height:44%;overflow:auto}
+#rTreePane{flex:1 1 auto;min-height:0;overflow:auto}
+/* 话数列表没有树的缩进（它不是子项） */
+.titem.flat{padding-left:8px}
+#rMain{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column}
+
+/* ---------------- 阅读器：全屏沉浸模式 ----------------
+   目标：整屏只有漫画。顶栏、底部提示、左侧目录全部收起；
+   若浏览器支持 Fullscreen API，同时进入真全屏（连浏览器 UI 一起让位）。
+
+   真全屏期间不显示顶栏，也不响应鼠标移动唤出顶栏；只有浏览器退出
+   Fullscreen API 后，fullscreenchange 才会移除 .full 并恢复普通顶栏。 */
+#reader.full{padding:0}
+#reader.full #rbar{
+  position:fixed;left:0;right:0;top:0;z-index:8;
+  background:rgba(13,13,13,.92);backdrop-filter:blur(6px);
+  border-bottom:1px solid #1b1b1b;
+  opacity:0;transform:translateY(-100%);pointer-events:none;
+  transition:opacity .2s ease,transform .2s ease}
+/* 全屏阅读时横栏始终隐藏；退出浏览器全屏后移除 .full，横栏自然恢复。 */
+#reader.full #rbar,
+#reader.full.ui #rbar{opacity:0;transform:translateY(-100%);pointer-events:none}
+#reader.full #rBody{padding-top:0}
+#reader.full #rHint{display:none}
+/* 目录在沉浸模式下也收起，但**不改 #rSide 的 off 类** ——
+   退出全屏时要原样恢复用户之前的开关状态。 */
+#reader.full #rSide{display:none}
+#reader.full #rstage{padding:0}
+/* 光标静置后藏起来。这是「全屏」感的一半 —— 留着箭头会一直提醒你这是个网页。 */
+#reader.full.idle{cursor:none}
+#reader.full.idle #rbar{opacity:0;transform:translateY(-100%);pointer-events:none}
+
+/* ---------------- 阅读器：窄屏（手机）适配 ----------------
+   实测 412x915（一加 Ace 6）下顶栏会横向溢出：「双页」被切掉，
+   「从右往左」「首页单页」「✕」整个被挤出屏幕 —— 手机上就点不到了。
+   做法：改用两行布局（flex-wrap），并把常用项留在第一行：
+     第一行 = 目录 · 页码 · 话数 · 关闭      （阅读时真正会动的）
+     第二行 = 双页 · 从右往左 · 首页单页      （设一次就不动，放下面）
+   靠 `order` 重排，**不改 DOM 顺序** —— 宽屏下仍是原来那条单行，互不影响。
+   另让出三项冗余：标题（页码已说明在哪一话）、上下页箭头（手机本就点左右半屏）、
+   长段键盘提示（手机上根本没键盘）。功能一个不丢，也不用做溢出菜单。
+
+   ⚠ 验证窄屏**不要**用 headless 的 `--window-size=412` —— 它强制最小宽度 526，
+   再用截图裁到 412，看起来就像右边被切了（我为此误判过一轮）。
+   正确做法：在宽窗口里放一个 412px 的 iframe 去量（见 _归档日志/probe_mobile.html）。 */
+@media (max-width: 820px){
+  #rbar{flex-wrap:wrap;gap:5px;padding:7px 10px}
+  /* ☠ 排顺序时**别和 spacer 撞成同一个 order**：order 相同就按 DOM 位置决胜负，
+     spacer 在 DOM 里靠前，于是它先占满整行、把本该在第一行的按钮挤到第二行。
+     （我就这么把「全屏/关闭」挤出第一行的。）所以 spacer 拿 6，其它一律避开 6。 */
+  #rTreeBtn{order:1}  #rPg{order:2}  #rChap{order:3}  #rFull{order:4}  #rClose{order:5}
+  #rbar .spacer{order:6;flex-basis:100%;height:0}
+                       /* 撑满第一行剩余空间并**逼出换行**。
+                          只写 flex:1 不够：spacer 没有内容，flex-basis 是 0，
+                          换行仍按「放不下才换」算 —— 于是新增的「滚屏」够窄、
+                          就留在第一行末尾了，分组变成随尺寸漂。basis:100% 之后
+                          换行点是定的：第一行=导航，第二行=显示设置。
+                          height:0 是为了让这行不留高度（它本身没有内容）。 */
+  #rScroll{order:7}  #rDual{order:8}  #rDir{order:9}  #rCover{order:10}
+  /* 滚屏放第二行第一个 —— 手机上读条漫最常动它；缩放组整体排最后 */
+  #rbar .zgroup{order:11}
+  #rbar .ttl{display:none}          /* 标题让位给控件 */
+  #rPrev,#rNext{display:none}       /* 点半屏 / 滑动已能翻页；换话另有左缘的 « » */
+  #rbar .pg{font-size:12px}
+  #chapFloat{display:flex}          /* 换话按钮：左缘垂直居中悬浮 */
+  .ricon{width:32px;height:32px;font-size:14px}
+  .rtoggle{padding:5px 9px;font-size:11.5px}
+  .vpsel{max-width:104px;padding:6px 9px;font-size:11.5px}
+  .rfoot{font-size:10.5px;padding:3px 10px 7px}
+}
+
+/* ---------------- 阅读器：竖向滚屏（条漫 / 韩漫） ----------------
+   条漫是一整话连成一条竖长图，翻页模式读它很别扭（一页就是一屏，还得不停翻）。
+   这里把整话按顺序竖着排成一条，滚轮/手指一路滑到底。
+
+   缩放（--zoom）作用在**列宽**上，不在图片上：
+     · zoom=1 → 列宽 = 容器宽，图正好铺满宽度（条漫的常规读法）
+     · zoom>1 → 列宽 > 容器宽，内容横向溢出，靠 #rstage 的横向滚动平移
+   这样做的好处是图片永远是 width:100%，不会出现「图被裁一半」的中间态。 */
+#reader.scroll #rstage{padding:0;overflow:auto;display:block;cursor:default}
+/* 滚屏模式下书页舞台不再居中、也不再是 flex —— 它变成一个普通滚动容器 */
+#reader.scroll #rstage.zoomed{overflow:auto}
+#rStrip{display:none}
+/* margin:0 auto —— 缩小到 100% 以下时列比容器窄，居中比贴左好看；
+   放大溢出时 auto 会自然退成 0，块从左边开始，起点依然可达，不会出现「拉不回去」。 */
+#reader.scroll #rStrip{display:block;width:calc(var(--zoom,1) * 100%);margin:0 auto}
+/* 滚屏模式里 .spread 不用了，但仍要保证它不显示 */
+#reader.scroll #rSpread{display:none}
+.stripPage{display:block;line-height:0;background:#0b0b0b}
+.stripPage img{width:100%;height:auto;display:block;-webkit-user-drag:none;user-select:none;
+  -webkit-user-select:none}
+/* 还没加载出来的页先按已知宽高比占位，免得滚动时列高不停跳、
+   导致「当前读到第几页」和进度乱跳。加载完就把 .ph 去掉，交给图片自身的比例。
+   用 aspect-ratio 而不是 min-height:100% —— 后者对高度 auto 的容器解析不出值。 */
+.stripPage.ph{aspect-ratio:var(--ar, 1 / 1.4);background:#0b0b0b}
+
+/* 缩放：翻页模式下把整屏放大（.spread 尺寸由 JS 乘上系数算好）。
+   放大后内容会超出舞台，所以放开溢出让它能拖着看；
+   `margin:auto` 在这里比 `justify-content:center` 可靠 —— 居中在溢出时会把左侧裁掉，
+   而 margin:auto 在空间不够时会自动退化成「起点可达」。 */
+#rstage.zoomed{overflow:auto;align-items:flex-start;justify-content:flex-start}
+#rstage.zoomed .spread{margin:auto}
+/* 滚屏模式下「双页 / 方向 / 首页单页」都失去意义，收起来 —— 留着只会让人以为按了没用。
+   用 CSS 而不是 style.display：窄屏那套 order 规则也管着这几个按钮，
+   写内联样式会盖掉媒体查询，把手机布局弄坏。 */
+#reader.scroll #rDual, #reader.scroll #rDir, #reader.scroll #rCover{display:none}
+#rbar .zoomv{font:400 12px var(--mono);color:var(--dim);min-width:44px;text-align:center}
+#rbar .zgroup{display:flex;align-items:center;gap:2px}
+.ricon.small{width:30px;height:30px;font-size:16px}
+
+/* 韩漫列表的说明条与卡片 */
+.stripHint{background:var(--surface);border-radius:var(--r-card);padding:11px 15px;
+  color:var(--dim);font-size:12.5px;line-height:1.6;margin-bottom:18px}
+.stripHint b{color:var(--fg)}
+
+/* ---------------- 登录遮罩 ----------------
+   只在「前端被单独部署、接口回 401」时出现（同源时服务器直接给登录页）。
+   固定覆盖整屏，居中一个表单卡片。 */
+.loginOverlay{position:fixed;inset:0;z-index:200;background:rgba(6,7,9,.94);
+  backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px}
+.loginBox{width:min(360px,100%);background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:24px;box-shadow:var(--shadow-lg);display:block}
+.loginBox h3{margin:0 0 3px;font-size:16px}
+.loginBox .sub{margin:0 0 16px;color:var(--dim);font-size:12px}
+.loginBox label{display:block;margin:12px 0 0;color:var(--dim);font-size:12px}
+.loginBox input{width:100%;margin-top:5px;padding:10px 12px;border-radius:9px;
+  border:1px solid var(--border);background:var(--surface);color:var(--fg);
+  font:400 14px var(--font)}
+.loginBox input:focus{outline:none;border-color:var(--accent)}
+.loginBox button{width:100%;margin-top:18px;padding:11px;border:0;border-radius:9px;
+  background:var(--accent);color:#000;font:700 14px var(--font);cursor:pointer}
+.loginBox .err{margin-top:12px;padding:8px 11px;border-radius:8px;
+  background:#3b1416;color:#ff9a9a;font-size:12.5px}
+/* 条漫封面：3:4 竖幅比 1:1 更能看清开头，且按顶部对齐（长图裁切只看得到上边） */
+.card.strip .cover{aspect-ratio:3/4}
+.card.strip .cover img{object-position:top center}
+/* 详情页那张 180px 的封面也要竖幅（卡片里靠 .card.strip 生效，这里单独给一份） */
+.cover.tall{aspect-ratio:3/4}
+.cover.tall img{object-position:top center}
+
+/* ---------------- 轻提示 ---------------- */
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(8px);
+  background:var(--card);color:var(--fg);border-radius:var(--full);
+  padding:11px 20px;font-size:13px;z-index:99;box-shadow:var(--shadow-lg);
+  opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;max-width:76vw}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{color:var(--dim);background:var(--surface);border-radius:var(--r-card);padding:28px;text-align:center}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:10px;border:3px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#4d4d4d}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---- 刮削元数据 / 订阅面板 ---- */
+.panel{display:flex;gap:20px;background:var(--surface);border-radius:var(--r-card);
+  padding:18px;margin-bottom:26px;align-items:flex-start}
+.panel .post{flex:0 0 140px;width:140px;border-radius:8px;overflow:hidden;
+  background:var(--surface2);aspect-ratio:2/3;position:relative}
+.panel .post img{width:100%;height:100%;object-fit:cover;display:block}
+.panel .body{flex:1;min-width:0}
+.panel .name{font-size:19px;font-weight:600;margin:0 0 2px;line-height:1.35}
+.panel .orig{color:var(--dim);font-size:13px;margin-bottom:10px;word-break:break-all}
+.panel .facts{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;
+  color:var(--dim);margin-bottom:12px}
+.panel .facts b{color:var(--fg);font-weight:600}
+.panel .score{color:var(--accent);font-weight:700;font-size:15px}
+.panel .desc{font-size:13px;line-height:1.72;color:#b9b4ad;max-height:7.2em;
+  overflow:hidden;margin-bottom:10px;white-space:pre-wrap}
+.panel .desc.open{max-height:none}
+.panel .more{font-size:12px;color:var(--dim);cursor:pointer;background:none;
+  border:none;padding:0;font-family:inherit;margin-bottom:12px}
+.panel .more:hover{color:var(--fg)}
+.panel a.lnk{color:var(--accent);font-size:13px;text-decoration:none}
+.panel a.lnk:hover{text-decoration:underline}
+.panel .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.warns{font-size:13px;color:var(--warn);margin-top:8px}
+
+.subrow{display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  font-size:14px;cursor:pointer;user-select:none}
+.subrow input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;
+  flex:0 0 auto;margin:0}
+.substat{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;
+  color:var(--dim);margin-bottom:4px}
+.substat b{color:var(--fg);font-weight:500}
+.pending{color:var(--warn)}
+.newlist{font-size:13px;color:var(--accent);margin-top:8px;line-height:1.6}
+.field{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.field input[type=text],.field input[type=number]{background:var(--surface2);
+  border:1px solid var(--border);color:var(--fg);border-radius:8px;
+  padding:7px 11px;font:400 13px var(--sans);font-family:inherit}
+.field input[type=number]{width:66px}
+.hits{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.hits button{text-align:left;background:var(--surface2);border:1px solid var(--border);
+  color:var(--fg);border-radius:8px;padding:9px 12px;cursor:pointer;
+  font:400 13px var(--sans);font-family:inherit}
+.hits button:hover{border-color:var(--accent)}
+.hits small{color:var(--dim);display:block;margin-top:2px;font-size:11px}
+
+/* ---- 网页内播放器 ---- */
+#vp{position:fixed;inset:0;background:#000;z-index:70;display:none;flex-direction:column;
+  overflow:hidden}
+#vp.on{display:flex}
+#vp:fullscreen,#vp:-webkit-full-screen{background:#000}
+#vpBar{flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:9px 14px;
+  border-bottom:1px solid #1b1b1b;background:#0d0d0d}
+#vpBar .ttl{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:38vw}
+#vpBar .pg{font:400 12.5px var(--mono);color:var(--dim);white-space:nowrap}
+#vpBar .spacer{flex:1}
+.vpsel{background:var(--surface2);border:0;color:var(--fg);border-radius:var(--full);
+  padding:7px 11px;font:500 12px var(--sans);font-family:inherit;cursor:pointer;max-width:150px}
+.vpsel:hover{background:#2a2a2a}
+/* 播放器主体：左播放列表 + 右画面 */
+#vpBody{flex:1 1 auto;min-height:0;display:flex;flex-direction:row}
+#vpSide{flex:0 0 236px;width:236px;background:#0d0d0d;
+  border-right:1px solid #1b1b1b;display:flex;flex-direction:column;
+  min-height:0;overflow:hidden}
+#vpSide.off{display:none}
+#vpSide .st{flex:0 0 auto;padding:11px 12px 2px;color:var(--dim);
+  font:600 11.5px var(--font);letter-spacing:.6px}
+#vpSide .treepane{margin:6px 0 0;padding:0 7px 12px}
+#vpQueuePane{display:none;flex:1;min-height:0;overflow:auto;padding:6px 8px 12px}
+#vpSide.audio #vpTreePane{display:none}
+#vpSide.audio #vpQueuePane{display:block}
+.queueTools{display:flex;gap:6px;margin:0 0 8px}
+.queueTools button{flex:1;background:var(--surface2);border:0;color:var(--dim);border-radius:var(--full);
+  padding:7px 8px;font:500 11px var(--font);cursor:pointer;white-space:nowrap}
+.queueTools button:hover,.queueTools button.on{color:var(--fg);background:#282828}
+.queueItem{display:grid;grid-template-columns:24px minmax(0,1fr) 24px;align-items:center;gap:5px;
+  min-height:38px;padding:6px 6px;border-radius:7px;background:transparent;color:var(--fg);cursor:pointer;
+  border:0;width:100%;text-align:left;font:400 12px var(--font)}
+.queueItem:hover{background:var(--surface2)}
+.queueItem.cur{background:#1e3225;box-shadow:inset 2px 0 0 var(--accent)}
+.queueItem .qi{color:var(--dim);font:400 10px var(--mono);text-align:center}
+.queueItem .qt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.queueItem .qx{width:22px;height:22px;border:0;border-radius:50%;background:transparent;color:var(--dim);
+  cursor:pointer;font-size:15px;line-height:20px;padding:0}
+.queueItem .qx:hover{color:var(--warn);background:#2a2424}
+.queueEmpty{color:var(--dim);font-size:11px;text-align:center;padding:20px 8px}
+#vpStage{flex:1 1 auto;min-width:0;min-height:0;position:relative;display:flex;
+  align-items:center;justify-content:center;background:#000}
+#vpEl{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+/* 纯音频：黑底上给个能看出在播的东西 */
+#vpStage.audio #vpEl{max-height:0;opacity:0}
+#vpStage.audio::after{content:'♪';position:absolute;font-size:120px;color:#1f1f1f;
+  pointer-events:none}
+#vpAudioMeta{display:none;position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(620px,78%);padding:22px 24px;border:1px solid #26372b;border-radius:14px;
+  background:rgba(18,27,21,.92);box-shadow:var(--shadow-lg);pointer-events:none}
+#vpStage.audio #vpAudioMeta{display:block}
+.audioMetaTitle{font-size:20px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.audioMetaOrig{margin-top:5px;color:#b7c9bb;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.audioMetaGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px 16px;margin-top:16px}
+.audioMetaCell{min-width:0}.audioMetaCell b{display:block;color:var(--dim);font:400 10px var(--mono);margin-bottom:2px}
+.audioMetaCell span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+#vpMsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  color:#cfcac4;font-size:14px;text-align:center;max-width:70%;line-height:1.7;
+  pointer-events:none;white-space:pre-wrap}
+#vpMsg:empty{display:none}
+#vpMsg .btn{pointer-events:auto;display:inline-block;margin-top:12px;background:var(--accent);
+  color:#000;font-weight:700;border:0;border-radius:var(--full);padding:9px 18px;
+  cursor:pointer;font-size:13px;font-family:inherit}
+#vpCtl{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:10px 16px 14px;
+  background:#0d0d0d;border-top:1px solid #1b1b1b}
+.vpb{background:none;border:0;color:var(--fg);font-size:17px;cursor:pointer;
+  width:34px;height:34px;display:grid;place-items:center;border-radius:50%;flex:0 0 auto}
+.vpb:hover{background:#232323}
+#vpTime{font:400 12.5px var(--mono);color:var(--dim);white-space:nowrap;flex:0 0 auto}
+#vpTrack{flex:1;height:20px;display:flex;align-items:center;cursor:pointer;
+  position:relative;min-width:60px;touch-action:none}
+#vpTrack::before{content:'';position:absolute;left:0;right:0;height:5px;border-radius:3px;
+  background:#2e2e2e}
+#vpBuf,#vpFill{position:absolute;left:0;height:5px;border-radius:3px}
+#vpBuf{background:#4a4a4a;width:0}
+#vpFill{background:var(--accent);width:0}
+#vpKnob{position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;
+  transform:translateX(-50%);left:0;pointer-events:none;opacity:0;transition:opacity .15s}
+#vpTrack:hover #vpKnob,#vpTrack.drag #vpKnob{opacity:1}
+#vpVol{width:86px;flex:0 0 auto;accent-color:var(--accent);cursor:pointer}
+video::cue{background:rgba(0,0,0,.72);color:#fff;font-size:0.92em;line-height:1.35}
+/* ---------------- 窄屏（手机）适配 ----------------
+   原布局是 body{grid-template-columns:210px 1fr}：侧栏死占 210px。
+   412px 宽的手机上留给内容的只剩 176px，顶栏的搜索框（固定 230px）还硬要
+   撑在原位，整个文档被顶到 477px —— 手机于是把页面整体缩放显示，
+   字变得又小又挤。所以窄屏必须换一套排法，而不是把桌面版缩小。
+
+   做法：侧栏改成「抽屉」——默认移出屏幕，用顶栏左上的汉堡键滑出，
+   盖一层背板点一下就收起。这样内容能拿到整宽。 */
+
+#navToggle{
+  display:none;flex:0 0 auto;width:38px;height:38px;place-items:center;
+  border:0;border-radius:10px;background:var(--surface2);color:var(--fg);
+  font:400 17px/1 var(--font);cursor:pointer;
+}
+#navToggle:hover{background:#2a2a2a}
+#navBackdrop{
+  display:none;position:fixed;inset:0;z-index:59;
+  background:rgba(0,0,0,.55);
+}
+
+@media(max-width:860px){
+  body{grid-template-columns:1fr}
+  /* 抽屉：fixed 之后脱离 grid，不再占列宽 */
+  aside{
+    position:fixed;left:0;top:0;bottom:0;z-index:60;width:272px;
+    grid-row:auto;grid-column:auto;
+    transform:translateX(-100%);transition:transform .22s ease;
+    box-shadow:var(--shadow-lg);
+  }
+  /* 侧栏在屏幕外时不接收点击（否则左边缘会有一条看不见的可点区） */
+  aside{visibility:hidden}
+  body.navopen aside{transform:none;visibility:visible}
+  body.navopen #navBackdrop{display:block}
+  #navToggle{display:grid}
+
+  /* 顶栏换行：标题一行、搜索框独占一行。spacer 在换行布局里会白占一格，
+     所以窄屏直接去掉它，改用 .searchbox{order:9} 把搜索框排到最后。 */
+  .topbar{flex-wrap:wrap;gap:10px;padding:12px 14px 10px}
+  .topbar h1{font-size:20px}
+  .topbar .sub{font-size:12px}
+  .topbar .spacer{display:none}
+  .searchbox{order:9;width:100%}
+  .searchbox input{width:100%}
+
+  .view{padding:0 14px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
+
+  /* 详情页头图：横排会挤成一团，改竖排，封面居中、限宽 */
+  .dhead{flex-direction:column;align-items:stretch;gap:16px}
+  .dhead .cover{width:100%;flex:0 0 auto;max-width:200px;margin:0 auto}
+  .dhead h2{font-size:26px}
+  .statgrid{grid-template-columns:repeat(auto-fit,minmax(122px,1fr))}
+
+  .nowbar{grid-column:1/-1;padding:8px 14px;gap:10px}
+  .nowbar .tt{max-width:none}
+  .nowbar .lbl{display:none}      /* 「最近播放」标签让位给标题 */
+
+  #musicbar{left:0}
+  .musicbarInfo{padding-left:0}
+  .musicbarTrack{max-width:34vw}
+  .musicQueuePanel{width:calc(100vw - 24px);right:12px}
+}
+
+/* 手机横屏（高度很小）也别让顶栏吃掉太多 */
+@media(max-width:860px) and (max-height:460px){
+  .topbar{padding:6px 12px 5px}
+  .topbar h1{font-size:17px}
+  .searchbox{display:none}
+}
+
+
+/* ---------------- 月影黑猫主题 ---------------- */
+:root{
+  --bg:#0b0912;
+  --surface:#151225;
+  --surface2:#201a34;
+  --card:#241d3b;
+  --fg:#f8f3ff;
+  --dim:#b8adcf;
+  --border:#4b3d66;
+  --accent:#c58bff;
+  --accent-strong:#9f73ff;
+  --neg:#ff91b7;
+  --warn:#f6c776;
+  --blue:#93b4ff;
+  --shadow-lg:rgba(7,4,17,.7) 0 14px 34px;
+  --shadow-md:rgba(7,4,17,.45) 0 8px 18px;
+}
+body{
+  background:
+    radial-gradient(ellipse at 84% -12%, rgba(133,92,199,.22), transparent 42%),
+    radial-gradient(ellipse at 12% 110%, rgba(44,47,116,.2), transparent 46%),
+    var(--bg);
+}
+aside{background:linear-gradient(180deg,rgba(20,15,37,.98),rgba(10,9,18,.98));border-right-color:rgba(197,139,255,.18)}
+.brand{position:relative;letter-spacing:.35px}
+.brand::after{content:'✦  moonlit shelf';position:absolute;left:41px;bottom:8px;color:rgba(184,173,207,.7);font:500 9px/1 var(--mono);letter-spacing:.35px;text-transform:uppercase}
+.brand .dot{background:radial-gradient(circle at 30% 25%,#fff5ff 0 12%,#dfb8ff 13% 26%,var(--accent-strong) 55%,#5b3c91 100%);color:#1a1027;box-shadow:0 0 0 1px rgba(240,220,255,.35),0 0 20px rgba(197,139,255,.45)}
+nav button:hover,.thead:hover,.titem:hover{background:rgba(197,139,255,.11)}
+nav button.on{background:linear-gradient(90deg,rgba(159,115,255,.23),rgba(32,26,52,.7));box-shadow:inset 2px 0 var(--accent)}
+.titem.cur{color:var(--accent)}
+aside .foot{border-top-color:rgba(197,139,255,.16)}
+main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
+.topbar{background:linear-gradient(rgba(11,9,18,.96) 72%,transparent)}
+.topbar h1{letter-spacing:.1px;text-shadow:0 0 22px rgba(197,139,255,.18)}
+.searchbox input{background:rgba(32,26,52,.9);box-shadow:rgba(197,139,255,.3) 0 0 0 1px inset}
+.searchbox input:focus{box-shadow:var(--accent) 0 0 0 1px inset,0 0 18px rgba(197,139,255,.16)}
+.card{background:linear-gradient(145deg,rgba(36,29,59,.96),rgba(21,18,37,.96));border:1px solid rgba(197,139,255,.08)}
+.card:hover{background:linear-gradient(145deg,rgba(53,40,82,.98),rgba(28,23,49,.98));box-shadow:0 14px 30px rgba(9,5,20,.5),0 0 0 1px rgba(197,139,255,.2)}
+.cover{box-shadow:0 9px 20px rgba(8,4,17,.5),0 0 0 1px rgba(197,139,255,.1)}
+.badge.a,.ep.seen::after{background:var(--accent)}
+.playcircle,.loginBox button{background:linear-gradient(135deg,#e1b8ff,var(--accent-strong));box-shadow:0 9px 22px rgba(117,73,188,.35)}
+.pillbtn:hover,.rtoggle:hover,.ricon:hover,.vpb:hover{background:rgba(197,139,255,.16)}
+.nowbar{background:linear-gradient(90deg,rgba(36,29,59,.94),rgba(21,18,37,.94));border-color:rgba(197,139,255,.12)}
+#reader,#vp{background:rgba(8,6,15,.96)}
+#rstage{background:radial-gradient(ellipse at 50% 15%,rgba(91,60,145,.13),transparent 55%),#0a0811}
+.rtoggle.on{color:#1a1027;background:var(--accent)}
+#toast{box-shadow:0 8px 30px rgba(9,5,20,.5),0 0 0 1px rgba(197,139,255,.18)}
+@media(max-width:860px){aside{background:linear-gradient(180deg,#171129,#0b0912)}}
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="brand"><span class="dot" aria-hidden="true">☾</span><span>月影黑猫</span></div>
+  <nav>
+    <button data-t="health">体检 <span class="n" id="nH"></span></button>
+    <button data-t="anime">动画 <span class="n" id="nA"></span></button>
+    <button data-t="sleep">助眠 <span class="n" id="nS"></span></button>
+    <button data-t="movie">电影 <span class="n" id="nF"></span></button>
+    <button data-t="av">AV <span class="n" id="nV"></span></button>
+    <button data-t="comic">漫画 <span class="n" id="nC"></span></button>
+    <button data-t="manhwa">韩漫 <span class="n" id="nK"></span></button>
+    <button data-t="music">音乐 <span class="n" id="nM"></span></button>
+  </nav>
+  <div class="treepane"><div class="tree" id="tree"></div></div>
+  <div class="foot">
+    <div style="margin-bottom:7px">OPDS</div>
+    <button class="copyurl" id="opdsBtn" title="点击复制完整地址">
+      <span id="opdsUrl">127.0.0.1:8777/opds</span>
+      <span class="cp">复制</span>
+    </button>
+    <div style="margin-top:10px" id="footSize"></div>
+  </div>
+</aside>
+<div id="navBackdrop"></div>
+
+<main>
+  <div class="topbar">
+    <button id="navToggle" title="目录" aria-label="打开目录">☰</button>
+    <h1 id="pageTitle">体检</h1>
+    <span class="sub" id="pageSub"></span>
+    <span class="spacer"></span>
+    <div class="searchbox">
+      <span class="ic">⌕</span>
+      <input id="q" type="search" placeholder="搜作品…" autocomplete="off">
+    </div>
+  </div>
+  <div class="view" id="view"></div>
+</main>
+
+<div class="nowbar mini" id="nowbar">
+  <div class="lbl">最近播放</div>
+  <div style="min-width:0">
+    <div class="tt" id="nowTitle">还没有播放记录</div>
+    <div class="sub" id="nowSub"></div>
+  </div>
+  <span class="spacer"></span>
+  <button class="playcircle" id="nowPlay" title="继续播放" style="width:42px;height:42px;font-size:16px">▶</button>
+</div>
+
+<div id="musicbar" aria-label="音乐播放器">
+  <audio id="musicAudio" preload="metadata"></audio>
+  <div class="musicbarMain">
+    <button class="vpb" id="musicPrev" title="上一首">‹</button>
+    <button class="vpb" id="musicPlay" title="播放 / 暂停">▶</button>
+    <button class="vpb" id="musicNext" title="下一首">›</button>
+    <div class="musicbarTrack">
+      <div class="musicbarTitle" id="musicTitle"></div>
+      <div class="musicbarOrig" id="musicOrig"></div>
+    </div>
+    <span class="musicbarTime" id="musicTime">0:00 / 0:00</span>
+    <input id="musicSeek" type="range" min="0" max="1000" step="1" value="0" title="播放进度">
+    <button class="rtoggle" id="musicMode" title="播放模式">顺序</button>
+    <button class="rtoggle" id="musicQueueBtn" title="播放队列">队列</button>
+    <button class="vpb" id="musicMute" title="静音">🔊</button>
+    <input id="musicVol" type="range" min="0" max="1" step="0.02" value="1" title="音量">
+  </div>
+  <div class="musicbarInfo" id="musicInfo"></div>
+  <div class="musicQueuePanel" id="musicQueuePanel">
+    <div class="musicQueueHead"><span>队列</span><button id="musicQueueClear" title="清空队列">清空</button></div>
+    <div id="musicQueue"></div>
+  </div>
+</div>
+
+<div id="reader">
+  <div id="rbar">
+    <button class="rtoggle" id="rTreeBtn" title="显示 / 隐藏目录 (L)">目录</button>
+    <button class="ricon" id="rPrev" title="上一页">‹</button>
+    <button class="ricon" id="rNext" title="下一页">›</button>
+    <span class="pg" id="rPg"></span>
+    <span class="ttl" id="rTitle"></span>
+    <span class="spacer"></span>
+    <select class="vpsel" id="rChap" title="切换话数"></select>
+    <button class="rtoggle" id="rScroll" title="竖向连续滚屏 / 一页一屏翻页（S 键）">滚屏</button>
+    <button class="rtoggle" id="rDual" title="单页 / 双页展开（D 键）">双页</button>
+    <button class="rtoggle" id="rDir" title="阅读方向（R 键）">从右往左</button>
+    <button class="rtoggle" id="rCover" title="第一页单独占一屏">首页单页</button>
+    <span class="zgroup">
+      <button class="ricon small" id="rZoomOut" title="缩小（- 键）">−</button>
+      <span class="zoomv" id="rZoomV">100%</span>
+      <button class="ricon small" id="rZoomIn" title="放大（+ 键）">＋</button>
+      <button class="rtoggle" id="rZoomFit" title="回到适应屏幕（0 键）">适应</button>
+    </span>
+    <button class="ricon" id="rFull" title="全屏阅读 (F)">⛶</button>
+    <button class="ricon" id="rClose" title="关闭 (Esc)">✕</button>
+  </div>
+  <!-- 换话按钮：手机专用，悬浮在屏幕左缘、垂直居中。
+       放在这儿而不放进顶栏，是因为单手拿手机时拇指正落在左中部 ——
+       滚屏读条漫一路往下滑，最常做的就是「下一话」，不该逼人把手指
+       挪到屏幕顶端去够。半透明，免得挡住漫画。 -->
+  <div id="chapFloat">
+    <button class="chapnav" id="rChapPrev" title="上一话">«</button>
+    <button class="chapnav" id="rChapNext" title="下一话">»</button>
+  </div>
+  <div id="rBody">
+    <div id="rSide">
+      <div class="st">本话目录</div>
+      <div class="treepane" id="rChapPane"></div>
+      <div class="st">全部作品</div>
+      <div class="treepane" id="rTreePane"><div class="tree" id="rTree"></div></div>
+    </div>
+    <div id="rMain">
+      <div id="rstage">
+        <div class="spread" id="rSpread"></div>
+        <div id="rStrip"></div>
+      </div>
+      <div class="rfoot" id="rHint"></div>
+    </div>
+  </div>
+</div>
+
+<div id="vp">
+  <div id="vpBar">
+    <button class="rtoggle" id="vpTreeBtn" title="显示 / 隐藏播放列表 (L)">播放列表</button>
+    <span class="ttl" id="vpTitle"></span>
+    <span class="pg" id="vpInfo"></span>
+    <span class="spacer"></span>
+    <select class="vpsel" id="vpEp" title="切换集数"></select>
+    <select class="vpsel" id="vpSub" title="字幕"></select>
+    <button class="rtoggle" id="vpPot" title="交给 PotPlayer 打开（想看完整 ass 字幕特效时用）">PotPlayer</button>
+    <button class="ricon" id="vpClose" title="关闭 (Esc)">✕</button>
+  </div>
+  <div id="vpBody">
+    <div id="vpSide">
+      <div class="st">播放列表</div>
+      <div class="treepane"><div class="tree" id="vpTree"></div></div>
+    </div>
+    <div id="vpStage">
+      <video id="vpEl" playsinline preload="metadata"></video>
+      <div id="vpMsg"></div>
+    </div>
+  </div>
+  <div id="vpCtl">
+    <button class="vpb" id="vpPlay" title="播放 / 暂停 (空格)">▶</button>
+    <span id="vpTime">0:00 / 0:00</span>
+    <div id="vpTrack" title="拖动跳转">
+      <div id="vpBuf"></div><div id="vpFill"></div><div id="vpKnob"></div>
+    </div>
+    <button class="vpb" id="vpMute" title="静音">🔊</button>
+    <input id="vpVol" type="range" min="0" max="1" step="0.02" value="1" title="音量">
+    <button class="vpb" id="vpFull" title="全屏 (F)">⛶</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// 静态前端与资源库后端解耦：GitHub Pages / 本地静态服务器都可通过配置 API 地址工作。
+// 例如：window.RESLIB_API_BASE = 'http://100.84.101.43:8777';
+const API_BASE = String(window.RESLIB_API_BASE || '').replace(/\/+$/, '');
+const apiUrl = path => API_BASE + (String(path).startsWith('/') ? path : '/' + path);
+const $ = s => document.querySelector(s);
+const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; };
+const size = n => { let u = ['B','KB','MB','GB','TB'], i = 0; while (n >= 1024 && i < 4) { n /= 1024; i++; } return n.toFixed(1) + u[i]; };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+const pct = n => Math.round(n * 100) + '%';
+
+/* ---------------- 登录 ----------------
+   后端在未登录时对接口回 401，对页面导航直接给登录页。
+   这里处理的是**接口 401** 那条路 —— 前端被单独部署在别的域名/端口时
+   （GitHub Pages 那种），页面能加载但数据全是 401，就得自己弹个登录框。
+   同源部署时根本走不到这里（服务器先给了登录页）。 */
+function showLoginOverlay(msg) {
+  if ($('#loginOverlay')) {
+    const e = $('#loginOverlay .err');
+    if (e && msg) { e.textContent = msg; e.style.display = ''; }
+    return;
+  }
+  const ov = el('div', 'loginOverlay');
+  ov.id = 'loginOverlay';
+  const box = el('form', 'loginBox');
+  box.innerHTML = `
+    <h3>需要登录</h3>
+    <p class="sub">月影黑猫 · 资源库 · 请先验证身份</p>
+    <label>用户名<input name="user" autocomplete="username" autocapitalize="off" required></label>
+    <label>密码<input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">登录</button>
+    <div class="err" style="display:none"></div>`;
+  box.onsubmit = async e => {
+    e.preventDefault();
+    const f = new FormData(box);
+    const errEl = box.querySelector('.err');
+    errEl.style.display = 'none';
+    try {
+      // 同源时带上 cookie；跨域部署需要 RESLIB_CORS_ORIGIN 精确配置 + credentials
+      const r = await fetch(apiUrl('/api/login'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: f.get('user'), password: f.get('password') }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.ok) { location.reload(); return; }
+      errEl.textContent = d.error || ('登录失败（HTTP ' + r.status + '）');
+      errEl.style.display = '';
+    } catch (err) {
+      errEl.textContent = '连不上服务：' + err;
+      errEl.style.display = '';
+    }
+  };
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  const u = box.querySelector('input[name=user]');
+  if (u) setTimeout(() => u.focus(), 30);
+}
+
+/* 所有 API 请求都过这里：401 就弹登录框，并抛出理由让调用方安静放弃。 */
+async function apiFetch(path, opts) {
+  const r = await fetch(apiUrl(path), opts);
+  if (r.status === 401) {
+    showLoginOverlay('登录已过期，请重新登录');
+    throw new Error('unauthorized');
+  }
+  return r;
+}
+
+let LIB = null, HEALTH = null, PROG = {};
+let META = {}, SUBS = {}, SETTINGS = {};   // 刮削元数据 / 订阅 / 设置
+let TAB = localStorage.tab || 'health';
+let QUERY = '';
+let DETAIL = null;                 // {kind, idx}
+/* 阅读器状态。
+   双页展开不是简单的「n 和 n+1」——必须先把整本切成「屏」（spreads）：
+     · 合页大图（宽 > 高）自己占一屏，不跟任何页配对
+     · 第一页通常是封面，默认也单独占一屏
+   这样翻页就是 spreads 数组上的 si ± 1，边界/配对/方向都只需在一处算清。 */
+const RMODE_KEY = 'reslib.readerMode';
+/* scroll 的含义见 applyWorkPrefs()：条漫默认竖屏滚屏，页漫默认一屏一翻。
+   这里只给个起手值，真正打开一部作品时会按作品（或 layout）覆盖。 */
+let rmode = Object.assign({ dual: true, rtl: true, cover: true, scroll: false },
+                          JSON.parse(localStorage.getItem(RMODE_KEY) || '{}'));
+const saveRmode = () => localStorage.setItem(RMODE_KEY, JSON.stringify(rmode));
+function loadVersionPrefs() {
+  try {
+    const v = SETTINGS && SETTINGS.anime_version_preferences;
+    return v && typeof v === 'object' ? v : {};
+  } catch (_) { return {}; }
+}
+let versionPrefSaveQueue = Promise.resolve();
+function saveVersionPref(workKey, versionKey) {
+  const prefs = loadVersionPrefs();
+  prefs[workKey] = String(versionKey);
+  SETTINGS.anime_version_preferences = prefs;
+  // 连续快速切换时排队写入，保证服务端最后保存的是最后一次选择。
+  versionPrefSaveQueue = versionPrefSaveQueue.then(async () => {
+    const saved = await apiPost('/api/settings', { anime_version_preferences: prefs });
+    if (saved && !saved.error) SETTINGS = saved;
+    else toast('版本偏好保存失败');
+  }).catch(() => toast('版本偏好保存失败'));
+}
+
+let reader = { pages: [], spreads: [], si: 0, path: '', title: '' };
+
+/* 支持 ?tab=anime&work=0 深链接：可收藏、也方便无头截图核查 */
+const QP = new URLSearchParams(location.search);
+if (['health', 'anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music'].includes(QP.get('tab'))) TAB = QP.get('tab');
+if (QP.has('work')) DETAIL = { kind: TAB, idx: parseInt(QP.get('work'), 10) || 0 };
+/* ?read=<章节序号>&page=<页序号> —— 直接打开阅读器（也方便无头截图验收）
+   &dual=0/1 &rtl=0/1 &cover=0/1 —— 临时覆盖阅读模式，用于分享特定视图和自动化验证 */
+const READ_QP = QP.has('read') ? (parseInt(QP.get('read'), 10) || 0) : null;
+const PAGE_QP = QP.has('page') ? (parseInt(QP.get('page'), 10) || 0) : 0;
+/* ?play=<集序号> —— 直接打开网页播放器（书签 + 无头截图验收都用它） */
+const PLAY_QP = QP.has('play') ? (parseInt(QP.get('play'), 10) || 0) : null;
+/* ?full=1 —— 以全屏模式打开阅读器（书签用；也方便无头验收那个模式） */
+const FULL_QP = QP.has('full') && QP.get('full') !== '0';
+for (const k of ['dual', 'rtl', 'cover', 'scroll']) {
+  if (QP.has(k)) rmode[k] = QP.get(k) !== '0';
+}
+/* ?zoom=2 —— 直接指定缩放，便于分享和自动化验收 */
+const ZOOM_QP = QP.has('zoom') ? parseFloat(QP.get('zoom')) : null;
+function syncUrl() {
+  const p = new URLSearchParams();
+  if (TAB !== 'health') p.set('tab', TAB);
+  if (DETAIL) p.set('work', DETAIL.idx);
+  const q = p.toString();
+  history.replaceState(null, '', q ? '?' + q : location.pathname);
+}
+
+/* 无封面时生成一个稳定的渐变 —— 让网格看起来是有意的，而不是缺图 */
+function grad(seed) {
+  let h = 0; for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) & 0xffff;
+  const a = h % 360, b = (a + 42 + (h >> 4) % 60) % 360;
+  return `linear-gradient(140deg, hsl(${a} 42% 26%), hsl(${b} 48% 15%))`;
+}
+function coverNode(url, title, cls) {
+  const d = el('div', 'cover' + (cls ? ' ' + cls : ''));
+  d.style.background = grad(title);
+  if (url) {
+    const im = el('img');
+    im.loading = 'lazy'; im.alt = ''; im.src = url;
+    im.onerror = () => { im.remove(); d.appendChild(el('div', 'gen', esc(title))); };
+    d.appendChild(im);
+  } else {
+    d.appendChild(el('div', 'gen', esc(title)));
+  }
+  return d;
+}
+
+/* ---------------- 目录树 ---------------- */
+/* 两级：分类 → 作品。
+   最小一级就是「这一季动画 / 这一部漫画」本身，**不再往下钻到单集** ——
+   那样目录会长得没边，而且点开作品详情页就能选集。
+   同一套构建函数渲染到两个地方：全局侧栏 + 播放器左侧。 */
+
+const TREE_KEY = 'reslib.treeOpen';
+let treeOpen = Object.assign(
+  { anime: true, sleep: true, movie: true, av: false, comic: true, manhwa: true,
+    music: false, novel: false },
+  JSON.parse(localStorage.getItem(TREE_KEY) || '{}'));
+
+const TREE_LABEL = { anime: '动画', sleep: '助眠', movie: '电影', av: 'AV', comic: '漫画',
+                     manhwa: '韩漫', music: '音乐', novel: '小说' };
+
+/* 把库整理成 [{tab, leaves:[{kind,w,i,title,sub,dir}]}] */
+function treeGroups() {
+  const out = [];
+  const add = (tab, kind, arr) => {
+    arr = arr || [];
+    if (!arr.length) return;
+    out.push({
+      tab, count: arr.length,
+      leaves: arr.map((w, i) => {
+        const m = metaOf(w.dir);
+        // 刮削到的中文名更准，有就用它
+        let title = (m && (m.title_cn || m.title)) || w.title;
+        if (kind === 'anime' && w.season && !title.includes(w.season)) {
+          title += ' · ' + w.season;
+        }
+        let sub = '';
+        if (kind === 'anime') sub = w.count + ' 集' + (w.version_count > 1 ? ' · ' + w.version_count + ' 个版本' : '');
+        else if (kind === 'sleep') sub = w.count + ' 个视频';
+        else if (kind === 'movie') sub = w.year || (m && m.date ? m.date.slice(0, 4) : '');
+        else if (kind === 'av') sub = w.count + ' 个视频';
+        else if (kind === 'comic') sub = w.count + ' 话';
+        else if (kind === 'manhwa') sub = w.count + ' 话 · 条漫';
+        else if (kind === 'music') sub = w.count + ' 首';
+        else if (kind === 'novel') sub = w.count + ' 本';
+        return { kind, w, i, title, sub, dir: w.dir };
+      }),
+    });
+  };
+  add('anime', 'anime', LIB.anime);
+  add('sleep', 'sleep', LIB.sleep);
+  add('movie', 'movie', LIB.movie);
+  add('av', 'av', LIB.av);
+  add('comic', 'comic', LIB.comic);
+  add('manhwa', 'manhwa', LIB.manhwa);
+  add('music', 'music', LIB.music);
+  add('novel', 'novel', LIB.novel);
+  return out;
+}
+
+/* 一集的字幕信息，**永远返回对象**。服务端现在一定会给 subs，
+   但前端不该因为漏一个字段就把整页打成白屏（我造测试数据时就踩到了）。 */
+function subsOf(e) {
+  const s = (e && e.subs) || {};
+  return { sc: s.sc || '', tc: s.tc || '', other: s.other || [] };
+}
+function noSubs(e) {
+  const s = subsOf(e);
+  return !s.sc && !s.tc && !s.other.length;
+}
+
+/* 这条媒体路径属于哪部作品？返回 {kind, w, i, idx} 或 null。
+   选集下拉要用它把「当前正在播的那一集」映射回它的作品和序号。 */
+function workOfPath(p) {
+  if (!LIB || !p) return null;
+  for (const tab of ['anime', 'sleep', 'movie', 'av']) {
+    const arr = LIB[tab] || [];
+    for (let i = 0; i < arr.length; i++) {
+      for (const gr of (arr[i].groups || [])) {
+        const gi = (gr.episodes || []).findIndex(e => e.path === p);
+        if (gi >= 0) return { kind: tab, w: arr[i], i, idx: gi, group: gr };
+      }
+      const idx = (arr[i].episodes || []).findIndex(e => e.path === p);
+      if (idx >= 0) return { kind: tab, w: arr[i], i, idx };
+    }
+  }
+  const cs = (LIB.comic || []).map((w, i) => ['comic', w, i])
+    .concat((LIB.manhwa || []).map((w, i) => ['manhwa', w, i]));
+  for (const [kind, w, i] of cs) {
+    const idx = (w.chapters || []).findIndex(c => c.path === p);
+    if (idx >= 0) return { kind, w, i, idx };
+  }
+  return null;
+}
+
+/* 下拉里每一条的文字。裸数字就补成「第 03 集」（漫画传 unit='话'）；
+   已经有描述性的标签（如「正片」「350--387」）就原样用。 */
+function epOptionText(label, i, unit) {
+  const u = unit || '集';
+  const s = String(label == null ? '' : label).trim();
+  return /^\d+(\.\d+)?$/.test(s) ? '第 ' + s + ' ' + u
+       : (s || ('第 ' + (i + 1) + ' 项'));
+}
+
+/* 关掉任何开着的全屏层（播放器 / 阅读器）。切作品前先收干净。 */
+function closeOverlays() {
+  if ($('#vp').classList.contains('on')) closePlayer();
+  if ($('#reader').classList.contains('on')) closeReader();
+}
+
+/* 点目录里的一部作品 —— **只跳到「选集」那一页，不直接开播**。
+   用户的意图是「我想看这部」，具体从哪一集开始应该由他在选集页上决定；
+   直接播第一集等于替他做了选择，而且想换集还得先关播放器。
+   音乐没有「选集」这一层（列表本身就是曲目表），所以切到音乐页即可。 */
+function pickLeaf(lf) {
+  if (lf.kind === 'music') {
+    closeOverlays();
+    go('music');
+    return;
+  }
+  if (lf.kind === 'novel') {
+    // 小说还没有独立的浏览页，先在体检页提示一下，别假装能打开
+    closeOverlays();
+    go('health');
+    toast('小说的浏览页还没做');
+    return;
+  }
+  // 动画 / 助眠 / 电影 / 漫画：都跳详情页（那里就是选集/选话的地方）
+  closeOverlays();
+  go(lf.kind === 'comic' ? 'comic' : lf.kind);
+  openDetail(lf.kind === 'comic' ? 'comic' : lf.kind, lf.i);
+}
+
+/* 把树渲染进 host。curPath 用来高亮正在播的那一部。 */
+function renderTree(host, curPath) {
+  if (!host) return;
+  host.innerHTML = '';
+  const groups = treeGroups();
+  if (!groups.length) {
+    host.appendChild(el('div', 'empty', '库里还没内容'));
+    return;
+  }
+  groups.forEach(g => {
+    const box = el('div', 'tgroup');
+    const isOpen = !!treeOpen[g.tab];
+    const hd = el('button', 'thead' + (isOpen ? ' open' : ''));
+    hd.appendChild(el('span', 'car', '▶'));
+    hd.appendChild(el('span', '', TREE_LABEL[g.tab] || g.tab));
+    hd.appendChild(el('span', 'cn', String(g.count)));
+    const items = el('div', 'titems' + (isOpen ? ' open' : ''));
+    g.leaves.forEach(lf => {
+      const cur = curPath && lf.dir && curPath.startsWith(lf.dir);
+      const b = el('button', 'titem' + (cur ? ' cur' : ''));
+      b.appendChild(el('span', 'tt', esc(lf.title)));
+      if (lf.sub) b.appendChild(el('span', 'tm', esc(lf.sub)));
+      b.title = lf.dir || lf.title;
+      b.onclick = () => pickLeaf(lf);
+      items.appendChild(b);
+    });
+    hd.onclick = () => {
+      treeOpen[g.tab] = !treeOpen[g.tab];
+      hd.classList.toggle('open', treeOpen[g.tab]);
+      items.classList.toggle('open', treeOpen[g.tab]);
+      localStorage.setItem(TREE_KEY, JSON.stringify(treeOpen));
+    };
+    box.appendChild(hd);
+    box.appendChild(items);
+    host.appendChild(box);
+  });
+}
+
+/* 三个地方一起刷新（库变了、换片了都调它）：全局侧栏、播放器左侧、阅读器左侧 */
+function refreshTrees() {
+  if (!LIB) return;
+  const cur = $('#reader').classList.contains('on')
+    ? (reader && reader.path)
+    : (vp ? vp.path : null);
+  renderTree($('#tree'), cur);
+  renderTree($('#vpTree'), cur);
+  renderTree($('#rTree'), cur);
+}
+
+
+
+/* 刮削元数据和订阅状态单独取。
+   刻意不跟 /api/library 混在一起 —— index 在服务端是启动时建一次的，
+   而这俩随时会变（刚刮完、刚查完更新），单独一个轻量接口现取现用。 */
+async function loadExtras() {
+  try {
+    const [ex, st] = await Promise.all([
+      apiFetch('/api/extras').then(r => r.json()),
+      apiFetch('/api/settings').then(r => r.json()),
+    ]);
+    META = (ex && ex.meta) || {};
+    SUBS = (ex && ex.subs) || {};
+    if (st && !st.error) SETTINGS = st;
+  } catch (e) { /* 拿不到就当没有，界面照常能用 */ }
+}
+
+async function apiPost(url, body) {
+  try {
+    const r = await apiFetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+    });
+    return await r.json();
+  } catch (e) { return { error: String(e) }; }
+}
+
+const metaOf = dir => META[dir] || null;
+const subOf = t => SUBS[t] || null;
+/* 刮削来的封面优先 —— 比「第一话第一页」更像封面 */
+const posterUrl = dir => apiUrl('/api/poster?dir=' + encodeURIComponent(dir));
+const CONF = { high: '匹配可信', medium: '匹配一般', low: '匹配存疑' };
+const pad2 = n => String(n || 0).padStart(2, '0');
+const fmtHour = (h, m) => pad2(h) + ':' + pad2(m);
+function fmtTime(t) {
+  const d = new Date(t * 1000);
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
+    + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+async function refreshLib() {
+  try { LIB = await fetch(apiUrl('/api/library')).then(r => r.json()); } catch (e) {}
+}
+
+/* ---- 动画：作品信息面板 ---- */
+function metaPanel(w) {
+  const wrap = el('div');
+  wrap.appendChild(el('div', 'sec', '作品信息'));
+  const m = metaOf(w.dir);
+  const p = el('div', 'panel');
+  wrap.appendChild(p);
+  const body = el('div', 'body');
+  p.appendChild(body);
+
+  if (!m) {
+    body.appendChild(el('div', 'name', '暂无数据'));
+    const a = el('div', 'acts');
+    const b = el('button', 'pillbtn', '刮削');
+    b.onclick = () => runScrape(w, b);
+    a.appendChild(b); body.appendChild(a);
+    return wrap;
+  }
+
+  // 顶部作品头已经展示封面和刮削中文名；这里保留原名、评分、简介和标签，
+  // 避免同一张封面和同一个标题在页面上重复出现。
+  if (m.title && m.title_cn && m.title !== m.title_cn) {
+    body.appendChild(el('div', 'orig', esc(m.title)));
+  }
+
+  const f = el('div', 'facts');
+  if (m.rating) f.appendChild(el('span', '', esc(m.rating_source || m.source_name || 'Bangumi') + ' <span class="score">' + esc(m.rating) + '</span>'));
+  if (m.rank) f.appendChild(el('span', '', '排名 <b>#' + esc(m.rank) + '</b>'));
+  if (m.date) f.appendChild(el('span', '', '<b>' + esc(m.date) + '</b> 开播'));
+  if (m.platform) f.appendChild(el('span', '', esc(m.platform)));
+  // 集数只对番剧有意义 —— 电影在 Bangumi 上也是 eps=1，写「全 1 集」很怪
+  if (w.kind === 'anime' && m.eps) {
+    f.appendChild(el('span', '', '全 <b>' + esc(m.eps) + '</b> 集'));
+    if (w.version_count > 1) {
+      f.appendChild(el('span', '', '本地 <b>' + esc(w.version_count) + '</b> 个版本 · <b>' + esc(w.count) + '</b> 集'));
+    // 单一版本才拿 Bangumi 的集数跟本地比 —— 合并版本后总数必然大于条目集数
+    } else if (w.count && w.count < m.eps) {
+      f.appendChild(el('span', '', '<span class="pending">库里只有 ' + w.count + '/' + esc(m.eps) + ' 集</span>'));
+    }
+  }
+  f.appendChild(el('span', '', esc(CONF[m.confidence] || m.confidence || '')));
+  body.appendChild(f);
+
+  if (m.summary) {
+    const d = el('div', 'desc', esc(m.summary));
+    body.appendChild(d);
+    if (m.summary.length > 110) {
+      const mo = el('button', 'more', '展开简介 ▾');
+      mo.onclick = () => {
+        d.classList.toggle('open');
+        mo.textContent = d.classList.contains('open') ? '收起 ▴' : '展开简介 ▾';
+      };
+      body.appendChild(mo);
+    }
+  }
+  if (m.tags && m.tags.length) {
+    const tg = el('div', 'facts');
+    m.tags.slice(0, 8).forEach(t => tg.appendChild(el('span', 'badge', esc(t))));
+    body.appendChild(tg);
+  }
+
+  const a = el('div', 'acts');
+  const rb = el('button', 'pillbtn', '重新刮削');
+  rb.onclick = () => runScrape(w, rb);
+  a.appendChild(rb);
+  if (m.source_url || m.bgm_url) {
+    const lk = el('a', 'lnk', '在 ' + esc(m.source_name || 'Bangumi') + ' 查看 ↗');
+    lk.href = m.source_url || m.bgm_url; lk.target = '_blank'; lk.rel = 'noopener';
+    a.appendChild(lk);
+  }
+  body.appendChild(a);
+  return wrap;
+}
+
+async function runScrape(w, btn) {
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = '刮削中…';
+  const r = await apiPost('/api/scrape', { dir: w.dir, title: w.dir_name || w.title });
+  btn.disabled = false; btn.textContent = old;
+  if (r && r.ok) { toast('刮削完成'); await loadExtras(); render(); }
+  else toast('没找到匹配的条目');
+}
+
+/* ---- 漫画：订阅面板 ---- */
+function subPanel(w) {
+  const wrap = el('div');
+  wrap.appendChild(el('div', 'sec', '订阅更新'));
+  const p = el('div', 'panel');
+  const body = el('div', 'body');
+  p.appendChild(body); wrap.appendChild(p);
+  const s = subOf(w.title);
+
+  if (!s) {
+    body.appendChild(el('div', 'name', '暂无订阅'));
+    const a = el('div', 'acts');
+    const b = el('button', 'pillbtn', '添加订阅');
+    b.onclick = () => subSearch(w, body);
+    a.appendChild(b); body.appendChild(a);
+    return wrap;
+  }
+
+  const lab = el('label', 'subrow');
+  const cb = el('input'); cb.type = 'checkbox'; cb.checked = s.enabled !== false;
+  cb.onchange = async () => {
+    const r = await apiPost('/api/subs', { action: 'toggle', name: w.title, enabled: cb.checked });
+    if (r.error) { toast(r.error); cb.checked = !cb.checked; return; }
+    toast(cb.checked ? '已开启定时订阅' : '已暂停定时订阅');
+    await loadExtras(); render();
+  };
+  lab.appendChild(cb);
+  lab.appendChild(el('span', '', '每天定时查更新（' +
+    fmtHour(SETTINGS.subscribe_hour, SETTINGS.subscribe_minute) + '）'));
+  body.appendChild(lab);
+
+  const st = el('div', 'substat');
+  st.appendChild(el('span', '', '订阅源'));
+  st.appendChild(el('b', '', esc(s.source + ' / ' + s.slug)));
+  st.appendChild(el('span', '', '源站'));
+  st.appendChild(el('b', '', s.known + ' 话' + (w.count ? '，本地 ' + w.count + ' 话' : '')));
+  st.appendChild(el('span', '', '上次检查'));
+  st.appendChild(el('b', '', s.last_check ? fmtTime(s.last_check) : '从未'));
+  body.appendChild(st);
+
+  if (s.last_new && s.last_new.length) {
+    body.appendChild(el('div', 'newlist',
+      '最近新增：' + esc(s.last_new.slice(0, 8).join('、'))));
+  }
+  if (s.pending && s.pending.length) {
+    body.appendChild(el('div', 'warns',
+      '⚠ 有 ' + s.pending.length + ' 话还没下下来，下次检查会重试'));
+  }
+  if (s.last_error) {
+    body.appendChild(el('div', 'warns', '⚠ ' + esc(s.last_error)));
+  }
+
+  const a = el('div', 'acts');
+  const nb = el('button', 'pillbtn', '立即检查更新');
+  nb.onclick = async () => {
+    nb.disabled = true; const t = nb.textContent; nb.textContent = '检查中…';
+    const r = await apiPost('/api/subs', { action: 'check', name: w.title, download: true });
+    nb.disabled = false; nb.textContent = t;
+    if (r.error) toast(r.error);
+    else if (r.downloaded) toast('下了 ' + r.downloaded + ' 话新内容');
+    else if (r.updated) toast('有更新，但没下下来（看下方提示）');
+    else toast('没有新内容');
+    await loadExtras();
+    if (r.downloaded) await refreshLib();
+    render();
+  };
+  a.appendChild(nb);
+
+  const rb = el('button', 'pillbtn ghost', '取消订阅');
+  rb.onclick = async () => {
+    if (!confirm('取消《' + w.title + '》的订阅？已下载的内容不会删。')) return;
+    await apiPost('/api/subs', { action: 'remove', name: w.title });
+    toast('已取消订阅'); await loadExtras(); render();
+  };
+  a.appendChild(rb);
+  body.appendChild(a);
+  return wrap;
+}
+
+function subSearch(w, body) {
+  const box = el('div');
+  const f = el('div', 'field');
+  const inp = el('input'); inp.type = 'text'; inp.value = w.title;
+  inp.style.flex = '1'; inp.style.minWidth = '220px';
+  const sb = el('button', 'pillbtn', '搜索');
+  f.appendChild(inp); f.appendChild(sb);
+  box.appendChild(f);
+  body.appendChild(box);
+  const hits = el('div', 'hits');
+  body.appendChild(hits);
+
+  async function go() {
+    hits.innerHTML = '';
+    hits.appendChild(el('div', 'orig', '搜索中…'));
+    const r = await apiPost('/api/subs', { action: 'search', q: inp.value });
+    hits.innerHTML = '';
+    const list = (r && r.hits) || [];
+    if (!list.length) {
+      hits.appendChild(el('div', 'orig', '没搜到。换个关键词试试。'));
+      return;
+    }
+    list.forEach(h => {
+      const slug = h[0], t = h[1];
+      const b = el('button', '', esc(t) + '<small>' + esc(slug) + '</small>');
+      b.onclick = async () => {
+        b.disabled = true;
+        const rr = await apiPost('/api/subs', { action: 'add', name: w.title, slug: slug });
+        if (rr.error) { toast(rr.error); b.disabled = false; return; }
+        toast('已订阅'); await loadExtras(); render();
+      };
+      hits.appendChild(b);
+    });
+  }
+  sb.onclick = go;
+  inp.onkeydown = e => { if (e.key === 'Enter') go(); };
+  go();
+}
+
+/* ---- 体检页：定时设置 ---- */
+function settingsPanel() {
+  const wrap = el('div');
+  wrap.appendChild(el('div', 'sec', '定时订阅设置'));
+  const p = el('div', 'panel');
+  const body = el('div', 'body');
+  p.appendChild(body); wrap.appendChild(p);
+  body.appendChild(el('div', 'name', '漫画自动更新'));
+
+  const f = el('div', 'field');
+  f.appendChild(el('span', '', '每日'));
+  const hh = el('input'); hh.type = 'number'; hh.min = 0; hh.max = 23;
+  hh.value = SETTINGS.subscribe_hour != null ? SETTINGS.subscribe_hour : 12;
+  const mm = el('input'); mm.type = 'number'; mm.min = 0; mm.max = 59;
+  mm.value = SETTINGS.subscribe_minute || 0;
+  f.appendChild(hh); f.appendChild(el('span', '', ':')); f.appendChild(mm);
+  body.appendChild(f);
+
+  const mk = (checked, label) => {
+    const l = el('label', 'subrow');
+    const c = el('input'); c.type = 'checkbox'; c.checked = checked;
+    l.appendChild(c); l.appendChild(el('span', '', label));
+    return [l, c];
+  };
+  const f2 = el('div', 'field');
+  const [l1, c1] = mk(SETTINGS.subscribe_download !== false,
+    '自动下载更新');
+  f2.appendChild(l1); body.appendChild(f2);
+  const f3 = el('div', 'field');
+  const [l2, c2] = mk(SETTINGS.auto_scrape !== false,
+    '自动刮削新动画 / 电影');
+  f3.appendChild(l2); body.appendChild(f3);
+
+  const a = el('div', 'acts');
+  const sv = el('button', 'pillbtn', '保存设置');
+  sv.onclick = async () => {
+    SETTINGS = await apiPost('/api/settings', {
+      subscribe_hour: Math.max(0, Math.min(23, parseInt(hh.value, 10) || 0)),
+      subscribe_minute: Math.max(0, Math.min(59, parseInt(mm.value, 10) || 0)),
+      subscribe_download: c1.checked,
+      auto_scrape: c2.checked,
+    });
+    toast('已保存');
+  };
+  a.appendChild(sv);
+
+  const ca = el('button', 'pillbtn ghost', '刮削全部动画 / 电影');
+  ca.onclick = async () => {
+    ca.disabled = true; const t = ca.textContent; ca.textContent = '刮削中…';
+    const r = await apiPost('/api/scrape', { all: true });
+    ca.disabled = false; ca.textContent = t;
+    toast('新刮 ' + (r.scraped || 0) + ' 部，未匹配 ' + (r.fail || 0) + ' 部');
+    await loadExtras(); render();
+  };
+  a.appendChild(ca);
+  body.appendChild(a);
+
+  const vids = (LIB.anime || []).concat(LIB.movie || []);
+  if (vids.length) {
+    const miss = vids.filter(x => !metaOf(x.dir)).length;
+    body.appendChild(el('div', 'orig', miss
+      ? '还有 ' + miss + ' 部动画/电影没有刮削数据。'
+      : '所有动画和电影都已有刮削数据。'));
+  }
+  return wrap;
+}
+
+/* ---- 体检页：播放缓存 ---- */
+function cachePanel() {
+  const wrap = el('div');
+  wrap.appendChild(el('div', 'sec', '播放缓存'));
+  const p = el('div', 'panel');
+  const body = el('div', 'body');
+  p.appendChild(body); wrap.appendChild(p);
+
+  body.appendChild(el('div', 'name', '换壳缓存（MKV → MP4）'));
+
+  const line = el('div', 'substat');
+  body.appendChild(line);
+  const acts = el('div', 'acts');
+  const rb = el('button', 'pillbtn', '刷新');
+  const cb = el('button', 'pillbtn ghost', '清空缓存');
+  acts.appendChild(rb); acts.appendChild(cb);
+  body.appendChild(acts);
+
+  async function loadCache() {
+    const [c, pp] = await Promise.all([
+      fetch(apiUrl('/api/cache')).then(r => r.json()).catch(() => null),
+      fetch(apiUrl('/api/comic/cache')).then(r => r.json()).catch(() => null),
+    ]);
+    line.innerHTML = '';
+    if (!c) { line.appendChild(el('span', '', '读取失败')); return; }
+    line.appendChild(el('span', '', '换壳（视频）'));
+    line.appendChild(el('b', '', c.count + ' 个 · ' + size(c.bytes)));
+    line.appendChild(el('span', '', '上限'));
+    line.appendChild(el('b', '', size(c.cap)));
+    if (pp) {
+      line.appendChild(el('span', '', '渲染页（PDF）'));
+      line.appendChild(el('b', '', pp.files + ' 页 · ' + size(pp.bytes)));
+      line.appendChild(el('span', '', '上限'));
+      line.appendChild(el('b', '', size(pp.cap)));
+    }
+    line.appendChild(el('span', '', '位置'));
+    line.appendChild(el('b', '', esc((c.dir || '').split('\\').slice(-2).join('\\'))));
+  }
+  rb.onclick = loadCache;
+  cb.onclick = async () => {
+    if (!confirm('清空缓存？原片不会删除。')) return;
+    const [r, r2] = await Promise.all([
+      apiPost('/api/cache', { clear: true }),
+      apiPost('/api/comic/cache', { clear: true }),
+    ]);
+    const c = (r && r.cleared) || {}, pp = (r2 && r2.cleared) || {};
+    toast('已清理 ' + ((c.removed || 0) + (pp.removed || 0)) + ' 个文件，释放 '
+          + size((c.freed || 0) + (pp.freed || 0)));
+    await loadCache();
+  };
+  loadCache();
+  return wrap;
+}
+
+async function load() {
+  // 走 apiFetch：401 时弹出登录遮罩并中断，而不是把 undefined 当成数据渲染出白屏。
+  try {
+    [LIB, HEALTH, PROG] = await Promise.all([
+      apiFetch('/api/library').then(r => r.json()),
+      apiFetch('/api/health').then(r => r.json()),
+      apiFetch('/api/progress').then(r => r.json()),
+    ]);
+  } catch (e) {
+    if (String(e && e.message) === 'unauthorized') return;   // 遮罩已弹出，等登录
+    throw e;
+  }
+  await loadExtras();
+  const s = LIB.stats;
+  $('#nH').textContent = HEALTH.filter(i => i.level === 'warn').length || '';
+  $('#nA').textContent = s.anime_works;
+  $('#nS').textContent = s.sleep_works || '';
+  $('#nF').textContent = s.movie_works || '';
+  $('#nV').textContent = s.av_works || '';
+  $('#nC').textContent = s.comic_works;
+  $('#nK').textContent = s.manhwa_works || '';
+  $('#nM').textContent = s.music_tracks;
+  $('#footSize').textContent = `合计 ${size(s.total_size)}`;
+  $('#opdsUrl').textContent = (API_BASE || location.origin) + '/opds';
+  $('#opdsBtn').onclick = () => {
+    navigator.clipboard.writeText((API_BASE || location.origin) + '/opds')
+      .then(() => toast('OPDS 地址已复制'))
+      .catch(() => toast((API_BASE || location.origin) + '/opds'));
+  };
+  drawNow();
+  render();
+  refreshTrees();
+  // ?read=<章节>&page=<页> 直接打开阅读器（书签 + 无头截图验收都用它）
+  if (READ_QP !== null && (TAB === 'comic' || TAB === 'manhwa') && DETAIL) {
+    const w = (TAB === 'manhwa' ? LIB.manhwa : LIB.comic)[DETAIL.idx];
+    const c = w && w.chapters[READ_QP];
+    if (c) {
+      // 必须 await：setReaderFull 会立刻排书页尺寸，
+      // 而 openComic 里有一趟 fetch —— 不等它跑完，重排就落在空数据上。
+      await openComic(c.path, w.title + ' ' + c.label, isPaged(c.ext), PAGE_QP);
+      if (FULL_QP) setReaderFull(true);      // 深链接进全屏
+    }
+  }
+  // ?play=<集序号> 直接开播（同样是给书签和验收用的）
+  if (PLAY_QP !== null && (TAB === 'anime' || TAB === 'sleep' || TAB === 'movie' || TAB === 'av') && DETAIL) {
+    const arr = TAB === 'anime' ? LIB.anime : (TAB === 'sleep' ? (LIB.sleep || [])
+      : (TAB === 'av' ? (LIB.av || []) : (LIB.movie || [])));
+    const w = arr[DETAIL.idx];
+    const e = w && w.episodes[PLAY_QP];
+    if (e) play(e.path, w.title + ' ' + e.label);
+  }
+  // 音乐也能直接播：?tab=music&play=<曲目序号>
+  if (PLAY_QP !== null && TAB === 'music') {
+    let n = 0;
+    for (const w of LIB.music) {
+      for (const t of w.tracks) {
+        if (n++ === PLAY_QP) { playAudio(t.path, t.title, { queue: LIB.music.flatMap(x => x.tracks || []) }); break; }
+      }
+      if (n > PLAY_QP) break;
+    }
+  }
+}
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2800);
+}
+
+/* ---------------- 路由 ---------------- */
+function go(tab) { TAB = tab; DETAIL = null; localStorage.tab = tab; syncUrl(); render(); }
+function openDetail(kind, idx) { DETAIL = { kind, idx }; syncUrl(); render(); $('main').scrollTop = 0; }
+function back() { DETAIL = null; syncUrl(); render(); }
+
+const TITLES = { health: '体检', anime: '动画', sleep: '助眠', movie: '电影', av: 'AV',
+                 comic: '漫画', manhwa: '韩漫', music: '音乐' };
+
+function render() {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.t === TAB));
+  const v = $('#view'); v.innerHTML = '';
+  const list = matches();
+  if (DETAIL) return renderDetail(v);
+  $('#pageTitle').textContent = TITLES[TAB];
+  $('#pageSub').textContent = subFor(TAB, list);
+  ({ health: drawHealth, anime: drawAnime, sleep: drawSleep, movie: drawMovies, av: drawAv,
+     comic: drawComic, manhwa: drawManhwa, music: drawMusic }[TAB])(v, list);
+}
+
+function matches() {
+  const q = QUERY.trim().toLowerCase();
+  const f = arr => !q ? arr : arr.filter(w => (w.title || '').toLowerCase().includes(q));
+  /* `|| []` 是防旧服务端：没重启时 LIB.movie 还不存在 */
+  return { anime: f(LIB.anime || []), sleep: f(LIB.sleep || []), movie: f(LIB.movie || []),
+           av: f(LIB.av || []),
+           comic: f(LIB.comic || []), manhwa: f(LIB.manhwa || []),
+           music: f(LIB.music || []) };
+}
+function subFor(tab, L) {
+  const s = LIB.stats;
+  if (tab === 'anime') return `${L.anime.length} 部 / ${s.anime_eps} 集`;
+  if (tab === 'sleep') return `${L.sleep.length} 组 / ${(s.sleep_count || 0)} 个视频`;
+  if (tab === 'movie') return `${L.movie.length} 部`;
+  if (tab === 'av') return `${L.av.length} 部 / ${(s.av_count || 0)} 个视频`;
+  if (tab === 'comic') return `${L.comic.length} 部 / ${s.comic_chapters} 话`;
+  if (tab === 'manhwa') return `${L.manhwa.length} 部 / ${(s.manhwa_chapters || 0)} 话 · 条漫竖向滚屏`;
+  if (tab === 'music') return `${s.music_artists} 位 / ${s.music_tracks} 首`;
+  return `需要处理 ${HEALTH.filter(i => i.level === 'warn').length} 项`;
+}
+
+/* ---------------- 体检 ---------------- */
+function drawHealth(v) {
+  const s = LIB.stats;
+  const sg = el('div', 'statgrid');
+  [['动画', s.anime_works + ' 部', s.anime_eps + ' 集 · 特典 ' + s.anime_extras],
+   ['漫画', s.comic_works + ' 部', s.comic_chapters + ' 话'],
+   ['韩漫', (s.manhwa_works || 0) + ' 部', (s.manhwa_chapters || 0) + ' 话 · 条漫'],
+   ['AV', (s.av_works || 0) + ' 部', (s.av_count || 0) + ' 个文件'],
+   ['音乐', s.music_artists + ' 位', s.music_tracks + ' 首'],
+   ['总体积', size(s.total_size), '扫描 ' + LIB.elapsed + 's']].forEach(([l, a, b]) => {
+    const d = el('div', 'stat');
+    d.appendChild(el('div', 'v', esc(a)));
+    d.appendChild(el('div', 'l', esc(l + ' · ' + b)));
+    sg.appendChild(d);
+  });
+  v.appendChild(sg);
+
+  v.appendChild(el('div', 'sec', '需要处理'));
+  if (!HEALTH.length) v.appendChild(el('div', 'issue ok', '<div class="t">✓ 一切正常</div>'));
+  HEALTH.forEach(i => {
+    const d = el('div', 'issue ' + (i.level === 'warn' ? '' : 'info'));
+    d.appendChild(el('div', 't', (i.level === 'warn' ? '⚠ ' : 'ℹ ') + '[' + esc(i.kind) + '] ' + esc(i.work)));
+    d.appendChild(el('div', 'm', esc(i.msg)));
+    if (i.hint) d.appendChild(el('div', 'h', '→ ' + esc(i.hint)));
+    v.appendChild(d);
+  });
+
+  v.appendChild(settingsPanel());
+  v.appendChild(cachePanel());
+
+  v.appendChild(el('div', 'sec', 'Moeli Reader'));
+  const c = el('div', 'issue info');
+  c.appendChild(el('div', 't', 'OPDS 地址'));
+  c.appendChild(el('div', 'm', '<code>' + esc((API_BASE || location.origin) + '/opds') + '</code>'));
+  v.appendChild(c);
+}
+
+/* ---------------- 动画 ---------------- */
+function drawAnime(v, L) {
+  if (!L.anime.length) return v.appendChild(el('div', 'empty', '没有匹配的动画'));
+  const g = el('div', 'grid');
+  L.anime.forEach(w => {
+    const real = LIB.anime.indexOf(w);
+    const m = metaOf(w.dir);
+    const c = el('button', 'card');
+    // 刮削来的正版封面优先，没有才退回落成渐变块
+    c.appendChild(coverNode(m && m.poster ? posterUrl(w.dir) : null, w.title));
+    c.appendChild(el('div', 't', esc(w.title)));
+    c.appendChild(el('div', 'm',
+      ((m && m.date) ? m.date.slice(0, 4) + ' · ' : '') + w.count + ' 集'
+      + (w.extras.length ? ' · 特典 ' + w.extras.length : '')));
+    const tags = el('div');
+    if (m && m.rating) tags.appendChild(el('span', 'badge', m.rating + ' 分'));
+    if (w.season) tags.appendChild(el('span', 'badge', esc(w.season)));
+    if (w.group) tags.appendChild(el('span', 'badge', esc(w.group)));
+    const ns = w.episodes.length && w.episodes.every(noSubs);
+    tags.appendChild(el('span', 'badge' + (ns ? '' : ' a'), ns ? '无外挂字幕' : '带外挂字幕'));
+    c.appendChild(tags);
+    c.onclick = () => openDetail('anime', real);
+    g.appendChild(c);
+  });
+  v.appendChild(g);
+}
+
+/* ---------------- 助眠 ---------------- */
+function drawSleep(v, L) {
+  if (!L.sleep.length) return v.appendChild(el('div', 'empty', '没有匹配的助眠资源'));
+  const g = el('div', 'grid');
+  L.sleep.forEach(w => {
+    const real = LIB.sleep.indexOf(w);
+    const c = el('button', 'card');
+    c.appendChild(coverNode(null, w.title));
+    c.appendChild(el('div', 't', esc(w.title)));
+    c.appendChild(el('div', 'm', w.count + ' 个视频 · ' + size(w.size)));
+    c.appendChild(el('span', 'badge', 'ASMR / 助眠'));
+    c.onclick = () => openDetail('sleep', real);
+    g.appendChild(c);
+  });
+  v.appendChild(g);
+}
+
+/* ---------------- AV ---------------- */
+/* 封面优先用作品目录里的 poster.jpg（JavSP 生成的），没有就用哈希渐变占位 ——
+   和其它分类一样，缺图不伪造。 */
+function avCover(w) {
+  const url = w.poster ? apiUrl('/file?path=' + encodeURIComponent(w.poster)) : null;
+  return coverNode(url, w.title);
+}
+
+function drawAv(v, L) {
+  const list = LIB.av || [];
+  if (!L.av.length) return v.appendChild(el('div', 'empty', '没有匹配的 AV 资源'));
+  const g = el('div', 'grid');
+  L.av.forEach(w => {
+    const real = list.indexOf(w);
+    const c = el('button', 'card');
+    c.appendChild(avCover(w));
+    c.appendChild(el('div', 't', esc(w.title)));
+    c.appendChild(el('div', 'm', w.count + ' 个视频 · ' + size(w.size)));
+    c.appendChild(el('span', 'badge', 'AV'));
+    c.onclick = () => openDetail('av', real);
+    g.appendChild(c);
+  });
+  v.appendChild(g);
+}
+
+/* ---------------- 电影 ---------------- */
+function drawMovies(v, L) {
+  const list = LIB.movie || [];
+  if (!L.movie.length) {
+    return v.appendChild(el('div', 'empty', '没有匹配的电影'));
+  }
+  const g = el('div', 'grid');
+  L.movie.forEach(w => {
+    const real = list.indexOf(w);
+    const m = metaOf(w.dir);
+    const c = el('button', 'card');
+    c.appendChild(coverNode(m && m.poster ? posterUrl(w.dir) : null, w.title));
+    c.appendChild(el('div', 't', esc(w.title)));
+    const bits = [];
+    if (m && m.date) bits.push(m.date.slice(0, 4));
+    else if (w.year) bits.push(w.year);
+    if (w.version) bits.push(w.version);
+    bits.push(size(w.size));
+    c.appendChild(el('div', 'm', esc(bits.join(' · '))));
+    const tags = el('div');
+    if (m && m.rating) tags.appendChild(el('span', 'badge', m.rating + ' 分'));
+    if (w.is_file) tags.appendChild(el('span', 'badge', '单文件'));
+    const ns = w.episodes.length && w.episodes.every(noSubs);
+    tags.appendChild(el('span', 'badge' + (ns ? '' : ' a'), ns ? '无字幕' : '带字幕'));
+    c.appendChild(tags);
+    c.onclick = () => openDetail('movie', real);
+    g.appendChild(c);
+  });
+  v.appendChild(g);
+}
+
+/* ---------------- 漫画 ---------------- */
+function drawComic(v, L) {
+  if (!L.comic.length) return v.appendChild(el('div', 'empty', '没有匹配的漫画'));
+  const g = el('div', 'grid');
+  L.comic.forEach(w => {
+    const real = LIB.comic.indexOf(w);
+    const first = w.chapters[0];
+    const url = first ? apiUrl('/cover?path=' + encodeURIComponent(first.path)) : null;
+    const c = el('button', 'card');
+    c.appendChild(coverNode(url, w.title));
+    c.appendChild(el('div', 't', esc(w.title)));
+    c.appendChild(el('div', 'm', w.count + ' 话 · ' + size(w.size)));
+    c.onclick = () => openDetail('comic', real);
+    g.appendChild(c);
+  });
+  v.appendChild(g);
+}
+
+/* ---------------- 韩漫（条漫） ----------------
+   列表与漫画同构，差别只在封面取法：条漫第一页是整条竖长图，直接塞进 3:4 的卡片会
+   被裁成一片糊。所以这里不重做取图，而是复用 /cover（服务端已有顶部留白裁剪），
+   再用 CSS 让封面按「顶部对齐」显示 —— 至少能看到开头的画面。
+   卡片上多一条提示，说明点进去默认为竖向滚屏。 */
+function drawManhwa(v, L) {
+  if (!L.manhwa.length) return v.appendChild(el('div', 'empty', '没有匹配的韩漫'));
+  const hint = el('div', 'stripHint',
+    '条漫（韩漫）：点开默认<b>竖向连续滚动</b>，一次读到底。阅读器里可切「滚屏 / 翻页」，也能缩放。');
+  v.appendChild(hint);
+  const g = el('div', 'grid');
+  L.manhwa.forEach(w => {
+    const real = LIB.manhwa.indexOf(w);
+    const first = w.chapters[0];
+    const url = first ? apiUrl('/cover?path=' + encodeURIComponent(first.path)) : null;
+    const c = el('button', 'card strip');
+    const cv = coverNode(url, w.title);
+    cv.classList.add('tall');       // 顶部对齐 + 长图不裁成糊
+    c.appendChild(cv);
+    c.appendChild(el('div', 't', esc(w.title)));
+    c.appendChild(el('div', 'm', w.count + ' 话 · ' + size(w.size)));
+    c.onclick = () => openDetail('manhwa', real);
+    g.appendChild(c);
+  });
+  v.appendChild(g);
+}
+
+/* ---------------- 音乐 ---------------- */
+function drawMusic(v, L) {
+  if (!L.music.length) return v.appendChild(el('div', 'empty', '没有匹配的音乐'));
+  const tracks = L.music.reduce((n, w) => n + w.tracks.length, 0);
+  const embedded = L.music.filter(w => w.embedded).reduce((n, w) => n + w.tracks.length, 0);
+  const formats = {};
+  L.music.forEach(w => w.tracks.forEach(t => {
+    const f = t.ext.slice(1).toUpperCase();
+    formats[f] = (formats[f] || 0) + 1;
+  }));
+  const hero = el('div', 'musicHero');
+  const intro = el('div');
+  intro.appendChild(el('h2', '', '音乐库'));
+  intro.appendChild(el('p', '', L.music.length + ' 个来源 · ' + tracks + ' 首曲目' +
+    (embedded ? ' · 含 ' + embedded + ' 首作品原声' : '')));
+  hero.appendChild(intro);
+  const stats = el('div', 'musicHeroStats');
+  Object.keys(formats).sort().forEach(f => stats.appendChild(el('span', 'musicChip', f + ' ' + formats[f])));
+  hero.appendChild(stats);
+  v.appendChild(hero);
+  L.music.forEach(w => {
+    const group = el('section', 'musicGroup');
+    const head = el('div', 'musicGroupHead');
+    head.appendChild(el('div', 'musicGroupTitle', esc(w.title)));
+    head.appendChild(el('div', 'musicGroupMeta', w.count + ' 首 · ' + size(w.size) + (w.embedded ? ' · 原声' : '')));
+    group.appendChild(head);
+    const g = el('div', 'musicList');
+    const source = (w.tracks || []).map(x => ({ path: x.path, title: x.title }));
+    w.tracks.forEach((t, i) => {
+      const b = el('div', 'musicRow' + (PROG[t.path] ? ' seen' : ''));
+      b.tabIndex = 0;
+      b.setAttribute('role', 'button');
+      b.title = t.path;
+      b.setAttribute('aria-label', '播放 ' + t.title);
+      b.appendChild(el('span', 'idx', String(i + 1).padStart(2, '0')));
+      b.appendChild(el('span', 'name', esc(t.title)));
+      b.appendChild(el('span', 'fmt', t.ext.slice(1).toUpperCase()));
+      b.appendChild(el('span', 'bytes', size(t.size)));
+      b.appendChild(el('span', 'play', '▶'));
+      const add = el('button', 'queueAdd', '＋');
+      add.title = '加入队列';
+      add.setAttribute('aria-label', '加入队列');
+      add.onclick = e => { e.stopPropagation(); queueAdd({ path: t.path, title: t.title }); };
+      b.appendChild(add);
+      b.onclick = () => playAudio(t.path, t.title, { queue: source });
+      b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playAudio(t.path, t.title, { queue: source }); } };
+      g.appendChild(b);
+    });
+    group.appendChild(g);
+    v.appendChild(group);
+  });
+}
+
+/* ---------------- 详情 ---------------- */
+/* 续读：上次在 PROG 里记了百分比，换算回页号 */
+function resumePage(path, total) {
+  const p = PROG[path];
+  if (p && typeof p.pos === 'number' && p.pos > 0 && total) {
+    return Math.min(total - 1, Math.floor(p.pos * total));
+  }
+  return 0;
+}
+
+function renderDetail(v) {
+  const kind = DETAIL.kind;
+  const isAnime = kind === 'anime';
+  const isSleep = kind === 'sleep';
+  const isMovie = kind === 'movie';
+  const isAv = kind === 'av';
+  const isManhwa = kind === 'manhwa';
+  const isVideo = isAnime || isSleep || isMovie || isAv;
+  const w = isAnime ? LIB.anime[DETAIL.idx]
+          : isSleep ? (LIB.sleep || [])[DETAIL.idx]
+          : isAv ? (LIB.av || [])[DETAIL.idx]
+          : isMovie ? (LIB.movie || [])[DETAIL.idx]
+          : isManhwa ? (LIB.manhwa || [])[DETAIL.idx]
+          : LIB.comic[DETAIL.idx];
+  const m = metaOf(w.dir);
+  // 顶栏只放分区名，作品名交给下面的 h2 —— 否则同一个名字在一屏里出现两次
+  $('#pageTitle').textContent = TITLES[kind];
+  $('#pageSub').textContent = '';
+
+  const b = el('button', 'back', '‹ 返回 ' + TITLES[kind]);
+  b.onclick = back;
+  v.appendChild(b);
+
+  const h = el('div', 'dhead');
+  // 封面：刮削来的海报优先（动画/电影都有），漫画退回到「第一话第一页」。
+  // 一张图都没有就不放 —— 塞个写着标题的渐变方块只会跟 h2 重复。
+  if (isVideo) {
+    if (isAv && w.poster) {
+      // AV 不走 Bangumi 刮削，海报是 JavSP 直接放在作品目录里的
+      const cv = coverNode(apiUrl('/file?path=' + encodeURIComponent(w.poster)), w.title);
+      cv.style.width = '180px'; cv.style.flex = '0 0 180px'; cv.style.margin = '0';
+      h.appendChild(cv);
+    } else if (m && m.poster) {
+      const cv = coverNode(posterUrl(w.dir), w.title);
+      cv.style.width = '180px'; cv.style.flex = '0 0 180px'; cv.style.margin = '0';
+      h.appendChild(cv);
+    }
+  } else {
+    const first = w.chapters[0];
+    const cv = coverNode(first ? apiUrl('/cover?path=' + encodeURIComponent(first.path)) : null, w.title);
+    if (isManhwa) cv.classList.add('tall');   // 条漫封面按 3:4 竖幅显示，能多看到开头
+    cv.style.width = '180px'; cv.style.flex = '0 0 180px'; cv.style.margin = '0';
+    h.appendChild(cv);
+  }
+  const info = el('div', 'info');
+  info.appendChild(el('div', 'kicker', isAnime ? '动画系列'
+    : (isSleep ? '助眠视频' : (isAv ? 'AV' : (isMovie ? '电影'
+      : (isManhwa ? '韩漫 · 条漫' : '漫画'))))));
+  info.appendChild(el('h2', '', esc(w.title)));
+  const bits = [];
+  if (isMovie) {
+    if (m && m.date) bits.push(m.date.slice(0, 4)); else if (w.year) bits.push(w.year);
+    if (w.version) bits.push(w.version);
+    bits.push(size(w.size));
+  } else if (isAv) {
+    bits.push(w.count + ' 个视频');
+    bits.push(size(w.size));
+    if (w.poster) bits.push('含海报');
+  } else if (isAnime || isSleep) {
+    if (isAnime && w.season) bits.push(w.season);
+    if (w.group) bits.push(w.group);
+    if (isAnime && w.version_count > 1) bits.push(w.version_count + ' 个版本');
+    bits.push(w.count + (isSleep ? ' 个视频' : ' 集'));
+    if (isAnime && w.extras.length) bits.push('特典 ' + w.extras.length);
+    bits.push(size(w.size));
+  } else {
+    bits.push(w.count + ' 话');
+    bits.push(size(w.size));
+    if (isManhwa) bits.push('条漫竖向滚屏');
+  }
+  info.appendChild(el('div', 'meta', esc(bits.join(' · '))));
+
+  const acts = el('div', 'actions');
+  const eps = isVideo ? w.episodes : w.chapters;
+  // 详情页顶部的播放按钮跟随下拉框选中的版本；未选版本时才回退到作品总集数。
+  let activeVersionEpisodes = eps;
+  if (eps.length) {
+    const pb = el('button', 'playcircle', '▶');
+    pb.title = isAnime ? '从第 1 集开始播'
+      : (isSleep || isAv ? '播放第 1 个视频' : (isMovie ? '播放正片'
+        : (isManhwa ? '从第 1 话开始竖向阅读' : '打开第 1 话')));
+    pb.onclick = () => {
+      const first = activeVersionEpisodes[0] || eps[0];
+      if (!first) return;
+      if (isVideo) play(first.path, w.title + ' ' + first.label);
+      else openComic(first.path, w.title + ' ' + first.label, isPaged(first.ext),
+                     resumePage(first.path, first.pages));
+    };
+    acts.appendChild(pb);
+  }
+  const lb = el('button', 'pillbtn', '打开文件夹');
+  lb.onclick = () => {
+    // 单文件电影没有自己的目录，复制父目录；否则把文件路径给出来更方便
+    navigator.clipboard.writeText(w.folder || w.dir);
+    toast('路径已复制到剪贴板');
+  };
+  acts.appendChild(lb);
+  // 网页放不了或想看完整 ass 特效时的退路，一直摆在这儿
+  if (eps.length) {
+    const pb2 = el('button', 'pillbtn ghost', 'PotPlayer');
+    pb2.title = '交给 PotPlayer 打开（完整 ass 字幕特效只有它能还原）';
+    pb2.onclick = () => {
+      const first = activeVersionEpisodes[0] || eps[0];
+      if (first) playExternal(first.path, w.title + ' ' + first.label);
+    };
+    acts.appendChild(pb2);
+  }
+  info.appendChild(acts);
+  h.appendChild(info);
+  v.appendChild(h);
+
+  // 刮削信息（动画/电影）/ 订阅面板（漫画）：紧跟在标题下面、剧集列表之前
+  if (isSleep) v.appendChild(el('div', 'orig', '助眠资源；未接入影视刮削。'));
+  else if (isAv) v.appendChild(el('div', 'orig',
+    'AV 资源；元数据（movie.nfo / poster.jpg / fanart.jpg）由 JavSP 生成在作品目录里，不走 Bangumi 刮削。'));
+  else v.appendChild(isVideo ? metaPanel(w) : subPanel(w));
+
+  // 服务端按一级目录保留版本边界：正片、妹妹s1/妹妹s2、CDs、Scans、SPs
+  // 各自成区；旧索引没有 groups 时退回原来的两个数组。
+  let groups;
+  if (isVideo && w.groups && w.groups.length) {
+    groups = w.groups;
+  } else if (isVideo) {
+    groups = [{ label: isMovie ? '正片' : '剧集', episodes: w.episodes || [], resources: [], extra: false }];
+    if ((w.extras || []).length) {
+      groups.push({ label: isMovie ? '花絮 / 预告' : '特典', episodes: w.extras, resources: [], extra: true });
+    }
+  } else {
+    groups = [{ label: '章节', episodes: w.chapters || [], resources: [], extra: false }];
+  }
+  // 资源分组使用两级选择：版本用下拉框切换，版本内的季别/资源类别用按钮切换。
+  // 一次只渲染当前分组，避免把所有版本和 CDs/Scans 同时铺在页面上。
+  v.appendChild(el('div', 'sec', '资源分组'));
+  const versionSets = [];
+  const versionMap = new Map();
+  groups.forEach((gr, i) => {
+    const rawLabel = String(gr.label || ('分组 ' + (i + 1)));
+    const m = rawLabel.match(/^版本\s*(\d+)\s*[·•]\s*(.+)$/);
+    const versionNo = m ? m[1] : '1';
+    const versionLabel = '版本 ' + versionNo;
+    let set = versionMap.get(versionNo);
+    if (!set) {
+      set = { key: versionNo, label: versionLabel, groups: [] };
+      versionMap.set(versionNo, set);
+      versionSets.push(set);
+    }
+    // 版本号已经由下拉框承担，季别按钮只显示刮削后的季别/资源类别。
+    const displayGroup = Object.assign({}, gr, { label: m ? m[2].trim() : rawLabel });
+    set.groups.push(displayGroup);
+  });
+  // 版本偏好由服务端永久保存，按刮削条目标识索引，直到下次修改。
+  const versionWorkKey = String(w.bgm_id || w.title || w.dir || (kind + ':' + DETAIL.idx));
+  const savedVersionKey = loadVersionPrefs()[versionWorkKey];
+  let initialVersion = versionSets.findIndex(set => String(set.key) === String(savedVersionKey));
+  if (initialVersion < 0) initialVersion = 0;
+  let versionSelect = null;
+  if (isVideo && versionSets.length > 1) {
+    const picker = el('div', 'versionPicker');
+    picker.appendChild(el('label', '', '版本'));
+    versionSelect = document.createElement('select');
+    versionSelect.className = 'versionSelect';
+    versionSelect.title = '选择同一作品的不同资源版本';
+    versionSets.forEach((set, i) => {
+      const option = document.createElement('option');
+      option.value = String(i);
+      option.textContent = set.label;
+      versionSelect.appendChild(option);
+    });
+    picker.appendChild(versionSelect);
+    v.appendChild(picker);
+    versionSelect.value = String(initialVersion);
+  }
+  const sw = el('div', 'resourceSwitch');
+  const pane = el('div', 'resourcePane');
+  const renderGroup = gr => {
+    pane.innerHTML = '';
+    const geps = gr.episodes || [];
+    const resources = gr.resources || [];
+    if (geps.length) {
+      pane.appendChild(el('div', 'sec', esc(gr.label || '剧集')));
+      const grid = el('div', 'eps');
+      geps.forEach(e => {
+        const isCbz = isPaged(e.ext);
+        const eb = el('button', 'ep' + ((gr.extra || e.special) ? ' sp' : '') + (PROG[e.path] ? ' seen' : ''));
+        eb.appendChild(el('span', '', esc(e.label)));
+        if (isVideo) {
+          const sb = subsOf(e);
+          const sub = sb.sc ? '简' : (sb.tc ? '繁' : (sb.other.length ? '字' : ''));
+          eb.appendChild(el('span', 's', sub || '—'));
+          eb.title = sb.sc || sb.tc || '（无外挂字幕）';
+        } else {
+          eb.appendChild(el('span', 'pg', e.pages ? e.pages + '页' : e.ext.slice(1)));
+          eb.title = e.path;
+        }
+        eb.onclick = () => isVideo
+          ? play(e.path, w.title + ' ' + e.label)
+          : openComic(e.path, w.title + ' ' + e.label, isCbz, resumePage(e.path, e.pages));
+        grid.appendChild(eb);
+      });
+      pane.appendChild(grid);
+    }
+    if (resources.length) {
+      pane.appendChild(el('div', 'sec', esc((gr.label || '其他资源') + ' · 其他资源（' + resources.length + '）')));
+      const details = document.createElement('details');
+      details.className = 'resourceDetails';
+      const summary = document.createElement('summary');
+      summary.textContent = '展开查看文件';
+      details.appendChild(summary);
+      const rg = el('div', 'resourceList');
+      resources.forEach(r => {
+        const rb = el('button', 'resourceItem', r.rel || r.name);
+        rb.title = r.path;
+        rb.onclick = () => window.open(apiUrl('/file?path=' + encodeURIComponent(r.path)), '_blank');
+        rg.appendChild(rb);
+      });
+      details.appendChild(rg);
+      pane.appendChild(details);
+    }
+  };
+  const renderVersion = versionIndex => {
+    const set = versionSets[versionIndex] || versionSets[0];
+    if (!set) return;
+    const regular = set.groups.reduce((all, gr) => all.concat(gr.extra ? [] : (gr.episodes || [])), []);
+    activeVersionEpisodes = regular.length
+      ? regular
+      : set.groups.reduce((all, gr) => all.concat(gr.episodes || []), []);
+    sw.innerHTML = '';
+    set.groups.forEach((gr, i) => {
+      const tb = el('button', 'resourceTab' + (i === 0 ? ' on' : ''), gr.label || ('分组 ' + (i + 1)));
+      tb.onclick = () => {
+        sw.querySelectorAll('.resourceTab').forEach(x => x.classList.remove('on'));
+        tb.classList.add('on');
+        renderGroup(gr);
+      };
+      sw.appendChild(tb);
+    });
+    renderGroup(set.groups[0]);
+  };
+  if (versionSelect) versionSelect.onchange = () => {
+    const next = parseInt(versionSelect.value, 10) || 0;
+    const set = versionSets[next] || versionSets[0];
+    if (set) saveVersionPref(versionWorkKey, set.key);
+    renderVersion(next);
+  };
+  v.appendChild(sw);
+  v.appendChild(pane);
+  renderVersion(initialVersion);
+}
+
+/* ---------------- 播放 ---------------- */
+/* ---------------- 网页内播放器 ---------------- */
+/* 为什么不只是一个 <video src>：
+   库里的素材基本都是 HEVC-10bit 的 MKV（实测史莱姆、Yani Neko 全是 hevc/Main 10）。
+   Chrome **能硬解 HEVC，但只在 MP4 系容器里**，MKV 不行 —— 所以常态是让服务端
+   把 MKV 重封装成 MP4（`-c copy`，纯换壳不重编码），之后就是原生 Range 播放：
+   拖进度精确瞬发、几乎不占 CPU。`/api/prepare` 会算好该走哪条路。
+   万一这台机器连 HEVC 解码器都没有，才回退到 `/transcode` 实时转码 ——
+   那是单向线性流，服务端没法「跳到某个字节」，只能带 start=<秒> 重新发起；
+   客户端用 vp.offset 把「流内时间」换算回「真实时间」。offset 只在兜底路径上非零。 */
+
+let vp = null;
+/* 音乐使用独立的底部播放器，不进入视频播放器的全屏层。 */
+const MUSIC_QUEUE_KEY = 'reslib.musicQueue';
+const MUSIC_MODE_KEY = 'reslib.musicMode';
+const MUSIC_MODES = ['sequence', 'shuffle', 'repeat'];
+const MUSIC_MODE_LABEL = { sequence: '顺序', shuffle: '随机', repeat: '单曲循环' };
+let musicQueue = [];
+let musicIndex = -1;
+let musicMode = MUSIC_MODES.includes(localStorage.getItem(MUSIC_MODE_KEY))
+  ? localStorage.getItem(MUSIC_MODE_KEY) : 'sequence';
+let musicInfo = null;
+let musicLoadToken = 0;
+let musicLastSave = 0;
+const AUDIO_PATH_RE = /\.(?:mp3|m4a|aac|flac|wav|ogg|opus|wma|ape|wv|dsf|dff|tta|aiff)$/i;
+
+function musicItem(x) {
+  const path = typeof x === 'string' ? x : (x && x.path);
+  if (!path) return null;
+  return { path, title: (typeof x === 'object' && x.title) || path.split(/[\\/]/).pop() };
+}
+function musicQueueSave() {
+  try { localStorage.setItem(MUSIC_QUEUE_KEY, JSON.stringify(musicQueue)); } catch (_) {}
+}
+function musicQueueLoad() {
+  try {
+    const q = JSON.parse(localStorage.getItem(MUSIC_QUEUE_KEY) || '[]');
+    musicQueue = q.map(musicItem).filter(Boolean);
+  } catch (_) { musicQueue = []; }
+}
+function queueSet(items, currentPath) {
+  const seen = new Set();
+  musicQueue = (items || []).map(musicItem).filter(x => x && !seen.has(x.path) && seen.add(x.path));
+  musicIndex = currentPath ? musicQueue.findIndex(x => x.path === currentPath) : -1;
+  musicQueueSave();
+  renderMusicQueue();
+}
+function queueAdd(item, autoplay) {
+  const x = musicItem(item);
+  if (!x) return;
+  let i = musicQueue.findIndex(q => q.path === x.path);
+  if (i < 0) { musicQueue.push(x); i = musicQueue.length - 1; }
+  if (musicIndex < 0 || (autoplay && i >= 0)) musicIndex = i;
+  musicQueueSave();
+  renderMusicQueue();
+  if (autoplay) playAudio(x.path, x.title, { fromQueue: true });
+}
+function queueRemove(i) {
+  if (i < 0 || i >= musicQueue.length) return;
+  const wasCurrent = i === musicIndex;
+  musicQueue.splice(i, 1);
+  if (i < musicIndex) musicIndex--;
+  else if (wasCurrent) musicIndex = Math.min(musicIndex, musicQueue.length - 1);
+  musicQueueSave();
+  renderMusicQueue();
+}
+function renderMusicQueue() {
+  const box = $('#musicQueue');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!musicQueue.length) { box.appendChild(el('div', 'queueEmpty', '暂无')); return; }
+  musicQueue.forEach((item, i) => {
+    const row = el('div', 'queueItem' + (i === musicIndex ? ' cur' : ''));
+    row.title = item.path;
+    row.appendChild(el('span', 'qi', String(i + 1).padStart(2, '0')));
+    row.appendChild(el('span', 'qt', esc(item.title)));
+    const x = el('button', 'qx', '×');
+    x.title = '移除'; x.setAttribute('aria-label', '移除');
+    x.onclick = e => { e.stopPropagation(); queueRemove(i); };
+    row.appendChild(x);
+    row.onclick = () => playAudio(item.path, item.title, { fromQueue: true });
+    box.appendChild(row);
+  });
+}
+function setMusicMode(mode) {
+  musicMode = MUSIC_MODES.includes(mode) ? mode : 'sequence';
+  localStorage.setItem(MUSIC_MODE_KEY, musicMode);
+  const b = $('#musicMode');
+  if (b) { b.textContent = MUSIC_MODE_LABEL[musicMode]; b.title = MUSIC_MODE_LABEL[musicMode] + '播放'; }
+}
+function cycleMusicMode() {
+  const i = MUSIC_MODES.indexOf(musicMode);
+  setMusicMode(MUSIC_MODES[(i + 1) % MUSIC_MODES.length]);
+}
+function musicNextIndex(dir) {
+  if (!musicQueue.length) return -1;
+  if (musicMode === 'repeat' && dir > 0) return musicIndex;
+  if (musicMode === 'shuffle' && dir > 0) {
+    if (musicQueue.length < 2) return musicIndex;
+    let n = musicIndex;
+    while (n === musicIndex) n = Math.floor(Math.random() * musicQueue.length);
+    return n;
+  }
+  const n = musicIndex < 0 ? (dir > 0 ? 0 : musicQueue.length - 1) : musicIndex + dir;
+  return (n + musicQueue.length) % musicQueue.length;
+}
+function musicStep(dir) {
+  const i = musicNextIndex(dir);
+  if (i < 0) return;
+  const x = musicQueue[i];
+  playAudio(x.path, x.title, { fromQueue: true });
+}
+function audioText(v, fallback = '') { return v == null || v === '' ? fallback : String(v); }
+function audioTags(info) {
+  const out = {};
+  const sources = [info && info.tags,
+                   info && info.format && info.format.tags,
+                   info && info.metadata && info.metadata.format,
+                   info && info.metadata && info.metadata.audio,
+                   info && info.audio && info.audio.tags];
+  sources.forEach(tags => Object.entries(tags || {}).forEach(([k, v]) => {
+    if (v != null && v !== '' && out[k.toLowerCase()] == null) out[k.toLowerCase()] = v;
+  }));
+  return out;
+}
+function audioRate(n) {
+  n = Number(n) || 0;
+  if (!n) return '';
+  return n >= 1000000 ? (n / 1000000).toFixed(1) + ' Mbps' : Math.round(n / 1000) + ' kbps';
+}
+function audioOrig(info, title) {
+  const t = audioTags(info);
+  const track = t.track || t.tracknumber || '';
+  return [t.artist || t.album_artist, t.album, track ? ('#' + track) : ''].filter(Boolean).join(' · ') || title;
+}
+function audioDecode(info) {
+  const a = info && info.audio || {};
+  const f = info && info.format || {};
+  const codec = a.codec || a.codec_name || '';
+  const rate = audioRate(a.bit_rate || f.bit_rate);
+  const sr = a.sample_rate ? (Number(a.sample_rate) / 1000).toFixed(1) + ' kHz' : '';
+  const bits = a.bits_per_sample || a.bits_per_raw_sample;
+  const depth = bits ? bits + ' bit' : '';
+  const ch = a.channel_layout || (a.channels ? a.channels + ' 声道' : '');
+  return [codec.toUpperCase(), rate, depth, sr, ch].filter(Boolean).join(' · ');
+}
+function renderMusicInfo(info, title) {
+  musicInfo = info || null;
+  const orig = audioOrig(info, title);
+  $('#musicOrig').textContent = orig;
+  const source = info && info.name ? info.name : '';
+  const dec = audioDecode(info);
+  const how = info && info.decode && info.decode.mode === 'transcode' ? '实时转码' : '浏览器原生解码';
+  $('#musicInfo').textContent = [source, dec, how].filter(Boolean).join(' · ');
+}
+function musicSync() {
+  const a = $('#musicAudio');
+  const dur = Number.isFinite(a.duration) ? a.duration : 0;
+  const cur = Number.isFinite(a.currentTime) ? a.currentTime : 0;
+  $('#musicPlay').textContent = a.paused ? '▶' : '❚❚';
+  $('#musicTime').textContent = fmtT(cur) + ' / ' + fmtT(dur);
+  $('#musicSeek').value = dur ? String(Math.round(cur / dur * 1000)) : '0';
+  $('#musicMute').textContent = (a.muted || a.volume === 0) ? '🔇' : '🔊';
+}
+async function playAudio(path, title, opts = {}) {
+  title = title || path.split(/[\\/]/).pop();
+  if (vp) closePlayer();
+  const a = $('#musicAudio');
+  const tok = ++musicLoadToken;
+  if (opts.queue) queueSet(opts.queue, path);
+  else queueAdd({ path, title });
+  musicIndex = musicQueue.findIndex(x => x.path === path);
+  $('#musicbar').classList.add('on');
+  $('#nowbar').classList.add('musicActive');
+  $('#musicTitle').textContent = title;
+  $('#musicOrig').textContent = '';
+  $('#musicInfo').textContent = '读取中';
+  renderMusicQueue();
+  let info;
+  try {
+    const r = await fetch(apiUrl('/api/media-info?path=' + encodeURIComponent(path)));
+    info = await r.json();
+    if (info.error && r.status === 404) {
+      info = await fetch(apiUrl('/api/video?path=' + encodeURIComponent(path))).then(x => x.json());
+    }
+  }
+  catch (e) { info = { error: String(e) }; }
+  if (tok !== musicLoadToken) return;
+  if (info.error) { $('#musicInfo').textContent = info.error; return; }
+  renderMusicInfo(info, title);
+  const resume = PROG[path] && Number(PROG[path].pos) > 0.005 && Number(PROG[path].pos) < 0.97
+    ? Number(PROG[path].pos) : 0;
+  if (resume) a.addEventListener('loadedmetadata', () => {
+    if (tok === musicLoadToken && Number.isFinite(a.duration) && a.duration > 0) {
+      a.currentTime = Math.min(a.duration - 0.3, a.duration * resume);
+    }
+  }, { once: true });
+  const url = info.mode === 'transcode'
+    ? apiUrl('/transcode?path=' + encodeURIComponent(path) + '&start=0&h=0')
+    : apiUrl('/play?path=' + encodeURIComponent(path));
+  a._path = path; a._title = title;
+  a.src = url; a.load();
+  a.play().catch(() => {});
+  musicSync();
+}
+function stopMusicPlayback() {
+  const a = $('#musicAudio');
+  if (!a) return;
+  a.pause(); a.removeAttribute('src'); a.load();
+  $('#musicbar').classList.remove('on');
+  $('#musicQueuePanel').classList.remove('on');
+  $('#nowbar').classList.remove('musicActive');
+}
+function musicSaveProgress(force = false) {
+  const a = $('#musicAudio'), path = a && a._path;
+  if (!path || !Number.isFinite(a.duration) || !a.duration) return;
+  const now = Date.now();
+  if (!force && now - musicLastSave < 5000) return;
+  musicLastSave = now;
+  const pos = Math.max(0, Math.min(1, a.currentTime / a.duration));
+  PROG[path] = { pos, title: a._title || path, at: now / 1000 };
+  fetch(apiUrl('/api/progress'), { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: path, pos, title: a._title || path }) }).catch(() => {});
+}
+/* 音乐的队列与播放控件接线。 */
+(function musicWire() {
+  const a = $('#musicAudio');
+  if (!a) return;
+  musicQueueLoad();
+  setMusicMode(musicMode);
+  renderMusicQueue();
+  a.addEventListener('loadedmetadata', musicSync);
+  a.addEventListener('timeupdate', () => { musicSync(); musicSaveProgress(); });
+  a.addEventListener('play', musicSync);
+  a.addEventListener('pause', () => { musicSync(); musicSaveProgress(true); });
+  a.addEventListener('ended', () => { musicSaveProgress(true); musicStep(1); });
+  a.addEventListener('error', () => { $('#musicInfo').textContent = '播放失败'; musicSync(); });
+  $('#musicPlay').onclick = () => { if (a.paused) a.play().catch(() => {}); else a.pause(); };
+  $('#musicPrev').onclick = () => musicStep(-1);
+  $('#musicNext').onclick = () => musicStep(1);
+  $('#musicMode').onclick = cycleMusicMode;
+  $('#musicQueueBtn').onclick = () => $('#musicQueuePanel').classList.toggle('on');
+  $('#musicQueueClear').onclick = () => { musicQueue = []; musicIndex = -1; musicQueueSave(); renderMusicQueue(); };
+  $('#musicMute').onclick = () => { a.muted = !a.muted; musicSync(); };
+  $('#musicVol').oninput = () => { a.volume = parseFloat($('#musicVol').value); if (a.volume > 0) a.muted = false; musicSync(); };
+  $('#musicSeek').oninput = () => {
+    if (Number.isFinite(a.duration) && a.duration) a.currentTime = a.duration * Number($('#musicSeek').value) / 1000;
+    musicSync();
+  };
+})();
+/* 播放列表开关：左上角那个按钮和 L 键共用这一份状态。
+   记进 localStorage —— 用户设一次就不想再设。 */
+const SIDE_KEY = 'reslib.vpSide';
+function setSide(on) {
+  $('#vpSide').classList.toggle('off', !on);
+  $('#vpTreeBtn').classList.toggle('on', on);
+  localStorage.setItem(SIDE_KEY, on ? '1' : '0');
+}
+function toggleSide() { setSide($('#vpSide').classList.contains('off')); }
+let vpToken = 0;      // 换 src 时会触发过期的 error/canplay，用它把旧事件丢掉
+let vpDragging = false;   // 拖进度条时别让 timeupdate 把条子拽回去
+let vpLastSave = 0;
+
+function fmtT(s) {
+  if (!isFinite(s) || s < 0) s = 0;
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = Math.floor(s % 60);
+  return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(x).padStart(2, '0');
+}
+const vpEl = () => $('#vpEl');
+/* 真实播放位置。
+   **原生模式**（direct/remux，走 Range）：MP4 是绝对时间轴，currentTime 就是真实时间。
+   **转码模式**：转码流从 start=S 开始、时间戳归零，得加 offset 换算。
+   这个区分是整套拖动逻辑的核心。 */
+function vpAbs() {
+  if (!vp) return 0;
+  return vp.native ? vpEl().currentTime : vp.offset + vpEl().currentTime;
+}
+function vpBufferedEnd() {
+  const v = vpEl(); let e = 0;
+  for (let i = 0; i < v.buffered.length; i++) e = Math.max(e, v.buffered.end(i));
+  return e;                       // 也是「流内时间」
+}
+function resumeSec(path, dur) {
+  const p = PROG[path];
+  if (p && typeof p.pos === 'number' && p.pos > 0.005 && p.pos < 0.97 && dur > 0) {
+    return p.pos * dur;
+  }
+  return 0;
+}
+
+/* 交给 PotPlayer —— 留作退路：ass 的完整特效（字体/定位/特效字幕）只有它能还原 */
+async function playExternal(path, title) {
+  try {
+    const j = await fetch(apiUrl('/api/play'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, prefer: 'sc' })
+    }).then(r => r.json());
+    if (!j.ok) return toast('播放失败：' + (j.error || ''));
+    const subName = j.sub ? j.sub.split('\\').pop().split('/').pop() : '';
+    toast('已交给 PotPlayer：' + title + (subName ? '　字幕 ' + subName : ''));
+  } catch (e) { toast('播放失败：' + e); }
+}
+
+/* 入口：所有播放入口都走这里 */
+async function play(path, title) {
+  title = title || path.split(/[\\/]/).pop();
+  if (AUDIO_PATH_RE.test(path)) {
+    playAudio(path, title);
+    return;
+  }
+  stopMusicPlayback();
+  $('#vp').classList.add('on');
+  $('#vpTitle').textContent = title;
+  $('#vpInfo').textContent = '';
+  $('#vpSub').innerHTML = '';
+  document.body.style.overflow = 'hidden';
+  vpFail('正在读取…', path, title, false);
+
+  let info;
+  try {
+    info = await fetch(apiUrl('/api/video?path=' + encodeURIComponent(path))).then(r => r.json());
+  } catch (e) { info = { error: String(e) }; }
+
+  if (info.error) {
+    vpFail('放不了这个文件\n' + info.error
+           + (info.ffprobe ? '\nffprobe: ' + info.ffprobe : ''), path, title, true);
+    return;
+  }
+
+  const mode = info.mode || (info.direct ? 'direct' : 'transcode');
+  vp = {
+    path, title, info, mode,
+    offset: 0, dur: info.duration || 0,
+    // native：走 Range 的原生播放（direct 原文件 / remux 换壳后的 MP4）
+    // 好处是拖动进度条是浏览器原生行为，零 CPU、精确、瞬发
+    native: mode !== 'transcode',
+    subIdx: -1,
+    audioOnly: !info.video,
+    triedTranscode: false,
+    lastAbs: 0,
+  };
+  $('#vpStage').classList.toggle('audio', vp.audioOnly);
+  const vcodec = info.video
+    ? `${info.video.codec} ${info.video.width}×${info.video.height}` : '纯音频';
+  const how = { direct: '直接播放', remux: '换壳播放（不重编码）', transcode: '实时转码' }[mode] || mode;
+  $('#vpInfo').textContent = `${vcodec} · ${how}`;
+
+  // 换壳要先跑一遍（只换容器，实测整集不到 1 秒），跑完再设 src，
+  // 这样界面能明确显示「准备中」，失败也看得到原因。
+  if (mode === 'remux') {
+    vpFail('准备中…（换壳成 MP4，不重编码）', path, title, false);
+    let r;
+    try {
+      r = await apiPost('/api/prepare', { path });
+    } catch (e) { r = { ok: false, error: String(e) }; }
+    if (!vp) return;                       // 期间用户关掉了
+    if (!r.ok) {
+      if (r.mode === 'transcode') {        // 换不了壳就转码兜底
+        vp.mode = 'transcode'; vp.native = false;
+        $('#vpInfo').textContent = `${vcodec} · 实时转码`;
+      } else {
+        vpFail('准备失败\n' + (r.error || ''), path, title, true);
+        return;
+      }
+    }
+  }
+
+  buildSub();
+  buildEps();
+  refreshTrees();          // 左上播放列表跟着高亮当前这部
+  vpLoadAt(resumeSec(path, vp.dur), true);
+}
+
+function vpFail(msg, path, title, showPot) {
+  const m = $('#vpMsg');
+  m.innerHTML = '';
+  m.appendChild(document.createTextNode(msg));
+  if (showPot) {
+    m.appendChild(document.createElement('br'));
+    const b = el('button', 'btn', '用 PotPlayer 打开');
+    b.onclick = () => playExternal(path, title);
+    m.appendChild(b);
+  }
+}
+
+/* 从 sec 开始播。
+   原生模式：src 固定指向 /play（服务端决定原文件还是缓存），起播位置靠 currentTime；
+   转码模式：带 start=S 重新起一次转码。 */
+function vpLoadAt(sec, autoplay) {
+  if (!vp) return;
+  const v = vpEl();
+  const tok = ++vpToken;
+  let url;
+  if (vp.native) {
+    vp.offset = 0;                 // 绝对时间轴，不需要 offset
+    url = apiUrl('/play?path=' + encodeURIComponent(vp.path));
+  } else {
+    vp.offset = Math.max(0, sec);
+    url = apiUrl('/transcode?path=' + encodeURIComponent(vp.path))
+      + '&start=' + vp.offset.toFixed(3) + '&h=0';   // 兜底转码也是原画（换壳才是常态）
+    vpFail('转码中…', vp.path, vp.title, false);
+  }
+  v.src = url;
+  if (vp.native) {
+    $('#vpMsg').innerHTML = '';
+    v.addEventListener('loadedmetadata', () => {
+      if (tok !== vpToken) return;
+      if (sec > 0 && isFinite(v.duration) && v.duration > 0) {
+        v.currentTime = Math.min(sec, v.duration - 0.3);
+      }
+    }, { once: true });
+  }
+  v.load();
+  if (autoplay) v.play().catch(() => {});
+  applySub();
+}
+
+/* 跳转。原生模式下就是设个 currentTime —— 浏览器自己发 Range 请求，
+   **零 CPU、瞬间到、时间精确**（这正是用户要的）。
+   转码模式才需要「能跳就跳、不能跳就带 start 重开转码」。 */
+function vpSeek(target) {
+  if (!vp) return;
+  const v = vpEl();
+  if (vp.dur) target = Math.max(0, Math.min(vp.dur - 0.5, target));
+  if (vp.native) { v.currentTime = target; return; }
+  const lo = vp.offset, hi = vp.offset + vpBufferedEnd();
+  if (target >= lo && target <= hi - 1) { v.currentTime = target - lo; return; }
+  const wasPlaying = !v.paused && !v.ended;
+  vpLoadAt(target, wasPlaying);
+}
+
+function applySub() {
+  const v = vpEl();
+  // 移除旧轨前**先把 cue 清掉并置为 disabled**。
+  // 直接 remove() 时，已经显示出来的 cue 在部分浏览器里不会立刻消失 ——
+  // 而拖一次进度就会重挂一次轨道，残留会一层层叠上去
+  // （用户截图里同一行字幕出现两次，就是这个症状）。
+  v.querySelectorAll('track').forEach(t => {
+    try {
+      const tt = t.track;
+      if (tt) {
+        tt.mode = 'disabled';
+        while (tt.cues && tt.cues.length) tt.removeCue(tt.cues[0]);
+      }
+    } catch (e) { /* 忽略 */ }
+    t.remove();
+  });
+  if (!vp) return;
+  const s = (vp.info.subs || [])[vp.subIdx];
+  if (!s) return;
+  const tr = document.createElement('track');
+  tr.kind = 'subtitles';
+  tr.label = s.label || '字幕';
+  tr.srclang = (s.lang || 'zh').slice(0, 12);
+  /* 关键：把当前转码流的起点 offset 一起发过去。
+     转码流的时间从 0 计，而字幕是绝对时间 —— 服务端会按 offset 把时间轴前移，
+     否则一拖进度条字幕就整体错位（画面是对白、字幕还在唱 OP 歌词）。
+     **原生模式（direct/remux）是绝对时间轴，offset 恒为 0，不需要平移。** */
+  const off = vp.native ? 0 : vp.offset;
+  tr.src = s.kind === 'embedded'
+    ? apiUrl('/api/sub?path=' + encodeURIComponent(vp.path) + '&track=' + s.index)
+      + '&offset=' + off.toFixed(3)
+    : apiUrl('/api/sub?path=' + encodeURIComponent(s.path))
+      + '&offset=' + off.toFixed(3);
+  v.appendChild(tr);
+  const on = () => { try { tr.track.mode = 'showing'; } catch (e) {} };
+  tr.addEventListener('load', on);
+  setTimeout(on, 400);            // 有些情况下 load 不触发，兜一下
+}
+
+/* 选集下拉。找到当前这一集属于哪部作品，把它的集数列出来。
+   只有一集（比如电影）就不摆个无意义的下拉。 */
+function buildEps() {
+  const sel = $('#vpEp');
+  sel.innerHTML = '';
+  const own = vp ? workOfPath(vp.path) : null;
+  const eps = own ? (own.group ? (own.group.episodes || []) : (own.w.episodes || [])) : [];
+  if (eps.length < 2) {
+    sel.disabled = true;
+    sel.style.display = 'none';
+    return;
+  }
+  sel.style.display = '';
+  sel.disabled = false;
+  eps.forEach((e, i) => {
+    const o = el('option', '', epOptionText(e.label, i));
+    o.value = String(i);
+    sel.appendChild(o);
+  });
+  sel.value = String(own.idx);
+  sel.title = own.w.title + '　共 ' + eps.length + ' 集';
+  sel.onchange = () => {
+    const i = parseInt(sel.value, 10);
+    const e = eps[i];
+    sel.blur();                 // 交出焦点，否则空格/方向键会被下拉吃掉
+    if (e) play(e.path, own.w.title + ' · ' + e.label);
+  };
+}
+
+function buildSub() {
+  const sel = $('#vpSub');
+  sel.innerHTML = '';
+  const subs = (vp && vp.info.subs) || [];
+  const off = el('option', '', '字幕：关');
+  off.value = '-1';
+  sel.appendChild(off);
+  subs.forEach((s, i) => {
+    const o = el('option', '', '字幕：' + (s.label || ('轨 ' + (i + 1))));
+    o.value = String(i);
+    sel.appendChild(o);
+  });
+  // 默认选第一条（外挂简中排在前面）
+  vp.subIdx = subs.length ? 0 : -1;
+  sel.value = String(vp.subIdx);
+  sel.disabled = !subs.length;
+  // 选完就把焦点交出去，否则空格/方向键会被 <select> 吃掉
+  sel.onchange = () => { vp.subIdx = parseInt(sel.value, 10); applySub(); sel.blur(); };
+}
+
+
+function vpSave() {
+  if (!vp) return;
+  const dur = vp.dur || vpEl().duration;
+  if (!dur || !isFinite(dur) || dur <= 0) return;
+  const pos = Math.max(0, Math.min(1, vpAbs() / dur));
+  PROG[vp.path] = { pos, title: vp.title, at: Date.now() / 1000 };
+  fetch(apiUrl('/api/progress'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: vp.path, pos, title: vp.title })
+  }).catch(() => {});
+}
+
+function closePlayer() {
+  if (!vp) return;
+  const p = vp.path;
+  vpSave();
+  const v = vpEl();
+  vpToken++;                      // 让还在路上的事件失效
+  v.pause();
+  v.removeAttribute('src');
+  v.load();
+  // 让服务端把 ffmpeg 收掉，别等连接超时
+  fetch(apiUrl('/api/stop?path=' + encodeURIComponent(p))).catch(() => {});
+  $('#vp').classList.remove('on');
+  $('#vpStage').classList.remove('audio');
+  $('#vpMsg').innerHTML = '';
+  document.body.style.overflow = '';
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  vp = null;
+  drawNow();
+  refreshTrees();          // 清掉高亮
+  if (DETAIL) render();
+}
+
+function vpPlayToggle() {
+  const v = vpEl();
+  if (v.paused) v.play().catch(() => {}); else v.pause();
+}
+
+function vpSyncUI() {
+  if (!vp || vpDragging) return;
+  const v = vpEl();
+  const dur = vp.dur || v.duration || 0;
+  const abs = vpAbs();
+  $('#vpPlay').textContent = v.paused ? '▶' : '❚❚';
+  $('#vpTime').textContent = fmtT(abs) + ' / ' + fmtT(dur);
+  const f = dur ? Math.max(0, Math.min(1, abs / dur)) : 0;
+  $('#vpFill').style.width = (f * 100) + '%';
+  $('#vpKnob').style.left = (f * 100) + '%';
+  const b = vpBufferedEnd();
+  $('#vpBuf').style.width = (dur ? Math.min(100, ((vp.offset + b) / dur) * 100) : 0) + '%';
+}
+
+function vpFullscreen() {
+  const box = $('#vp');
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else box.requestFullscreen().catch(() => toast('全屏被拒绝'));
+}
+
+/* ---- 播放器的事件接线（一次性） ---- */
+(function vpWire() {
+  const v = vpEl();
+  if (!v) return;
+
+  v.addEventListener('timeupdate', () => {
+    if (!vp) return;
+    vp.lastAbs = vpAbs();          // 回退到转码时要从这个位置接着播
+    vpSyncUI();
+    const now = Date.now();
+    if (now - vpLastSave > 5000) { vpLastSave = now; vpSave(); }
+  });
+  v.addEventListener('play', vpSyncUI);
+  v.addEventListener('pause', () => { vpSyncUI(); vpSave(); });
+  // 转码流播完（ffmpeg 输出结束）就是片尾
+  v.addEventListener('ended', () => { vpSyncUI(); vpSave(); });
+  v.addEventListener('progress', vpSyncUI);
+  const clear = () => { $('#vpMsg').innerHTML = ''; };
+  v.addEventListener('loadeddata', clear);
+  v.addEventListener('playing', clear);
+  v.addEventListener('canplay', clear);
+  v.addEventListener('waiting', () => {
+    if (vp && !vp.native) vpFail('缓冲中…', vp.path, vp.title, false);
+  });
+  /* 放不出来（解码失败/格式不支持）→ 先自动退回转码，再不行才给出路。
+     原生播放依赖系统 HEVC 解码器；万一那台机器没装，这里就是安全网。 */
+  v.addEventListener('error', () => {
+    if (!vp) return;
+    if (vp.native && !vp.triedTranscode) {
+      vp.triedTranscode = true;
+      const resume = vp.lastAbs || 0;
+      vp.mode = 'transcode';
+      vp.native = false;
+      $('#vpInfo').textContent = '实时转码（原生播放失败，已自动回退）';
+      vpLoadAt(resume, true);
+      return;
+    }
+    const code = v.error ? v.error.code : 0;
+    vpFail('浏览器放不了这个文件' + (code ? `（错误码 ${code}）` : '')
+           + '\n可以改用 PotPlayer。', vp.path, vp.title, true);
+  });
+
+  $('#vpPlay').onclick = vpPlayToggle;
+  $('#vpClose').onclick = closePlayer;
+  $('#vpFull').onclick = vpFullscreen;
+  /* 播放列表开关。状态记进 localStorage —— 用户设一次就不想再设。
+     按钮在**左上角**，和键盘上的 L 是同一个动作，所以抽成一个函数给两边用。 */
+  setSide(localStorage.getItem(SIDE_KEY) !== '0');
+  $('#vpTreeBtn').onclick = toggleSide;
+  $('#vpPot').onclick = () => { if (vp) playExternal(vp.path, vp.title); };
+  $('#vpMute').onclick = () => { v.muted = !v.muted; };
+  $('#vpVol').oninput = () => {
+    v.volume = parseFloat($('#vpVol').value);
+    if (v.volume > 0) v.muted = false;
+  };
+  v.addEventListener('volumechange', () => {
+    if (!document.activeElement || document.activeElement.id !== 'vpVol') {
+      $('#vpVol').value = String(v.muted ? 0 : v.volume);
+    }
+    $('#vpMute').textContent = (v.muted || v.volume === 0) ? '🔇' : '🔊';
+  });
+
+  /* 进度条：拖的时候只预览，松手才真跳 ——
+     转码流每次跳都可能重启一次 ffmpeg，不能跟着鼠标一路重启 */
+  const track = $('#vpTrack');
+  const at = cx => {
+    const r = track.getBoundingClientRect();
+    const f = Math.max(0, Math.min(1, (cx - r.left) / Math.max(1, r.width)));
+    return { f, t: f * (vp && vp.dur ? vp.dur : 0) };
+  };
+  const preview = cx => {
+    const { f, t } = at(cx);
+    $('#vpFill').style.width = (f * 100) + '%';
+    $('#vpKnob').style.left = (f * 100) + '%';
+    $('#vpTime').textContent = fmtT(t) + ' / ' + fmtT(vp && vp.dur ? vp.dur : 0);
+  };
+  track.addEventListener('pointerdown', e => {
+    if (!vp || !vp.dur) return;
+    vpDragging = true;
+    track.classList.add('drag');
+    try { track.setPointerCapture(e.pointerId); } catch (err) {}
+    preview(e.clientX);
+  });
+  track.addEventListener('pointermove', e => { if (vpDragging) preview(e.clientX); });
+  const drop = e => {
+    if (!vpDragging) return;
+    vpDragging = false;
+    track.classList.remove('drag');
+    vpSeek(at(e.clientX).t);
+  };
+  track.addEventListener('pointerup', drop);
+  track.addEventListener('pointercancel', () => {
+    vpDragging = false; track.classList.remove('drag');
+  });
+})();
+
+function drawNow() {
+  const items = Object.entries(PROG).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
+  const nb = $('#nowbar');
+  if (!items.length) { nb.classList.add('mini'); $('#nowTitle').textContent = '还没有播放记录'; $('#nowSub').textContent = ''; $('#nowPlay').disabled = true; return; }
+  const [path, p] = items[0];
+  nb.classList.remove('mini');
+  $('#nowTitle').textContent = p.title || path.split('\\').pop();
+  $('#nowSub').textContent = new Date((p.at || 0) * 1000).toLocaleString('zh-CN');
+  $('#nowPlay').disabled = false;
+  $('#nowPlay').onclick = () => /\.(?:mp3|m4a|aac|flac|wav|ogg|opus|wma|ape|wv|dsf|dff|tta|aiff)$/i.test(path)
+    ? playAudio(path, p.title || path) : play(path, p.title || path);
+}
+
+/* ---------------- 漫画阅读器 ---------------- */
+/* 哪些格式能进我们自己的阅读器逐页翻。
+   cbz 是 zip 里的图片；**pdf 由服务端按需渲染成 JPEG**（见 lib.py 的 pdf_render_page）。
+   其它格式（cbr/cb7）没有内建支持，退回把原文件交给浏览器 —— 那是"不能"而不是"不做"。 */
+const PAGED_EXT = ['.cbz', '.pdf'];
+const isPaged = ext => PAGED_EXT.includes(String(ext || '').toLowerCase());
+
+/* 切到同一部作品的另一话。下拉和左侧目录都走它 —— 逻辑只写一处。 */
+function openChapter(own, i) {
+  const c = (own.w.chapters || [])[i];
+  if (!c) return;
+  savePlace();                       // 先记住这一本读到哪了
+  openComic(c.path, own.w.title + ' ' + c.label, isPaged(c.ext), 0);
+}
+
+/* 上/下一话。给滚屏模式的左右键用 —— 条漫一路滑到底之后，
+   最自然的下一步就是「翻到下一话」，不该逼人退出阅读器回列表点。
+   边界处给一句提示而不是静默无反应（静默会让人以为按键坏了）。 */
+function stepChapter(delta) {
+  const own = workOfPath(reader.path);
+  if (!own) return toast('找不到这一部的话数');
+  const i = own.idx + delta;
+  const n = (own.w.chapters || []).length;
+  if (i < 0) return toast('已经是第一话');
+  if (i >= n) return toast('已经是最后一话');
+  openChapter(own, i);
+}
+
+/* 切换话数。跟播放器的选集是同一套思路 ——
+   不用关掉阅读器再回列表找下一话。只有一话时把下拉藏起来。
+   顺手把左侧「本话目录」也填上：阅读时想换话，眼睛在左侧，不该逼人回到顶栏下拉。 */
+function buildChaps() {
+  const sel = $('#rChap');
+  sel.innerHTML = '';
+  const own = workOfPath(reader.path);
+  const chs = own ? (own.w.chapters || []) : [];
+  // —— 左侧目录（本话列表）——
+  const pane = $('#rChapPane');
+  pane.innerHTML = '';
+  if (!chs.length) {
+    pane.appendChild(el('div', 'empty', '没找到这一部的话数'));
+  } else {
+    chs.forEach((c, i) => {
+      const cur = own.idx === i;
+      const b = el('button', 'titem flat' + (cur ? ' cur' : ''));
+      b.appendChild(el('span', 'tt', esc(epOptionText(c.label, i, '话'))));
+      b.title = c.path || '';
+      b.onclick = () => { if (!cur) openChapter(own, i); };
+      pane.appendChild(b);
+    });
+    pane.title = own.w.title + '　共 ' + chs.length + ' 话';
+  }
+  if (chs.length < 2) {
+    sel.disabled = true;
+    sel.style.display = 'none';
+    // 只有一话（或没解析到话数）时换话按钮必须一起置灰 ——
+    // 这里提前 return，不处理的话按钮会留着上一部作品的可用状态。
+    $('#rChapPrev').disabled = true;
+    $('#rChapNext').disabled = true;
+    return;
+  }
+  sel.style.display = '';
+  sel.disabled = false;
+  chs.forEach((c, i) => {
+    const o = el('option', '', epOptionText(c.label, i, '话'));
+    o.value = String(i);
+    sel.appendChild(o);
+  });
+  sel.value = String(own.idx);
+  sel.title = own.w.title + '　共 ' + chs.length + ' 话';
+  sel.onchange = () => {
+    const i = parseInt(sel.value, 10);
+    sel.blur();                        // 交出焦点，别把键盘快捷键吃掉
+    openChapter(own, i);
+  };
+  // 换话按钮的可用状态：到头就置灰。置灰比"点了弹提示"好 ——
+  // 一眼就知道没有下一话，不必先点一次才知道。
+  const pv = $('#rChapPrev'), nx = $('#rChapNext');
+  pv.disabled = own.idx <= 0;
+  nx.disabled = own.idx >= chs.length - 1;
+  pv.title = '上一话' + (own.idx > 0 ? '（' + epOptionText(chs[own.idx - 1].label, own.idx - 1, '话') + '）' : '');
+  nx.title = '下一话' + (own.idx < chs.length - 1 ? '（' + epOptionText(chs[own.idx + 1].label, own.idx + 1, '话') + '）' : '');
+}
+
+const pageUrl = n => apiUrl(`/api/comic/page?path=${encodeURIComponent(reader.path)}&n=${n}`);
+
+/* 宽高比 > 1.15 视为「合页大图」（横长）。普通漫画页是竖长的（约 0.7）。
+   阈值取 1.15 而不是 1.0，是为了容忍轻微裁切和扫描歪斜。 */
+const isWide = i => {
+  const p = reader.pages[i];
+  return !!(p && p.w > 0 && p.h > 0 && (p.w / p.h) > 1.15);
+};
+
+function buildSpreads() {
+  const P = reader.pages, out = [];
+  let i = 0;
+  // 封面单独：只有双页模式下才有意义
+  if (rmode.dual && rmode.cover && P.length > 1 && !isWide(0)) { out.push([0]); i = 1; }
+  while (i < P.length) {
+    if (!rmode.dual) { out.push([i]); i++; continue; }
+    if (isWide(i)) { out.push([i]); i++; continue; }            // 合页大图：独占一屏
+    if (i + 1 < P.length && !isWide(i + 1)) { out.push([i, i + 1]); i += 2; }
+    else { out.push([i]); i++; }
+  }
+  return out;
+}
+
+const spreadOfPage = n => {
+  for (let i = 0; i < reader.spreads.length; i++)
+    if (reader.spreads[i].includes(n)) return i;
+  return 0;
+};
+
+async function openComic(path, title, paged, startPage) {
+  // 能分页的才进我们的阅读器：cbz（zip 图片）+ **pdf（服务端逐页渲染）**。
+  // 其它（cbr/cb7…）确实没有内建支持，退回原文件交给浏览器是对的。
+  if (!paged) { window.open(apiUrl('/file?path=' + encodeURIComponent(path)), '_blank'); return; }
+  const info = await fetch(apiUrl('/api/comic?path=' + encodeURIComponent(path))).then(r => r.json());
+  if (info.error) return toast('打不开：' + info.error);
+  reader = { pages: info.pages || [], spreads: [], si: 0, path, title };
+  prefetched.clear();                          // 换作品/换话必须清：页码 n 是作品内序号，会重号
+  $('#rTitle').textContent = title;
+  buildChaps();                                // 顺便把「切换话数」+ 左侧目录填上
+  applyWorkPrefs();                            // 按作品（或按 layout）决定滚屏 / 翻页 + 缩放
+  $('#reader').classList.add('on');
+  refreshTrees();                              // 左侧作品树高亮正在读的这一部（要在 .on 之后）
+  document.body.classList.add('reading');      // 锁住背景滚动
+  refreshSpreads(startPage || 0);
+}
+
+/* ---------------- 每部作品自己的阅读方式 ----------------
+   两种模式各有擅场，不该全局一刀切：
+     · 条漫（韩漫）：一整话是连续竖长图 → 竖屏滚屏最自然
+     · 页漫（日漫）：一页/跨页是一幅完整画面 → 一屏一翻才对
+   所以记到**作品**上，第一次打开按 layout 给默认值，用户改过之后一直听用户的。
+   缩放同理（有人读条漫就想放大看细节；换一本没道理继承上一本的比例）。 */
+const RWORK_KEY = 'reslib.readerByWork';
+function readerPrefs() {
+  try { const o = JSON.parse(localStorage.getItem(RWORK_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; }
+  catch (_) { return {}; }
+}
+/* 作品的稳定标识：用**作品目录**而不是当前话 —— 同一部里换话不该丢模式。
+   找不到作品（单文件）时退回用 chapters[0] 的父目录。 */
+function workKeyOf(p) {
+  const own = workOfPath(p);
+  if (own && own.w && own.w.dir) return String(own.w.dir);
+  const d = String(p || '').replace(/[\\/][^\\/]*$/, '');
+  return d || String(p || '');
+}
+function getWorkPrefs(key) {
+  const all = readerPrefs();
+  return all[key] || null;
+}
+function saveWorkPrefs(key, patch) {
+  const all = readerPrefs();
+  all[key] = Object.assign({}, all[key] || {}, patch);
+  try { localStorage.setItem(RWORK_KEY, JSON.stringify(all)); } catch (_) {}
+}
+function layoutOfPath(p) {
+  const own = workOfPath(p);
+  return (own && own.w && own.w.layout) || 'paged';
+}
+function applyWorkPrefs() {
+  const key = workKeyOf(reader.path);
+  const saved = getWorkPrefs(key);
+  // URL 里显式给了就听 URL 的 —— 深链接要能稳定复现某个视图（自动验收就靠它），
+  // 不然会被作品自己的记忆覆盖掉。
+  if (!QP.has('scroll')) {
+    if (saved && typeof saved.scroll === 'boolean') rmode.scroll = saved.scroll;
+    else rmode.scroll = layoutOfPath(reader.path) === 'strip';
+  }
+  if (ZOOM_QP != null && !isNaN(ZOOM_QP)) rzoom = clampZoom(ZOOM_QP);
+  else rzoom = (saved && saved.zoom > 0) ? clampZoom(saved.zoom) : 1;
+  reader.workKey = key;
+}
+
+/* 模式/缩放一变就落到作品上 —— 下次打开同一部自动恢复。 */
+function persistWorkPrefs() {
+  if (reader.workKey) saveWorkPrefs(reader.workKey, { scroll: rmode.scroll, zoom: rzoom });
+}
+
+function refreshSpreads(keepPage) {
+  reader.spreads = buildSpreads();
+  // ⚠ 顺序要紧：**先把 .scroll 类落到 #reader 上，再渲染**。
+  // #rStrip 在没有这个类时是 display:none；对 display:none 的元素，
+  // 所有 offsetTop/offsetHeight 都是 0 —— 而滚屏定位正是按 offsetTop 走的，
+  // 于是「切回滚屏」会整条落在开头。
+  // 这个坑很隐蔽：首次打开时目标就是第 0 页、offsetTop 恰好也是 0，看起来完全正常，
+  // 只有「翻页 → 再切回滚屏」并且停在中段时才暴露。
+  $('#reader').classList.toggle('scroll', rmode.scroll);
+  reader.si = spreadOfPage(keepPage || 0);
+  // 滚屏／翻页两种模式共用同一个 reader.si 位置语义（当前页），切换时平移过去，
+  // 所以「看到一半切模式」不会跳回开头。
+  if (rmode.scroll) {
+    reader.si = clampInt(keepPage || 0, 0, Math.max(0, reader.pages.length - 1));
+    renderStrip(reader.si);
+  } else {
+    renderSpread();
+  }
+  syncToggles();
+  savePlace();
+}
+
+const clampInt = (v, lo, hi) => Math.max(lo, Math.min(hi, v | 0));
+
+/* ---------------- 竖向滚屏（条漫） ----------------
+   一次把整话排成一条，靠浏览器原生 lazy 加载；用 IntersectionObserver 反查
+   「当前读到第几页」来更新页码和进度。
+
+   为什么不做「只保留前后几个 img」的虚拟列表：一话几十页、每页几百 KB，
+   原生 lazy 已经能做到只取视口附近的图，而虚拟列表会让滚动条长度不停变
+   （列高算不准），反而更难用。 */
+let stripIO = null;
+function renderStrip(startPage) {
+  const box = $('#rStrip');
+  box.innerHTML = '';
+  applyStripZoom();          // 初次进入（或换话）时必须把当前缩放落到列宽上 ——
+                             // 只改 rzoom 不改 --zoom 的话，标签写着 200% 而画面还是 100%
+  const total = reader.pages.length;
+  if (stripIO) { stripIO.disconnect(); stripIO = null; }
+  const frag = document.createDocumentFragment();
+  for (let n = 0; n < total; n++) {
+    const p = reader.pages[n] || {};
+    const holder = el('div', 'stripPage ph');
+    holder.dataset.n = String(n);
+    if (p.w > 0 && p.h > 0) holder.style.setProperty('--ar', `${p.w} / ${p.h}`);
+    const im = el('img');
+    im.alt = '';
+    im.draggable = false;
+    im.loading = 'lazy';           // 原生懒加载：视口附近才真正发请求
+    im.decoding = 'async';
+    im.dataset.n = String(n);
+    im.onload = () => holder.classList.remove('ph');
+    im.onerror = () => holder.classList.add('ph');   // 失败就别再撑着高占位
+    im.src = pageUrl(n);
+    holder.appendChild(im);
+    frag.appendChild(holder);
+  }
+  box.appendChild(frag);
+
+  // 当前页 = 视口中线落在哪一页上。滚动时更新页码 + 进度（节流）。
+  const stage = $('#rstage');
+  stripIO = new IntersectionObserver(() => scheduleStripTrack(), {
+    root: stage, rootMargin: '0px', threshold: [0, 0.25, 0.5, 0.75, 1],
+  });
+  box.querySelectorAll('.stripPage').forEach(h => stripIO.observe(h));
+
+  // 先滚到位再记进度，否则会被上一次的位置覆盖
+  stripJump(startPage || 0, false);
+  centerStripH();                 // 进入时若已是放大状态，横向也要居中（否则贴着左边）
+  scheduleStripTrack(0);
+}
+
+function stripJump(n, smooth) {
+  const box = $('#rStrip');
+  const h = box.querySelector(`.stripPage[data-n="${n}"]`);
+  if (!h) return;
+  const stage = $('#rstage');
+  stage.scrollTo({ top: h.offsetTop, behavior: smooth ? 'smooth' : 'auto' });
+}
+
+let stripTimer = 0;
+function scheduleStripTrack(delay) {
+  clearTimeout(stripTimer);
+  stripTimer = setTimeout(stripTrack, delay == null ? 120 : delay);
+}
+
+function stripTrack() {
+  if (!rmode.scroll || !reader.pages.length) return;
+  const stage = $('#rstage');
+  if (!stage.clientHeight) return;
+  const strip = $('#rStrip');
+  // 列还没排出高度（隐藏中、或图/占位都还没就位）时直接返回：
+  // 这时所有 offsetTop 都是 0，硬算会把 reader.si 冲成 0，把阅读位置吃掉。
+  if (!strip.offsetHeight) return;
+  const mid = stage.scrollTop + stage.clientHeight / 2;
+  const holders = strip.querySelectorAll('.stripPage');
+  if (!holders.length) return;
+  // holders 的 offsetTop 是相对 #rStrip 的，单调递增 → 二分找中线所在的那一页
+  let lo = 0, hi = holders.length - 1, hit = 0;
+  while (lo <= hi) {
+    const m = (lo + hi) >> 1;
+    const h = holders[m];
+    if (h.offsetTop <= mid) { hit = m; lo = m + 1; } else { hi = m - 1; }
+  }
+  // 触底时末页常常比视口矮，中线会落回上一页 —— 但读者看到的确实是最后一页，
+  // 这时报「第 36 页」会让人以为没到底。所以到底就钳到最后一页。
+  if (stage.scrollTop + stage.clientHeight >= strip.offsetHeight - 4) {
+    hit = holders.length - 1;
+  }
+  reader.si = hit;
+  $('#rPg').textContent = `第 ${hit + 1} 页 / ${reader.pages.length}`;
+  savePlaceThrottled();
+}
+
+/* 滚屏时进度更新很频繁，别每滚一像素就 POST 一次。 */
+let placeTimer = 0;
+function savePlaceThrottled() {
+  clearTimeout(placeTimer);
+  placeTimer = setTimeout(savePlace, 700);
+}
+
+function renderSpread() {
+  const sp = $('#rSpread');
+  sp.innerHTML = '';
+  sp.classList.toggle('rtl', rmode.rtl);
+  const pages = reader.spreads[reader.si];
+  if (!pages) return;
+  // DOM 顺序 = 阅读顺序。RTL 时靠 .spread 的 row-reverse 把第一页送到右边，
+  // 所以这里不用为了方向颠倒数组 —— 逻辑和呈现分开，翻页计算才不会乱。
+  for (const n of pages) {
+    const im = el('img');
+    im.src = pageUrl(n);
+    im.alt = '';
+    im.draggable = false;
+    // 万一服务端没给出尺寸（异常图），等它加载完补测一次再重排
+    im.onload = () => {
+      const p = reader.pages[n];
+      if (p && (!p.w || !p.h) && im.naturalWidth) {
+        p.w = im.naturalWidth; p.h = im.naturalHeight;
+        layoutSpread();
+      }
+    };
+    sp.appendChild(im);
+  }
+  const a = pages[0] + 1, b = pages[pages.length - 1] + 1;
+  $('#rPg').textContent = (pages.length === 1 ? `第 ${a} 页` : `第 ${a}-${b} 页`)
+                        + ` / ${reader.pages.length}`;
+  $('#rPrev').disabled = reader.si === 0;
+  $('#rNext').disabled = reader.si === reader.spreads.length - 1;
+  layoutSpread();
+  preload();
+}
+
+/* 舞台可用区。**量的是「没有滚动条时」的尺寸**。
+   放大后 #rstage 会出现滚动条，如果每次重排都实时量，可用宽会被滚动条吃掉一截、
+   再重排又变一次，看起来就是缩放时画面在抖。所以固定一个基准，缩放只在这个基准上乘。 */
+let rStageBox = { w: 0, h: 0 };
+function measureStage() {
+  const st = $('#rstage');
+  if (!st) return;
+  const prev = st.style.overflow;
+  st.style.overflow = 'hidden';                 // 临时禁用滚动条再量
+  const cs = getComputedStyle(st);
+  const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+  const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  rStageBox = { w: Math.max(80, st.clientWidth - padX),
+                h: Math.max(80, st.clientHeight - padY) };
+  st.style.overflow = prev;
+}
+
+/* 精确排版一屏。
+   要点：**两页用同一个高度**（等比缩放，不拉伸），宽度按各自比例推出来，
+   于是两页严丝合缝拼在一起 —— 不会像之前那样各占半宽、图居中、中间空出黑沟。
+   高度同时受「可用高度」和「拼起来不能超过可用宽度」两个约束。
+   最后整体乘上缩放系数 rzoom（1 = 适应屏幕）。 */
+function layoutSpread() {
+  const pages = reader.spreads[reader.si];
+  const imgs = $('#rSpread').querySelectorAll('img');
+  if (!pages || !imgs.length) return;
+  if (!rStageBox.w || !rStageBox.h) measureStage();
+  const availW = rStageBox.w, availH = rStageBox.h;
+
+  const dims = [];
+  for (let k = 0; k < pages.length; k++) {
+    const p = reader.pages[pages[k]] || {};
+    dims.push({ w: p.w > 0 ? p.w : 800, h: p.h > 0 ? p.h : 1200, el: imgs[k] });
+  }
+  const H0 = Math.max(...dims.map(d => d.h));
+  // 若统一按 H0 高，总宽会是多少 → 用它反推被宽度卡住时该用多高
+  const needW = dims.reduce((a, d) => a + d.w * (H0 / d.h), 0);
+  const fit = Math.min(availH, needW > 0 ? availW * H0 / needW : availH);
+  const H = fit * rzoom;
+
+  dims.forEach(d => {
+    d.el.style.height = Math.round(H) + 'px';
+    d.el.style.width = Math.round(d.w * (H / d.h)) + 'px';
+  });
+  $('#rstage').classList.toggle('zoomed', rzoom > 1.001);
+}
+
+/* ---------------- 缩放 ----------------
+   范围取 0.5~5：再大对漫画页没意义（原图分辨率就那么多），
+   再小会小到看不清字。步进用等比（×1.25 / ÷1.25），这样从任何比例
+   出发「放大三次再缩小三次」都能回到原点，不会因取整漂走。 */
+const ZOOM_MIN = 0.5, ZOOM_MAX = 5, ZOOM_STEP = 1.25;
+const clampZoom = z => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number(z) || 1));
+let rzoom = 1;
+
+function setZoom(z, opts) {
+  const nz = clampZoom(z);
+  if (Math.abs(nz - rzoom) < 0.001) return;
+  // 滚屏模式下缩放不该把人弹回顶部：记住当前页，重排后回到它
+  const keepPage = rmode.scroll ? reader.si : null;
+  rzoom = nz;
+  if (rmode.scroll) {
+    applyStripZoom();
+    if (keepPage != null) stripJump(keepPage, false);
+    // 放大后条幅比容器宽，默认停在最左边 —— 读者的视线在中间，
+    // 那样等于每次缩放都要手动横拖一下。所以缩放后把横向也居中。
+    centerStripH();
+    stripTrack();
+  } else {
+    layoutSpread();
+    // 翻页模式放大后内容可能超出视野，把正在看的那一屏挪回中间
+    if (!(opts && opts.keepScroll)) centerSpread();
+  }
+  persistWorkPrefsOnlyIfWanted(opts);
+  syncToggles();
+}
+
+/* 滚屏模式的横向居中。只在真的溢出时才动 —— 没溢出时 scrollLeft 本来就是 0，
+   硬设 (scrollWidth-clientWidth)/2 = 0 也无害，但判断一下意图更清楚。 */
+function centerStripH() {
+  const st = $('#rstage');
+  const over = st.scrollWidth - st.clientWidth;
+  st.scrollLeft = over > 0 ? over / 2 : 0;
+}
+
+/* 捏合缩放每帧都会调 setZoom，别每帧都写 localStorage —— 松手时才落盘。
+   专门抽出来是为了让 setZoom 的意图更清楚：silent 只影响「要不要持久化」。 */
+function persistWorkPrefsOnlyIfWanted(opts) {
+  if (!(opts && opts.silent)) persistWorkPrefs();
+}
+
+function centerSpread() {
+  const st = $('#rstage');
+  if (!st.classList.contains('zoomed')) return;
+  st.scrollLeft = Math.max(0, (st.scrollWidth - st.clientWidth) / 2);
+  st.scrollTop = Math.max(0, (st.scrollHeight - st.clientHeight) / 2);
+}
+
+/* 滚屏模式的缩放就是把列宽改掉 —— CSS 里 #rStrip 的宽度是 calc(var(--zoom) * 100%)。 */
+function applyStripZoom() {
+  $('#rStrip').style.setProperty('--zoom', String(rzoom));
+}
+
+
+/* 预取前后各两屏，翻页不卡白。
+   为什么是两屏：这条链路（DERP 中继）单页传输只要 53ms，但 RTT 是 252ms ——
+   83% 的等待花在往返而不是数据上。只预取一屏的话，每翻一屏必定撞一次这笔税；
+   预取两屏，就是拿 0.2 秒的提前下载，换掉翻页时持续的 0.25 秒空等。 */
+const prefetched = new Set();
+function preload() {
+  // 滚屏模式不用手动预取：整条列已经在 DOM 里，浏览器原生 lazy 会自己取视口附近的图，
+  // 再叠一层 new Image() 只会把同一批图请求两遍。
+  if (rmode.scroll) return;
+  for (const d of [1, -1, 2, -2]) {
+    const s = reader.spreads[reader.si + d];
+    if (s) s.forEach(n => {
+      if (prefetched.has(n)) return;      // 已取过的页不再重复 new Image，
+      prefetched.add(n);                  // 否则每次 renderSpread 都要走一遍
+      const i = new Image(); i.src = pageUrl(n);
+    });
+  }
+}
+
+function step(d) {
+  // 滚屏模式：往前/往后是「翻一屏」，不是「翻一页」。
+  // 条漫里一页常常只是半屏，按页跳会跳过头、读起来一顿一顿的。
+  if (rmode.scroll) {
+    const st = $('#rstage');
+    st.scrollBy({ top: d * Math.max(120, st.clientHeight * 0.92), behavior: 'auto' });
+    scheduleStripTrack(0);
+    return;
+  }
+  const ns = reader.si + d;
+  if (ns < 0 || ns >= reader.spreads.length) return;
+  reader.si = ns;
+  renderSpread();
+  savePlace();
+}
+
+function savePlace() {
+  const total = reader.pages.length;
+  if (!total) return;
+  // 两种模式对 reader.si 的解释不同：翻页模式是「第几屏」，滚屏模式是「第几页」。
+  // 进度只认页号，所以这里统一换算成页号再存（两边都读它来续读）。
+  let page;
+  if (rmode.scroll) {
+    page = reader.si;
+  } else {
+    const sp = reader.spreads[reader.si];
+    if (!sp) return;
+    page = sp[0];
+  }
+  PROG[reader.path] = { pos: page / Math.max(1, total),
+                        title: reader.title, at: Date.now() / 1000 };
+  fetch(apiUrl('/api/progress'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: reader.path, pos: PROG[reader.path].pos, title: reader.title })
+  }).catch(() => {});
+}
+
+function syncToggles() {
+  $('#rScroll').classList.toggle('on', rmode.scroll);
+  $('#rZoomV').textContent = Math.round(rzoom * 100) + '%';
+  $('#rZoomFit').classList.toggle('on', Math.abs(rzoom - 1) < 0.001);
+  // 滚屏模式下「双页 / 方向 / 首页单页」由 CSS 收起（见 #reader.scroll 那几条）
+  $('#reader').classList.toggle('scroll', rmode.scroll);
+  $('#rDual').textContent = rmode.dual ? '双页' : '单页';
+  $('#rDual').classList.toggle('on', rmode.dual);
+  $('#rDir').textContent = rmode.rtl ? '从右往左' : '从左往右';
+  $('#rDir').classList.toggle('on', rmode.rtl);
+  $('#rCover').classList.toggle('on', rmode.cover);
+  $('#rCover').style.visibility = rmode.dual ? 'visible' : 'hidden';
+  $('#rFull').classList.toggle('on', rFull);
+  // 手机上没有键盘 —— 那串「D 单/双页 R 换方向」纯属噪音，还占掉两行。
+  // 窄屏改成一句触摸提示，靠窗口大小时时更新（旋转屏也不出错）。
+  const narrow = window.innerWidth <= 820;
+  const nx = rmode.rtl ? '左侧下一页' : '右侧下一页';
+  const pv = rmode.rtl ? '右侧上一页' : '左侧上一页';
+  $('#rHint').textContent = rmode.scroll
+    ? (narrow ? '上下滑动阅读 · 双指捏合缩放 · ←→ 换话'
+              : '↑ ↓ / 空格 滚动 · ← → 换话 · Ctrl+滚轮 缩放 · S 切回翻页 · Esc 关闭')
+    : (narrow ? `${nx} · ${pv} · 滑动翻页` : '← → 翻页 · 空格翻页 · Esc 关闭');
+}
+
+/* ---------------- 全屏沉浸模式 ----------------
+   两种叠加：类名 .full（收起所有界面，任何浏览器都有效）
+             + Fullscreen API（连浏览器 UI 一起让位，支持才用）
+   **两者要分开看**：iOS Safari 没有 Element.requestFullscreen，
+   但它照样该能享受「整屏只有漫画」—— 所以 .full 不依赖 API。 */
+let rFull = false;
+let rUiTimer = 0;
+
+/* 唤出界面。3 秒后自动收回 —— **收回界面时一并藏光标**。
+   （原来给光标单开了一个 2.5s 定时器，还加了「界面可见就别藏」的守卫，
+   结果两个定时器互相打架：光标定时器先到期、被守卫挡掉，界面再收回时
+   光标就永远留在那了。合并成一个定时器就没有这种时序陷阱。） */
+function showReaderUI() {
+  if (!rFull) return;
+  const el = $('#reader');
+  el.classList.add('ui');
+  el.classList.remove('idle');
+  clearTimeout(rUiTimer);
+  rUiTimer = setTimeout(() => {
+    el.classList.remove('ui');
+    if (rFull) el.classList.add('idle');
+  }, 3000);
+}
+
+/* 立刻收回界面（点顶部那一下用它，要有即时反馈，不能等 3 秒）。 */
+function hideReaderUI() {
+  clearTimeout(rUiTimer);
+  const el = $('#reader');
+  el.classList.remove('ui');
+  if (rFull) el.classList.add('idle');
+}
+
+function setReaderFull(on) {
+  rFull = !!on;
+  const el = $('#reader');
+  el.classList.toggle('full', rFull);
+  if (!rFull) {
+    el.classList.remove('ui', 'idle');
+    clearTimeout(rUiTimer);
+  }
+  // 真全屏：能进就进，进不去也不影响 .full 的效果。静默失败是对的 ——
+  // 用户不该因为浏览器不支持就吃一个报错。
+  try {
+    if (rFull) {
+      if (!document.fullscreenElement && el.requestFullscreen) {
+        el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+      }
+    } else if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  } catch (e) { /* 忽略：不支持就没有真全屏 */ }
+  syncToggles();
+  // 收起顶栏后可用高度变了，书页要重排（先排一次、等过渡结束再排一次）。
+  // 量基准必须在这两拍里各做一次 —— 否则放大状态下进全屏会沿用旧的可用区。
+  relayoutReader(40);
+  relayoutReader(300);
+}
+
+/* 重排阅读器内容。两种模式要重排的东西不一样：
+     · 翻页模式：先重量可用区，再按它把这一屏排出来
+     · 滚屏模式：#rStrip 的宽度是百分比（CSS 自己跟着容器走），
+       只需要把当前页滚回视野里 —— 量基准反而会动到滚动位置 */
+function relayoutReader(delay) {
+  setTimeout(() => {
+    if (!$('#reader').classList.contains('on')) return;
+    if (rmode.scroll) {
+      stripJump(reader.si, false);
+      stripTrack();
+    } else {
+      measureStage();
+      layoutSpread();
+    }
+  }, delay || 0);
+}
+
+function toggleReaderFull() { setReaderFull(!rFull); }
+
+function flipMode(field) {
+  if (field === 'scroll') {
+    // 切换时把当前「页」带过去，看到一半切模式不会跳回开头
+    const cur = rmode.scroll
+      ? reader.si
+      : (reader.spreads[reader.si] ? reader.spreads[reader.si][0] : 0);
+    rmode.scroll = !rmode.scroll;
+    saveRmode();
+    persistWorkPrefs();
+    refreshSpreads(cur);
+    relayoutReader(0);
+    return;
+  }
+  const cur = reader.spreads[reader.si] ? reader.spreads[reader.si][0] : 0;
+  rmode[field] = !rmode[field];
+  saveRmode();
+  refreshSpreads(cur);
+}
+
+function closeReader() {
+  setReaderFull(false);                 // 关之前先把全屏收干净，别留个残留状态
+  savePlace();                          // 关掉前把位置落下去（滚屏模式靠节流，可能还没写）
+  if (stripIO) { stripIO.disconnect(); stripIO = null; }
+  clearTimeout(stripTimer); clearTimeout(placeTimer);
+  $('#reader').classList.remove('on', 'scroll');
+  document.body.classList.remove('reading');
+  if (DETAIL) render();
+}
+
+/* 阅读器左侧目录的开关。和播放器的「播放列表」是同一套做法：按钮与 L 键共用一份状态，
+   状态记进 localStorage（用户设一次就不想再设）。
+   画面宽度一变必须重排书页 —— 书页尺寸是 layoutSpread() 算出来的像素值，
+   不重排就会溢出或者留一大块空白。 */
+const RSIDE_KEY = 'reslib.rSide';
+function setRSide(on) {
+  $('#rSide').classList.toggle('off', !on);
+  $('#rTreeBtn').classList.toggle('on', on);
+  localStorage.setItem(RSIDE_KEY, on ? '1' : '0');
+  // 侧栏一开一关，可用宽度就变了，两种模式都得重排
+  if (reader.pages.length) relayoutReader(0);
+}
+function toggleRSide() { setRSide($('#rSide').classList.contains('off')); }
+
+/* ---------------- 事件 ---------------- */
+/* 侧栏抽屉（窄屏）：点汉堡键滑出，点背板/选完分类/按 Esc 收起。
+   桌面宽屏下 #navToggle 是 display:none，这里的开关不起作用也不碍事。 */
+const navDrawer = {
+  open()  { document.body.classList.add('navopen'); },
+  close() { document.body.classList.remove('navopen'); },
+  toggle(){ document.body.classList.toggle('navopen'); },
+};
+$('#navToggle').onclick = e => { e.stopPropagation(); navDrawer.toggle(); };
+$('#navBackdrop').onclick = () => navDrawer.close();
+/* 转回宽屏时要把 navopen 清掉，否则 aside 会卡在 transform:none 的中间态 */
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 860) navDrawer.close();
+});
+
+document.addEventListener('click', e => {
+  const nb = e.target.closest('nav button');
+  if (nb) { go(nb.dataset.t); navDrawer.close(); }
+});
+$('#q').addEventListener('input', e => { QUERY = e.target.value; render(); });
+$('#rPrev').onclick = () => step(-1);
+$('#rNext').onclick = () => step(1);
+$('#rClose').onclick = closeReader;
+$('#rScroll').onclick = () => flipMode('scroll');
+$('#rChapPrev').onclick = () => stepChapter(-1);
+$('#rChapNext').onclick = () => stepChapter(1);
+$('#rDual').onclick = () => flipMode('dual');
+$('#rDir').onclick = () => flipMode('rtl');
+$('#rCover').onclick = () => flipMode('cover');
+$('#rZoomIn').onclick = () => setZoom(rzoom * ZOOM_STEP);
+$('#rZoomOut').onclick = () => setZoom(rzoom / ZOOM_STEP);
+$('#rZoomFit').onclick = () => setZoom(1);
+/* 目录默认开着（这就是阅读时要的东西）；窄屏上默认收起，并把书页留给内容。
+   用户手动拨过一次之后就完全听 localStorage 的。 */
+const RSIDE_SAVED = localStorage.getItem(RSIDE_KEY);
+setRSide(RSIDE_SAVED === null ? window.innerWidth >= 820 : RSIDE_SAVED === '1');
+$('#rTreeBtn').onclick = toggleRSide;
+
+$('#rFull').onclick = toggleReaderFull;
+
+/* 点左半屏/右半屏翻页。方向反过来时语义也跟着反 ——
+   从右往左读的时候，「往前」是往左走。
+   全屏模式下顶部仍然保留安全区，不把点击误判成翻页；退出全屏交给浏览器。 */
+$('#rstage').onclick = e => {
+  // 滚屏模式下点击不该翻页 —— 读者会点屏幕来「停住/唤出界面」，
+  // 一不当心就跳掉一屏，比没这个功能还烦。只负责唤出界面。
+  if (rmode.scroll) {
+    if (rFull) showReaderUI();
+    return;
+  }
+  const r = e.currentTarget.getBoundingClientRect();
+  if (rFull && (e.clientY - r.top) < r.height * 0.15) {
+    // 真全屏期间顶栏不提供网页内退出入口，交给浏览器的退出全屏操作。
+    return;
+  }
+  const leftHalf = (e.clientX - r.left) < r.width / 2;
+  const goNext = rmode.rtl ? leftHalf : !leftHalf;
+  step(goNext ? 1 : -1);
+};
+
+/* 滚屏时更新「读到第几页」与进度。IntersectionObserver 只在跨阈值时响，
+   滚动过程中补一条 scroll 监听更平滑（两者都走同一个节流）。 */
+$('#rstage').addEventListener('scroll', () => {
+  if (rmode.scroll) scheduleStripTrack();
+}, { passive: true });
+
+/* 真全屏被系统退出时（F11 / 浏览器手势 / Esc），把 .full 也同步关掉，
+   退出事件只在这里恢复普通顶栏。 */
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && rFull) {
+    setReaderFull(false);
+  }
+});
+
+/* 滚轮。三种行为按优先级分：
+     1. Ctrl/⌘ + 滚轮 = 缩放（浏览器的通用约定；触摸板双指捏合也会走这条）
+     2. 滚屏模式    = 交给浏览器原生滚动（拦了就没法顺畅一路滑下去）
+     3. 放大后的翻页模式 = 内容超出视野，滚轮改成平移，别拿去翻页
+     4. 其余        = 翻页（漫画阅读器的习惯操作），加节流，否则一次滚轮连翻好几页 */
+let wheelLock = 0;
+$('#rstage').addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    setZoom(rzoom * (e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP));
+    return;
+  }
+  if (rmode.scroll) return;                                  // 原生滚动
+  if ($('#rstage').classList.contains('zoomed')) return;      // 放大后滚轮 = 平移
+  e.preventDefault();
+  const now = Date.now();
+  if (now < wheelLock) return;
+  if (Math.abs(e.deltaY) < 4) return;
+  wheelLock = now + 260;
+  const down = e.deltaY > 0;
+  step((rmode.rtl ? down : !down) ? 1 : -1);
+}, { passive: false });
+
+/* 双指捏合缩放。手机上没有 Ctrl 键，捏合是唯一的缩放手势 ——
+   桌面靠按钮和 Ctrl+滚轮，两边都能用。
+   捏的过程中不写 localStorage（每帧都写太浪费），松手时才落盘。 */
+const pinchDist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+let pinch = null;
+$('#rstage').addEventListener('touchstart', e => {
+  if (e.touches.length === 2) pinch = { d: pinchDist(e.touches), z: rzoom };
+}, { passive: true });
+$('#rstage').addEventListener('touchmove', e => {
+  if (!pinch || e.touches.length !== 2) return;
+  const d = pinchDist(e.touches);
+  if (pinch.d > 0) {
+    e.preventDefault();                       // 捏合时别让浏览器同时滚动/缩放整页
+    setZoom(pinch.z * (d / pinch.d), { silent: true, keepScroll: true });
+  }
+}, { passive: false });
+$('#rstage').addEventListener('touchend', e => {
+  if (pinch && e.touches.length < 2) {
+    pinch = null;
+    persistWorkPrefs();                       // 手势结束才落盘
+  }
+}, { passive: true });
+$('#rstage').addEventListener('touchcancel', () => { pinch = null; }, { passive: true });
+
+/* 尺寸是 JS 算出来的像素值，所以窗口一变必须重排，否则会留白或被裁。
+   手机旋转屏幕时顶栏格局也会变（窄屏/宽屏两套），提示文案要跟着换。 */
+window.addEventListener('resize', () => {
+  if ($('#reader').classList.contains('on')) {
+    syncToggles();
+    relayoutReader(0);
+  }
+});
+if (window.ResizeObserver) {
+  new ResizeObserver(() => {
+    if ($('#reader').classList.contains('on') && !rmode.scroll) {
+      measureStage();
+      layoutSpread();
+    }
+  }).observe($('#rstage'));
+}
+
+document.addEventListener('keydown', e => {
+  // 窄屏侧栏抽屉开着时，Esc 先收起它（比让 Esc 冒到播放器/阅读器更符合预期）
+  if (e.key === 'Escape' && document.body.classList.contains('navopen')) {
+    e.preventDefault(); navDrawer.close(); return;
+  }
+  // 播放器开着时优先吃键
+  if ($('#vp').classList.contains('on')) {
+    const t = e.target;
+    // **但焦点在左侧播放列表、或任何一个下拉/输入框上时，就放行** ——
+    // 否则在树上按方向键会被拿去调进度，在下拉上按方向键会被拿去换字幕轨。
+    if (t && t.closest && t.closest('.treepane')) return;
+    const tag = (t && t.tagName) || '';
+    if ((tag === 'SELECT' || tag === 'INPUT' || tag === 'TEXTAREA') && e.key !== 'Escape') return;
+    if (e.key === 'Escape') { e.preventDefault(); closePlayer(); return; }
+    if (e.key === ' ' || e.key === 'k' || e.key === 'K') { e.preventDefault(); vpPlayToggle(); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); vpSeek(vpAbs() + 5); return; }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); vpSeek(vpAbs() - 5); return; }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault(); vpEl().volume = Math.min(1, vpEl().volume + 0.05); return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault(); vpEl().volume = Math.max(0, vpEl().volume - 0.05); return;
+    }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); vpFullscreen(); return; }
+    if (e.key === 'm' || e.key === 'M') { e.preventDefault(); vpEl().muted = !vpEl().muted; return; }
+    if (e.key === 'l' || e.key === 'L') { e.preventDefault(); toggleSide(); return; }
+    return;
+  }
+  if ($('#reader').classList.contains('on')) {
+    // 焦点在下拉/输入上时放行，让方向键能用来选话；
+    // 在左侧目录上按方向键也要放行（不然会被拿去翻页，目录没法滚）
+    const rt = e.target;
+    if (rt && rt.closest && rt.closest('.treepane')) return;
+    const rtag = (rt && rt.tagName) || '';
+    if ((rtag === 'SELECT' || rtag === 'INPUT' || rtag === 'TEXTAREA') && e.key !== 'Escape') return;
+    const fwd  = rmode.rtl ? ['ArrowLeft', ' ', 'PageDown'] : ['ArrowRight', ' ', 'PageDown'];
+    const back = rmode.rtl ? ['ArrowRight', 'PageUp'] : ['ArrowLeft', 'PageUp'];
+    // Esc 分两级：全屏时先退出全屏，再按才关阅读器。
+    // 一次就把阅读器关掉的话，用户想退出全屏却丢了阅读进度，很恼人。
+    if (e.key === 'Escape') {
+      if (rFull) { e.preventDefault(); setReaderFull(false); return; }
+      closeReader(); return;
+    }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleReaderFull(); return; }
+    if (e.key === 'l' || e.key === 'L') { e.preventDefault(); toggleRSide(); return; }
+    if (e.key === 's' || e.key === 'S') { e.preventDefault(); flipMode('scroll'); return; }
+    // 缩放键。+/- 在多数键盘上要配合 Shift，所以把 '=' 和 '_' 也一并认下；
+    // 数字小键盘的 + - 在 e.key 里同样是 '+' '-'，自然覆盖。
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); setZoom(rzoom * ZOOM_STEP); return; }
+    if (e.key === '-' || e.key === '_') { e.preventDefault(); setZoom(rzoom / ZOOM_STEP); return; }
+    if (e.key === '0') { e.preventDefault(); setZoom(1); return; }
+    // 滚屏模式：上下键就是滚动（浏览器默认行为即可），左右键用来**换话**。
+    // 条漫里没有「左边一页」的概念，把左右键拿去做横向移动没人会想要；
+    // 而一路滑到话末之后，最自然的下一步就是翻下一话。
+    // 空格仍按「翻一屏」处理。
+    if (rmode.scroll) {
+      if (e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); step(1); return; }
+      if (e.key === 'PageUp') { e.preventDefault(); step(-1); return; }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); stepChapter(-1); return; }
+      if (e.key === 'ArrowRight') { e.preventDefault(); stepChapter(1); return; }
+      if (e.key === 'Home') { e.preventDefault(); stripJump(0, false); stripTrack(); return; }
+      if (e.key === 'End') {
+        e.preventDefault();
+        stripJump(reader.pages.length - 1, false); stripTrack(); return;
+      }
+      return;      // ↑↓ 交给原生滚动
+    }
+    if (fwd.includes(e.key)) { e.preventDefault(); step(1); return; }
+    if (back.includes(e.key)) { e.preventDefault(); step(-1); return; }
+    if (e.key === 'Home') { e.preventDefault(); reader.si = 0; renderSpread(); return; }
+    if (e.key === 'End') { e.preventDefault(); reader.si = reader.spreads.length - 1; renderSpread(); return; }
+    if (e.key === 'd' || e.key === 'D') { flipMode('dual'); return; }
+    if (e.key === 'r' || e.key === 'R') { flipMode('rtl'); return; }
+    return;
+  }
+  if (e.key === 'Escape' && DETAIL) back();
+  if (e.key === '/' && document.activeElement !== $('#q')) { e.preventDefault(); $('#q').focus(); }
+});
+
+load();
+</script>
+</body>
+</html>
