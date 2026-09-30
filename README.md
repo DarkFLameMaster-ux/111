@@ -13,7 +13,7 @@
 
 ## 本地运行
 
-1. 复制 `.env.example` 为 `.env`，将 `RESLIB_SCRIPT_DIR` 改为本机资源脚本目录。该目录需要提供原有管线的 `lib.py`、`scrape.py` 和 `subscribe.py`。
+1. 复制 `.env.example` 作为本地参考，将 `RESLIB_SCRIPT_DIR` 改为本机资源脚本目录，并把变量导入当前终端（启动脚本不会自动读取 `.env`）。该目录需要提供原有管线的 `lib.py`、`scrape.py` 和 `subscribe.py`。
 2. 在项目根目录构建前端：
 
 ```powershell
