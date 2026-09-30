@@ -929,7 +929,7 @@ main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
 
 <script>
 // 静态前端与资源库后端解耦：GitHub Pages / 本地静态服务器都可通过配置 API 地址工作。
-// 例如：window.RESLIB_API_BASE = 'http://100.84.101.43:8777';
+// 例如：window.RESLIB_API_BASE = 'http://<server-host>:8777';
 const API_BASE = String(window.RESLIB_API_BASE || '').replace(/\/+$/, '');
 const apiUrl = path => API_BASE + (String(path).startsWith('/') ? path : '/' + path);
 const $ = s => document.querySelector(s);
