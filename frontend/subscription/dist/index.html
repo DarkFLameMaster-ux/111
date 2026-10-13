@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="application-version" content="0.2.0">
   <script src="config.js"></script>
   <title>资源订阅控制台</title>
   <style>
@@ -15,11 +16,38 @@
     .row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:14px 0;border-top:1px solid #ffffff10}.row:first-child{border-top:0}.title{font-weight:700;font-size:17px}.meta{font-size:13px;color:#9da7b8;margin-top:5px}.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.empty{padding:24px;text-align:center;color:#9da7b8}
     #toast{position:fixed;right:20px;bottom:20px;background:#202630;color:#fff;border:1px solid #ffffff2a;border-radius:10px;padding:12px 15px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}.show{opacity:1!important;transform:none!important}
     @media(max-width:650px){.hero{display:block}.actions{justify-content:flex-start;margin-top:10px}}
+    /* 五更琉璃 / 黑猫主题：与展示前端共用月影紫黑、月轮和微弱星点。 */
+    :root{--ruri:#d09aff;--ruri-hot:#a66cff;--night:#0b0912;--panel:#171329e8}
+    body{background:
+      radial-gradient(circle at 84% -8%,rgba(162,104,255,.28),transparent 34%),
+      radial-gradient(circle at 10% 105%,rgba(72,67,166,.22),transparent 42%),var(--night)}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.22;
+      background-image:radial-gradient(rgba(237,216,255,.85) 0 1px,transparent 1.5px);
+      background-size:54px 54px;mask-image:linear-gradient(180deg,#000,transparent 75%)}
+    main{position:relative}
+    .hero{position:relative}
+    .hero::after{content:'☾';position:absolute;right:22px;top:-10px;color:rgba(231,200,255,.16);
+      font-size:124px;line-height:1;pointer-events:none;text-shadow:0 0 34px rgba(208,154,255,.2)}
+    .pill{position:relative;z-index:1;border-color:rgba(208,154,255,.38);color:#e1c6ff;
+      background:linear-gradient(135deg,rgba(50,32,78,.9),rgba(24,18,47,.9));box-shadow:0 0 22px rgba(137,83,212,.15)}
+    h1{position:relative;z-index:1;text-shadow:0 0 28px rgba(208,154,255,.23)}
+    .panel{background:var(--panel);border-color:rgba(208,154,255,.13);box-shadow:0 18px 50px rgba(4,2,12,.45),inset 0 1px rgba(255,255,255,.03)}
+    button{background:linear-gradient(135deg,#9d63e8,#7243ba);border-color:#d09aff88;box-shadow:0 7px 18px rgba(87,42,145,.25);transition:transform .16s,box-shadow .16s,filter .16s}
+    button:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 10px 23px rgba(87,42,145,.38),0 0 0 1px rgba(236,213,255,.18) inset}
+    button.secondary{background:#242039;border-color:rgba(208,154,255,.18)}
+    button.danger{background:#652936;border-color:#ad4257}
+    input:focus{outline:2px solid rgba(208,154,255,.6);outline-offset:1px}
+    .row{border-top-color:rgba(208,154,255,.1)}
+    .title{color:#faf5ff}.muted,.meta{color:#b8adcc}
+    #toast{background:#211936;border-color:rgba(208,154,255,.35);box-shadow:0 12px 32px rgba(4,2,12,.45)}
+    .heroBrand{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+    .appVersion{position:relative;z-index:1;display:inline-flex;flex:0 0 auto;white-space:nowrap;padding:4px 8px;
+      border:1px solid rgba(208,154,255,.24);border-radius:999px;background:rgba(208,154,255,.08);color:#b8adcc;font-size:11px}
   </style>
 </head>
 <body>
 <main>
-  <section class="hero"><div><div class="pill">订阅资源 · 独立前端</div><h1>漫画更新控制台</h1><div class="muted">管理订阅、立即检查新话，并把下载写回现有资源库作品目录。</div></div><div id="health" class="muted">连接中…</div></section>
+  <section class="hero"><div><div class="heroBrand"><div class="pill">五更琉璃 · 黑猫订阅台</div><span class="appVersion" aria-label="软件版本 0.2.0">软件 v0.2.0</span></div><h1>漫画更新控制台</h1><div class="muted">在月影下管理订阅、检查新话，并把下载写回现有资源库作品目录。</div></div><div id="health" class="muted">连接中…</div></section>
   <section class="panel"><h2>添加订阅</h2><form id="addForm"><input id="name" required placeholder="作品名，例如：上伊那牡丹"><input id="slug" placeholder="可选：包子漫画 slug"><button>添加订阅</button></form><div id="search" class="muted" style="margin-top:12px"></div></section>
   <section class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>当前订阅</h2><div class="actions"><button id="checkAll">立即检查全部</button><button id="refresh" class="secondary">刷新</button></div></div><div id="list"><div class="empty">正在读取…</div></div></section>
 </main><div id="toast"></div>

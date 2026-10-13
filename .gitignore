@@ -1,5 +1,8 @@
 # Frontend dependencies and generated caches
 frontend/*/node_modules/
+node_modules/
+desktop/logs/
+/dist/
 __pycache__/
 *.py[cod]
 .cache/

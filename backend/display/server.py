@@ -31,7 +31,9 @@ from compat import prepare  # noqa: E402
 prepare(lib, os.environ.get("RESLIB_CORS_ORIGIN", "*"))
 lib.UI_FILE = FRONTEND
 
-host = os.environ.get("RESLIB_HOST", "127.0.0.1")
+# 默认绑定全部网卡，配合资源库 settings.json 的 allow_nets/auth 让同一 Wi‑Fi
+# 下的设备可以访问。需要仅本机时可显式设置 RESLIB_HOST=127.0.0.1。
+host = os.environ.get("RESLIB_HOST", "0.0.0.0")
 port = int(os.environ.get("RESLIB_PORT", "8777"))
 tls_port = int(os.environ.get("RESLIB_TLS_PORT", "0"))
 if tls_port == 0:

@@ -1,0 +1,29 @@
+{
+  "name": "moonshadow-blackcat-reslib",
+  "version": "0.2.0",
+  "private": true,
+  "description": "月影黑猫资源库：网页、订阅管理与 Windows 桌面端",
+  "main": "desktop/main.js",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "desktop": "electron .",
+    "desktop:dev": "electron . --dev",
+    "desktop:portable": "npm run release:check && powershell -NoProfile -ExecutionPolicy Bypass -File desktop/package-portable.ps1",
+    "check": "node scripts/check.mjs",
+    "test": "node --test desktop/*.test.js scripts/*.test.mjs frontend/*.test.mjs",
+    "version:show": "node scripts/version.mjs show",
+    "version:bump": "node scripts/version.mjs bump",
+    "version:check": "node scripts/version.mjs check",
+    "release:check": "npm run build && npm run check && npm test && npm run version:check"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DarkFLameMaster-ux/111.git"
+  },
+  "devDependencies": {
+    "electron": "40.10.2"
+  }
+}

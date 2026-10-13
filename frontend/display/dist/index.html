@@ -4,6 +4,7 @@
   <script src="config.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="application-version" content="0.2.0">
 <title>月影黑猫 · 资源库</title>
 <style>
 /* ------------------------------------------------------------------
@@ -112,6 +113,11 @@ main{overflow:auto;padding:0 0 20px}
 .searchbox input::placeholder{color:#8a8a8a}
 .searchbox input:focus{outline:0;box-shadow:var(--accent) 0 0 0 1px inset}
 .searchbox .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8a8a8a;font-size:13px}
+.archiveTopBtn{background:linear-gradient(135deg,#a98bff,#d7a9ff);border:0;border-radius:999px;color:#17131f;cursor:pointer;padding:9px 15px;font:700 12px var(--font);white-space:nowrap;box-shadow:0 5px 18px rgba(169,139,255,.22)}
+.archiveTopBtn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.restartTopBtn{background:transparent;border:0;border-radius:999px;color:var(--fg);cursor:pointer;padding:9px 15px;font:700 12px var(--font);white-space:nowrap;box-shadow:var(--border) 0 0 0 1px inset}
+.restartTopBtn:hover{background:#1a1a1a;box-shadow:#9f87c8 0 0 0 1px inset;transform:translateY(-1px)}
+.restartTopBtn:disabled{cursor:wait;opacity:.65;transform:none}
 .view{padding:0 26px}
 
 /* ---------------- 卡片网格 ---------------- */
@@ -119,9 +125,10 @@ main{overflow:auto;padding:0 0 20px}
 .card{
   background:var(--surface);border:0;border-radius:var(--r-card);padding:12px;
   cursor:pointer;text-align:left;color:inherit;font-family:var(--font);
-  transition:background .18s ease, box-shadow .18s ease;
+  transition:background .18s ease, box-shadow .18s ease, transform .18s ease;
+  content-visibility:auto;contain-intrinsic-size:0 330px;
 }
-.card:hover{background:var(--surface2);box-shadow:var(--shadow-md)}
+.card:hover{background:var(--surface2);box-shadow:var(--shadow-md);transform:translateY(-2px)}
 .cover{
   aspect-ratio:1/1;width:100%;border-radius:var(--r-sm);overflow:hidden;
   background:#2a2a2a;position:relative;margin-bottom:12px;
@@ -139,7 +146,7 @@ main{overflow:auto;padding:0 0 20px}
 .badge{display:inline-block;background:var(--surface2);border-radius:var(--full);
   padding:2px 9px;font:400 11px/1.5 var(--font);color:var(--dim);margin:6px 4px 0 0}
 .badge.w{color:var(--warn)}
-.badge.a{color:var(--accent)}
+.badge.a{color:#07140b}
 
 /* ---------------- 详情 ---------------- */
 .dhead{display:flex;gap:22px;align-items:flex-end;margin-bottom:26px}
@@ -518,11 +525,37 @@ body.reading{overflow:hidden}
   opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;max-width:76vw}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .empty{color:var(--dim);background:var(--surface);border-radius:var(--r-card);padding:28px;text-align:center}
+.issue,.historyItem,.musicGroup{content-visibility:auto;contain-intrinsic-size:0 90px}
+.historyHead{display:flex;align-items:center;gap:12px;margin:2px 0 16px}
+.historyHead .sec{margin:0}
+.historyHead .pillbtn{margin-left:auto}
+.historyList{display:flex;flex-direction:column;gap:8px;max-width:920px}
+.historyItem{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--surface);
+  border-radius:var(--r-card);min-width:0;box-shadow:inset 3px 0 0 var(--accent)}
+.historyItem.missing{box-shadow:inset 3px 0 0 var(--border);opacity:.7}
+.historyItem .hmain{min-width:0;flex:1}
+.historyItem .htitle{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.historyItem .hmeta{color:var(--dim);font-size:11.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.historyItem .hstate{flex:0 0 auto;color:var(--dim);font:400 11px var(--mono);white-space:nowrap}
+.historyItem .hopen{flex:0 0 auto}
+.historyItem .hremove{flex:0 0 auto;background:transparent;border:0;color:var(--dim);cursor:pointer;
+  font-size:16px;width:28px;height:28px;border-radius:50%}
+.historyItem .hremove:hover{background:var(--surface2);color:var(--fg)}
+@media(max-width:720px){
+  .historyItem{gap:9px;padding:11px 10px}
+  .historyItem .hstate{font-size:10px}
+  .historyItem .hopen{padding:7px 10px}
+}
 ::-webkit-scrollbar{width:11px;height:11px}
 ::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:10px;border:3px solid var(--bg)}
 ::-webkit-scrollbar-thumb:hover{background:#4d4d4d}
 ::-webkit-scrollbar-track{background:transparent}
 
+.archiveOverlay{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;background:rgba(5,3,10,.72);backdrop-filter:blur(8px)}
+.archiveOverlay[hidden]{display:none}
+.archiveDialog{width:min(620px,calc(100vw - 30px));background:linear-gradient(145deg,#1b1630,#12101f);border:1px solid rgba(211,183,255,.25);border-radius:18px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.archiveDialogHead{display:flex;gap:16px;align-items:flex-start}.archiveDialog h2{margin:0;font-size:24px}.archiveDialog p{margin:5px 0 0;color:var(--dim);font-size:12.5px}.archiveClose{margin-left:auto;width:32px;height:32px;border:0;border-radius:50%;background:var(--surface2);color:var(--dim);font-size:22px;line-height:1;cursor:pointer}.archiveClose:hover{color:var(--fg);background:#30264d}
+.archiveLabel{display:flex;flex-direction:column;gap:7px;margin-top:18px;color:var(--dim);font-size:12px}.archiveLabel input,.archiveLabel select{width:100%;background:#0f0c19;color:var(--fg);border:1px solid #493d63;border-radius:9px;padding:10px 12px;font:400 13px var(--font)}.archiveLabel input:focus,.archiveLabel select:focus{outline:0;border-color:#b99bff}.archiveFieldRow{display:flex;align-items:flex-end;gap:10px}.archivePathRow{display:flex;gap:8px;align-items:center}.archivePathRow input{flex:1}.archivePick{white-space:nowrap}.archiveSave{white-space:nowrap;margin-bottom:0}.archiveHint{margin-top:12px;color:#aaa0be;font-size:12px;line-height:1.6}.archiveActions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}.archiveRun{background:var(--accent);color:#17131f}.archiveRun:hover{background:#d9bfff}.archiveRun:disabled,.archiveSave:disabled{opacity:.5;cursor:wait}.archiveResult{margin-top:16px;max-height:190px;overflow:auto;white-space:pre-wrap;background:#0d0b15;border:1px solid #30264d;border-radius:9px;padding:11px;color:#c9bedb;font:400 11px/1.55 var(--mono)}
 /* ---- 刮削元数据 / 订阅面板 ---- */
 .panel{display:flex;gap:20px;background:var(--surface);border-radius:var(--r-card);
   padding:18px;margin-bottom:26px;align-items:flex-start}
@@ -761,6 +794,7 @@ main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
 .card:hover{background:linear-gradient(145deg,rgba(53,40,82,.98),rgba(28,23,49,.98));box-shadow:0 14px 30px rgba(9,5,20,.5),0 0 0 1px rgba(197,139,255,.2)}
 .cover{box-shadow:0 9px 20px rgba(8,4,17,.5),0 0 0 1px rgba(197,139,255,.1)}
 .badge.a,.ep.seen::after{background:var(--accent)}
+.badge.a{color:#241334}
 .playcircle,.loginBox button{background:linear-gradient(135deg,#e1b8ff,var(--accent-strong));box-shadow:0 9px 22px rgba(117,73,188,.35)}
 .pillbtn:hover,.rtoggle:hover,.ricon:hover,.vpb:hover{background:rgba(197,139,255,.16)}
 .nowbar{background:linear-gradient(90deg,rgba(36,29,59,.94),rgba(21,18,37,.94));border-color:rgba(197,139,255,.12)}
@@ -769,12 +803,69 @@ main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
 .rtoggle.on{color:#1a1027;background:var(--accent)}
 #toast{box-shadow:0 8px 30px rgba(9,5,20,.5),0 0 0 1px rgba(197,139,255,.18)}
 @media(max-width:860px){aside{background:linear-gradient(180deg,#171129,#0b0912)}}
+
+/* ---------------- 五更琉璃 / 黑猫识别层 ----------------
+   使用内置矢量与渐变，保持桌面壳和离线网页都能稳定显示。 */
+.brand{padding-bottom:16px}
+.brand .dot{display:none}
+.brandMark{width:30px;height:30px;flex:0 0 auto;display:grid;place-items:center;
+  border:1px solid rgba(239,210,255,.42);border-radius:10px 10px 12px 12px;
+  background:linear-gradient(145deg,#e4bdff 0%,#a06dff 52%,#432c74 100%);
+  box-shadow:0 0 0 3px rgba(197,139,255,.08),0 0 22px rgba(197,139,255,.3)}
+.brandMark svg{width:23px;height:23px;fill:#1a1027;filter:drop-shadow(0 1px 0 rgba(255,255,255,.28))}
+.brandCopy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.brandCopy strong{font-size:15px;line-height:1.1;letter-spacing:.3px}
+.brandCopy small{color:#c7b7df;font:500 9px/1 var(--mono);letter-spacing:1.2px;text-transform:uppercase}
+.catCard{position:relative;overflow:hidden;margin:2px 4px 12px;padding:13px 12px 12px;
+  border:1px solid rgba(217,174,255,.2);border-radius:12px;
+  background:linear-gradient(145deg,rgba(55,37,83,.72),rgba(19,14,35,.88));
+  box-shadow:inset 0 1px rgba(255,255,255,.06),0 10px 24px rgba(6,3,16,.24)}
+.catCard::before{content:'';position:absolute;inset:-40%;opacity:.42;pointer-events:none;
+  background:repeating-radial-gradient(circle at 76% 18%,rgba(236,207,255,.8) 0 1px,transparent 1.5px 18px);
+  transform:rotate(-16deg)}
+.catCardTop{position:relative;display:flex;align-items:center;gap:9px}
+.catCardMoon{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;
+  color:#fff3ff;font-size:20px;line-height:1;text-shadow:0 0 14px #e0b9ff}
+.catCardName{display:flex;flex-direction:column;gap:1px}
+.catCardName strong{font-size:12px;letter-spacing:.4px}
+.catCardName span{color:#b8a7d1;font:500 9px var(--mono);letter-spacing:.8px}
+.catCard p{position:relative;margin:10px 0 0;color:#d2c5e2;font-size:10.5px;line-height:1.55}
+.catCard p::before{content:'“';color:#d5a7ff;font:700 18px/0 Georgia;vertical-align:-5px;margin-right:3px}
+.topbarMark{display:flex;align-items:center;gap:7px;margin-right:4px;color:#bca9d6;font:500 9px var(--mono);letter-spacing:1.1px}
+.topbarMark .moon{color:#ead4ff;font-size:17px;line-height:1;text-shadow:0 0 12px rgba(224,185,255,.75)}
+.appVersion{display:inline-flex;align-items:center;flex:0 0 auto;white-space:nowrap;padding:4px 8px;
+  border:1px solid rgba(197,139,255,.24);border-radius:var(--pill);background:rgba(197,139,255,.08);
+  color:var(--dim);font:500 11px/1.4 var(--font)}
+.topbar h1{flex:0 0 auto}
+@media(min-width:861px) and (max-width:1200px){
+  .topbar{flex-wrap:wrap}.topbarMark,.topbar .spacer{display:none}
+  .searchbox{order:9;width:100%}.searchbox input{width:100%}
+}
+.pillbtn,.playcircle,.vpb,.rtoggle{transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+.pillbtn:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(224,185,255,.28) inset,0 8px 20px rgba(108,61,164,.18)}
+.playcircle:hover{box-shadow:0 0 0 4px rgba(197,139,255,.12),0 0 26px rgba(197,139,255,.4)}
+.vpb:hover,.rtoggle:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(224,185,255,.2) inset,0 0 14px rgba(197,139,255,.16)}
+.playcircle:focus-visible,.pillbtn:focus-visible,.vpb:focus-visible,.rtoggle:focus-visible,
+nav button:focus-visible,.catCard:focus-visible{outline:2px solid #f1d9ff;outline-offset:2px}
+@media(max-width:860px){.catCard{margin-top:8px}.topbarMark{display:none}}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
 </style>
 </head>
 <body>
 
 <aside>
-  <div class="brand"><span class="dot" aria-hidden="true">☾</span><span>月影黑猫</span></div>
+  <div class="brand">
+    <span class="brandMark" aria-hidden="true"><svg viewBox="0 0 64 64" role="img"><path d="M9 27 7 9l16 9c5-3 13-4 18 0l16-9-2 18c2 4 3 9 3 14 0 12-8 17-24 17S9 53 9 41c0-5 0-10 0-14Z"/><path d="m20 39 8-2 4 3 4-3 8 2-5 7H25l-5-7Z" fill="#d9b1ff"/><circle cx="24" cy="31" r="3" fill="#f9efff"/><circle cx="40" cy="31" r="3" fill="#f9efff"/><path d="M32 38h0" stroke="#1a1027" stroke-width="2" stroke-linecap="round"/></svg></span>
+    <span class="brandCopy"><strong>月影黑猫</strong><small>GOKOU RURI · RESLIB</small></span>
+  </div>
+  <div class="catCard" aria-label="五更琉璃主题提示">
+    <div class="catCardTop"><span class="catCardMoon" aria-hidden="true">☾</span><span class="catCardName"><strong>五更琉璃</strong><span>BLACK CAT ARCHIVE</span></span></div>
+    <p>把杂乱的收藏，交给夜色整理。</p>
+  </div>
   <nav>
     <button data-t="health">体检 <span class="n" id="nH"></span></button>
     <button data-t="anime">动画 <span class="n" id="nA"></span></button>
@@ -784,6 +875,7 @@ main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
     <button data-t="comic">漫画 <span class="n" id="nC"></span></button>
     <button data-t="manhwa">韩漫 <span class="n" id="nK"></span></button>
     <button data-t="music">音乐 <span class="n" id="nM"></span></button>
+    <button data-t="history">记录 <span class="n" id="nR"></span></button>
   </nav>
   <div class="treepane"><div class="tree" id="tree"></div></div>
   <div class="foot">
@@ -802,23 +894,38 @@ main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
     <button id="navToggle" title="目录" aria-label="打开目录">☰</button>
     <h1 id="pageTitle">体检</h1>
     <span class="sub" id="pageSub"></span>
+    <span class="appVersion" aria-label="软件版本 0.2.0">软件 v0.2.0</span>
     <span class="spacer"></span>
+    <div class="topbarMark" aria-hidden="true"><span class="moon">☾</span><span>BLACK CAT / MOONLIT SHELF</span></div>
     <div class="searchbox">
       <span class="ic">⌕</span>
       <input id="q" type="search" placeholder="搜作品…" autocomplete="off">
     </div>
+    <button class="restartTopBtn" id="restartTopBtn" type="button" title="重新扫描并启动资源库服务">重启资源库</button>
+    <button class="archiveTopBtn" id="archiveTopBtn" type="button">一键归档</button>
   </div>
   <div class="view" id="view"></div>
 </main>
 
 <div class="nowbar mini" id="nowbar">
-  <div class="lbl">最近播放</div>
+  <div class="lbl">最近记录</div>
   <div style="min-width:0">
     <div class="tt" id="nowTitle">还没有播放记录</div>
     <div class="sub" id="nowSub"></div>
   </div>
   <span class="spacer"></span>
   <button class="playcircle" id="nowPlay" title="继续播放" style="width:42px;height:42px;font-size:16px">▶</button>
+</div>
+
+<div class="archiveOverlay" id="archiveOverlay" hidden>
+  <div class="archiveDialog" role="dialog" aria-modal="true" aria-labelledby="archiveTitle">
+    <div class="archiveDialogHead"><div><h2 id="archiveTitle">一键归档</h2><p>扫描待整理目录，分类移动后自动刮削动画与电影。</p></div><button class="archiveClose" id="archiveClose" type="button" aria-label="关闭">×</button></div>
+    <label class="archiveLabel">默认待整理目录<div class="archivePathRow"><input id="archiveInbox" type="text" spellcheck="false" placeholder="选择待整理目录，例如 00-待整理"><button class="pillbtn ghost archivePick" id="archivePick" type="button">选择文件夹</button></div></label>
+    <div class="archiveFieldRow"><label class="archiveLabel" style="flex:1">本次分区<select id="archiveCategory"><option value="">自动识别</option><option>动画</option><option>电影</option><option>漫画</option><option>小说</option><option>音乐</option><option>游戏</option><option>助眠</option><option>AV</option></select></label><button class="pillbtn ghost archiveSave" id="archiveSave" type="button">保存默认目录</button></div>
+    <div class="archiveHint">选择分区后，本次目录内的资源会统一放入该分区；选择“自动识别”则沿用现有分类规则。</div>
+    <div class="archiveResult" id="archiveResult" hidden></div>
+    <div class="archiveActions"><button class="pillbtn ghost" id="archiveCancel" type="button">取消</button><button class="pillbtn archiveRun" id="archiveRun" type="button">开始归档</button></div>
+  </div>
 </div>
 
 <div id="musicbar" aria-label="音乐播放器">
@@ -848,8 +955,8 @@ main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
 <div id="reader">
   <div id="rbar">
     <button class="rtoggle" id="rTreeBtn" title="显示 / 隐藏目录 (L)">目录</button>
-    <button class="ricon" id="rPrev" title="上一页">‹</button>
-    <button class="ricon" id="rNext" title="下一页">›</button>
+    <button class="ricon" id="rPrev" title="上一页（[）" aria-label="上一页，快捷键 [" aria-keyshortcuts="[">‹</button>
+    <button class="ricon" id="rNext" title="下一页（]）" aria-label="下一页，快捷键 ]" aria-keyshortcuts="]">›</button>
     <span class="pg" id="rPg"></span>
     <span class="ttl" id="rTitle"></span>
     <span class="spacer"></span>
@@ -859,7 +966,7 @@ main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
     <button class="rtoggle" id="rDir" title="阅读方向（R 键）">从右往左</button>
     <button class="rtoggle" id="rCover" title="第一页单独占一屏">首页单页</button>
     <span class="zgroup">
-      <button class="ricon small" id="rZoomOut" title="缩小（- 键）">−</button>
+       <button class="ricon small" id="rZoomOut" title="缩小（_ 键）">−</button>
       <span class="zoomv" id="rZoomV">100%</span>
       <button class="ricon small" id="rZoomIn" title="放大（+ 键）">＋</button>
       <button class="rtoggle" id="rZoomFit" title="回到适应屏幕（0 键）">适应</button>
@@ -872,8 +979,8 @@ main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
        滚屏读条漫一路往下滑，最常做的就是「下一话」，不该逼人把手指
        挪到屏幕顶端去够。半透明，免得挡住漫画。 -->
   <div id="chapFloat">
-    <button class="chapnav" id="rChapPrev" title="上一话">«</button>
-    <button class="chapnav" id="rChapNext" title="下一话">»</button>
+     <button class="chapnav" id="rChapPrev" title="上一话（-）" aria-label="上一话，快捷键 -" aria-keyshortcuts="-">«</button>
+     <button class="chapnav" id="rChapNext" title="下一话（=）" aria-label="下一话，快捷键 =" aria-keyshortcuts="=">»</button>
   </div>
   <div id="rBody">
     <div id="rSide">
@@ -1034,7 +1141,7 @@ let reader = { pages: [], spreads: [], si: 0, path: '', title: '' };
 
 /* 支持 ?tab=anime&work=0 深链接：可收藏、也方便无头截图核查 */
 const QP = new URLSearchParams(location.search);
-if (['health', 'anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music'].includes(QP.get('tab'))) TAB = QP.get('tab');
+if (['health', 'anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music', 'history'].includes(QP.get('tab'))) TAB = QP.get('tab');
 if (QP.has('work')) DETAIL = { kind: TAB, idx: parseInt(QP.get('work'), 10) || 0 };
 /* ?read=<章节序号>&page=<页序号> —— 直接打开阅读器（也方便无头截图验收）
    &dual=0/1 &rtl=0/1 &cover=0/1 —— 临时覆盖阅读模式，用于分享特定视图和自动化验证 */
@@ -1049,13 +1156,61 @@ for (const k of ['dual', 'rtl', 'cover', 'scroll']) {
 }
 /* ?zoom=2 —— 直接指定缩放，便于分享和自动化验收 */
 const ZOOM_QP = QP.has('zoom') ? parseFloat(QP.get('zoom')) : null;
-function syncUrl() {
+const ROUTE_TABS = ['health', 'anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music', 'history'];
+let ROUTE_DEPTH = 0;
+
+/*
+   站内页面必须进入浏览器历史。
+   之前这里一直 replaceState：地址栏会变，历史记录却只有最初那一条，
+   所以桌面返回和手机左滑只能离开站点。pushState 负责新页面，
+   replaceState 只负责给当前入口补上初始状态。
+*/
+function routeUrl() {
   const p = new URLSearchParams();
   if (TAB !== 'health') p.set('tab', TAB);
   if (DETAIL) p.set('work', DETAIL.idx);
   const q = p.toString();
-  history.replaceState(null, '', q ? '?' + q : location.pathname);
+  return q ? '?' + q : location.pathname;
 }
+
+function syncUrl(mode = 'push') {
+  const replace = mode === 'replace';
+  const nextDepth = replace ? ROUTE_DEPTH : ROUTE_DEPTH + 1;
+  const state = { reslibRoute: true, reslibDepth: nextDepth,
+                  tab: TAB, detail: DETAIL };
+  history[replace ? 'replaceState' : 'pushState'](state, '', routeUrl());
+  ROUTE_DEPTH = nextDepth;
+}
+
+function seedHistory() {
+  const state = history.state || {};
+  ROUTE_DEPTH = Number.isInteger(state.reslibDepth) ? state.reslibDepth : 0;
+  history.replaceState({ ...state, reslibRoute: true, reslibDepth: ROUTE_DEPTH,
+                         tab: TAB, detail: DETAIL }, '', location.href);
+}
+
+function routeFromLocation(state = history.state) {
+  const p = new URLSearchParams(location.search);
+  const stateTab = state && state.reslibRoute && ROUTE_TABS.includes(state.tab) ? state.tab : null;
+  const tab = ROUTE_TABS.includes(p.get('tab')) ? p.get('tab') : (stateTab || 'health');
+  const raw = p.get('work');
+  const stateIdx = state && state.reslibRoute && state.detail ? state.detail.idx : NaN;
+  const idx = raw == null ? stateIdx : parseInt(raw, 10);
+  return { tab, detail: Number.isInteger(idx) && idx >= 0 ? { kind: tab, idx } : null };
+}
+
+function applyRouteFromLocation(state = history.state) {
+  const route = routeFromLocation(state);
+  TAB = route.tab;
+  DETAIL = route.detail;
+  localStorage.tab = TAB;
+  closeOverlays();
+  render();
+  if (DETAIL) $('#main').scrollTop = 0;
+}
+
+// 让首次打开的入口也带有可识别的站内状态，同时保留深链接参数。
+seedHistory();
 
 /* 无封面时生成一个稳定的渐变 —— 让网格看起来是有意的，而不是缺图 */
 function grad(seed) {
@@ -1068,7 +1223,7 @@ function coverNode(url, title, cls) {
   d.style.background = grad(title);
   if (url) {
     const im = el('img');
-    im.loading = 'lazy'; im.alt = ''; im.src = url;
+    im.loading = 'lazy'; im.decoding = 'async'; im.fetchPriority = 'low'; im.alt = ''; im.src = url;
     im.onerror = () => { im.remove(); d.appendChild(el('div', 'gen', esc(title))); };
     d.appendChild(im);
   } else {
@@ -1199,9 +1354,7 @@ function pickLeaf(lf) {
     return;
   }
   // 动画 / 助眠 / 电影 / 漫画：都跳详情页（那里就是选集/选话的地方）
-  closeOverlays();
-  go(lf.kind === 'comic' ? 'comic' : lf.kind);
-  openDetail(lf.kind === 'comic' ? 'comic' : lf.kind, lf.i);
+  openWork(lf.kind === 'comic' ? 'comic' : lf.kind, lf.i);
 }
 
 /* 把树渲染进 host。curPath 用来高亮正在播的那一部。 */
@@ -1278,6 +1431,110 @@ async function apiPost(url, body) {
     });
     return await r.json();
   } catch (e) { return { error: String(e) }; }
+}
+
+/* 进度和浏览记录共用一条写入链路。
+   keepalive 让手机切后台/关标签时仍有机会把最后一条记录送到服务端；
+   pagehide 时再用 sendBeacon 兜底，避免只依赖普通 fetch 的完成回调。 */
+function saveProgressEntry(key, fields, beacon = false) {
+  if (!key) return;
+  const old = (PROG[key] && typeof PROG[key] === 'object') ? PROG[key] : {};
+  const item = Object.assign({}, old, fields || {}, { at: Date.now() / 1000 });
+  PROG[key] = item;
+  const nr = $('#nR');
+  if (nr) nr.textContent = Object.keys(PROG).length || '';
+  if (typeof drawNow === 'function') drawNow();
+  const body = Object.assign({ key, title: item.title || '' }, fields || {});
+  body.title = item.title || '';
+  const raw = JSON.stringify(body);
+  if (beacon && navigator.sendBeacon) {
+    try {
+      const blob = new Blob([raw], { type: 'application/json' });
+      if (navigator.sendBeacon(apiUrl('/api/progress'), blob)) return;
+    } catch (_) { /* 退回 keepalive fetch */ }
+  }
+  fetch(apiUrl('/api/progress'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: raw, keepalive: true,
+  }).catch(() => {});
+}
+
+/* ---------------- 一键归档 ---------------- */
+function openArchive() {
+  const ov = $('#archiveOverlay');
+  $('#archiveInbox').value = SETTINGS.inbox_dir || '';
+  $('#archiveCategory').value = '';
+  $('#archiveResult').hidden = true;
+  $('#archiveResult').textContent = '';
+  $('#archiveRun').disabled = false;
+  ov.hidden = false;
+  setTimeout(() => $('#archiveInbox').focus(), 30);
+}
+function closeArchive() { $('#archiveOverlay').hidden = true; }
+async function saveArchiveInbox() {
+  const input = $('#archiveInbox');
+  const dir = input.value.trim();
+  if (!dir) { toast('请先填写待整理目录'); return; }
+  const r = await apiPost('/api/settings', { inbox_dir: dir });
+  if (r && !r.error) { SETTINGS = r; toast('默认待整理目录已保存'); }
+  else toast((r && r.error) || '保存失败');
+}
+async function pickArchiveInbox() {
+  if (!window.reslibDesktop || !window.reslibDesktop.pickFolder) {
+    toast('当前网页模式不能弹出文件夹选择器，请直接填写路径');
+    return;
+  }
+  const dir = await window.reslibDesktop.pickFolder();
+  if (dir) $('#archiveInbox').value = dir;
+}
+async function runArchive() {
+  const run = $('#archiveRun'), result = $('#archiveResult');
+  const dir = $('#archiveInbox').value.trim();
+  const category = $('#archiveCategory').value;
+  if (!dir) { toast('请先填写待整理目录'); return; }
+  run.disabled = true; run.textContent = '归档与刮削中…'; result.hidden = false; result.textContent = '正在扫描并移动资源，请稍候……';
+  const r = await apiPost('/api/archive', { inbox_dir: dir, category, save_inbox: true });
+  if (r && r.ok) {
+    result.textContent = `已归档 ${r.moved || 0} 项\n刮削新资源 ${r.scraped || 0} 部` + (r.scrape_fail ? `，未匹配 ${r.scrape_fail} 部` : '') + '\n\n' + (r.output || '');
+    SETTINGS.inbox_dir = dir;
+    await Promise.all([refreshLib(), loadExtras()]);
+    if (LIB && LIB.stats) {
+      $('#nH').textContent = HEALTH ? HEALTH.filter(i => i.level === 'warn').length || '' : '';
+      $('#footSize').textContent = `合计 ${size(LIB.stats.total_size)}`;
+    }
+    render(); refreshTrees(); toast('归档完成');
+  } else {
+    result.textContent = (r && (r.error || r.output)) || '归档失败';
+    toast('归档失败');
+  }
+  run.disabled = false; run.textContent = '开始归档';
+}
+
+async function restartResourceLibrary() {
+  const b = $('#restartTopBtn');
+  if (!b || b.disabled) return;
+  b.disabled = true;
+  const label = b.textContent;
+  b.textContent = '重启中…';
+  try {
+    // 桌面壳可以完整重启展示服务，重启完成后它会重新载入首页。
+    if (window.reslibDesktop && window.reslibDesktop.retry) {
+      const ok = await window.reslibDesktop.retry();
+      if (!ok) throw new Error('桌面服务没有响应');
+      return;
+    }
+    // 直接用浏览器访问时，退回到同一套重新扫描逻辑，不要求用户手动开终端。
+    const r = await apiPost('/api/reindex', {});
+    if (!r || !r.ok) throw new Error((r && r.error) || '重新扫描失败');
+    await load();
+    render();
+    refreshTrees();
+    toast('资源库已重新扫描');
+  } catch (e) {
+    toast('重启失败：' + (e && e.message ? e.message : e));
+    b.disabled = false;
+    b.textContent = label;
+  }
 }
 
 const metaOf = dir => META[dir] || null;
@@ -1640,6 +1897,7 @@ async function load() {
   $('#nC').textContent = s.comic_works;
   $('#nK').textContent = s.manhwa_works || '';
   $('#nM').textContent = s.music_tracks;
+  $('#nR').textContent = Object.keys(PROG).length || '';
   $('#footSize').textContent = `合计 ${size(s.total_size)}`;
   $('#opdsUrl').textContent = (API_BASE || location.origin) + '/opds';
   $('#opdsBtn').onclick = () => {
@@ -1689,16 +1947,34 @@ function toast(msg) {
 /* ---------------- 路由 ---------------- */
 function go(tab) { TAB = tab; DETAIL = null; localStorage.tab = tab; syncUrl(); render(); }
 function openDetail(kind, idx) { DETAIL = { kind, idx }; syncUrl(); render(); $('main').scrollTop = 0; }
-function back() { DETAIL = null; syncUrl(); render(); }
+function openWork(kind, idx) {
+  closeOverlays();
+  TAB = kind; DETAIL = { kind, idx }; localStorage.tab = kind;
+  syncUrl(); render(); $('main').scrollTop = 0;
+}
+function back() {
+  // 有上一条站内路由时直接让浏览器回退，保持前进/后退栈的方向一致。
+  // 直接打开详情深链接时没有站内前一条记录，则原地替换为作品列表。
+  if (DETAIL && ROUTE_DEPTH > 0) { history.back(); return; }
+  DETAIL = null; syncUrl('replace'); render();
+}
+
+// 浏览器后退、手机左滑都会触发 popstate；按地址栏里的路由恢复页面，
+// 不再把它当成离开站点的动作。
+window.addEventListener('popstate', e => {
+  if (e.state && Number.isInteger(e.state.reslibDepth)) ROUTE_DEPTH = e.state.reslibDepth;
+  applyRouteFromLocation(e.state);
+});
 
 const TITLES = { health: '体检', anime: '动画', sleep: '助眠', movie: '电影', av: 'AV',
-                 comic: '漫画', manhwa: '韩漫', music: '音乐' };
+                 comic: '漫画', manhwa: '韩漫', music: '音乐', history: '记录' };
 
 function render() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.t === TAB));
   const v = $('#view'); v.innerHTML = '';
   const list = matches();
   if (DETAIL) return renderDetail(v);
+  if (TAB === 'history') return drawHistory(v);
   $('#pageTitle').textContent = TITLES[TAB];
   $('#pageSub').textContent = subFor(TAB, list);
   ({ health: drawHealth, anime: drawAnime, sleep: drawSleep, movie: drawMovies, av: drawAv,
@@ -1723,6 +1999,7 @@ function subFor(tab, L) {
   if (tab === 'comic') return `${L.comic.length} 部 / ${s.comic_chapters} 话`;
   if (tab === 'manhwa') return `${L.manhwa.length} 部 / ${(s.manhwa_chapters || 0)} 话 · 条漫竖向滚屏`;
   if (tab === 'music') return `${s.music_artists} 位 / ${s.music_tracks} 首`;
+  if (tab === 'history') return `${Object.keys(PROG).length} 条记录`;
   return `需要处理 ${HEALTH.filter(i => i.level === 'warn').length} 项`;
 }
 
@@ -1971,6 +2248,34 @@ function resumePage(path, total) {
   return 0;
 }
 
+// 漫画作品的文件可以按子目录归类。服务端仍把它们合并成一个作品，
+// 详情页再按相对路径的第一层还原「话 / 卷 / 番外 / 特典」等分组。
+const COMIC_GROUP_ORDER = ['话', '卷', '番外', '特典', '其他企划', '未分类'];
+function comicGroups(w) {
+  const root = String(w.dir || '').replace(/[\\/]+$/, '');
+  const map = new Map();
+  (w.chapters || []).forEach(ch => {
+    const raw = String(ch.path || '');
+    const rel = raw.startsWith(root) ? raw.slice(root.length).replace(/^[\\/]+/, '') : '';
+    const parts = rel.split(/[\\/]+/).filter(Boolean);
+    const label = parts.length > 1 ? parts[0] : '未分类';
+    if (!map.has(label)) map.set(label, []);
+    map.get(label).push(ch);
+  });
+  return Array.from(map.entries())
+    .sort((a, b) => {
+      const ai = COMIC_GROUP_ORDER.indexOf(a[0]);
+      const bi = COMIC_GROUP_ORDER.indexOf(b[0]);
+      return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi) || a[0].localeCompare(b[0], 'zh-CN');
+    })
+    .map(([label, chapters]) => ({
+      label: `${label}（${chapters.length}）`,
+      episodes: chapters,
+      resources: [],
+      extra: label !== '话',
+    }));
+}
+
 function renderDetail(v) {
   const kind = DETAIL.kind;
   const isAnime = kind === 'anime';
@@ -2099,7 +2404,9 @@ function renderDetail(v) {
       groups.push({ label: isMovie ? '花絮 / 预告' : '特典', episodes: w.extras, resources: [], extra: true });
     }
   } else {
-    groups = [{ label: '章节', episodes: w.chapters || [], resources: [], extra: false }];
+    groups = isManhwa
+      ? [{ label: '章节', episodes: w.chapters || [], resources: [], extra: false }]
+      : comicGroups(w);
   }
   // 资源分组使用两级选择：版本用下拉框切换，版本内的季别/资源类别用按钮切换。
   // 一次只渲染当前分组，避免把所有版本和 CDs/Scans 同时铺在页面上。
@@ -2420,7 +2727,8 @@ async function playAudio(path, title, opts = {}) {
   const url = info.mode === 'transcode'
     ? apiUrl('/transcode?path=' + encodeURIComponent(path) + '&start=0&h=0')
     : apiUrl('/play?path=' + encodeURIComponent(path));
-  a._path = path; a._title = title;
+  a._path = path; a._title = title; a._finished = false;
+  saveProgressEntry(path, { pos: resume, title, kind: 'audio', completed: false });
   a.src = url; a.load();
   a.play().catch(() => {});
   musicSync();
@@ -2429,20 +2737,20 @@ function stopMusicPlayback() {
   const a = $('#musicAudio');
   if (!a) return;
   a.pause(); a.removeAttribute('src'); a.load();
+  a._path = ''; a._title = ''; a._finished = false;
   $('#musicbar').classList.remove('on');
   $('#musicQueuePanel').classList.remove('on');
   $('#nowbar').classList.remove('musicActive');
 }
-function musicSaveProgress(force = false) {
+function musicSaveProgress(force = false, completed = false, beacon = false) {
   const a = $('#musicAudio'), path = a && a._path;
   if (!path || !Number.isFinite(a.duration) || !a.duration) return;
   const now = Date.now();
   if (!force && now - musicLastSave < 5000) return;
   musicLastSave = now;
-  const pos = Math.max(0, Math.min(1, a.currentTime / a.duration));
-  PROG[path] = { pos, title: a._title || path, at: now / 1000 };
-  fetch(apiUrl('/api/progress'), { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: path, pos, title: a._title || path }) }).catch(() => {});
+  completed = completed || !!a._finished;
+  const pos = completed ? 1 : Math.max(0, Math.min(1, a.currentTime / a.duration));
+  saveProgressEntry(path, { pos, title: a._title || path, kind: 'audio', completed }, beacon);
 }
 /* 音乐的队列与播放控件接线。 */
 (function musicWire() {
@@ -2453,9 +2761,9 @@ function musicSaveProgress(force = false) {
   renderMusicQueue();
   a.addEventListener('loadedmetadata', musicSync);
   a.addEventListener('timeupdate', () => { musicSync(); musicSaveProgress(); });
-  a.addEventListener('play', musicSync);
+  a.addEventListener('play', () => { a._finished = false; musicSync(); });
   a.addEventListener('pause', () => { musicSync(); musicSaveProgress(true); });
-  a.addEventListener('ended', () => { musicSaveProgress(true); musicStep(1); });
+  a.addEventListener('ended', () => { a._finished = true; musicSaveProgress(true, true); musicStep(1); });
   a.addEventListener('error', () => { $('#musicInfo').textContent = '播放失败'; musicSync(); });
   $('#musicPlay').onclick = () => { if (a.paused) a.play().catch(() => {}); else a.pause(); };
   $('#musicPrev').onclick = () => musicStep(-1);
@@ -2567,30 +2875,35 @@ async function play(path, title) {
   const how = { direct: '直接播放', remux: '换壳播放（不重编码）', transcode: '实时转码' }[mode] || mode;
   $('#vpInfo').textContent = `${vcodec} · ${how}`;
 
-  // 换壳要先跑一遍（只换容器，实测整集不到 1 秒），跑完再设 src，
-  // 这样界面能明确显示「准备中」，失败也看得到原因。
+  // 换壳视频先流式开播，后台再生成可拖动缓存，避免首次点击等待整集换壳。
   if (mode === 'remux') {
-    vpFail('准备中…（换壳成 MP4，不重编码）', path, title, false);
-    let r;
-    try {
-      r = await apiPost('/api/prepare', { path });
-    } catch (e) { r = { ok: false, error: String(e) }; }
-    if (!vp) return;                       // 期间用户关掉了
-    if (!r.ok) {
-      if (r.mode === 'transcode') {        // 换不了壳就转码兜底
-        vp.mode = 'transcode'; vp.native = false;
-        $('#vpInfo').textContent = `${vcodec} · 实时转码`;
-      } else {
-        vpFail('准备失败\n' + (r.error || ''), path, title, true);
+    vpFail('网页流式换壳中…', path, title, false);
+    // 不阻塞首帧。接口只负责安排后台缓存，真正的视频请求马上走 /play。
+    apiPost('/api/prepare', { path }).then(r => {
+      if (!vp || vp.path !== path) return;
+      if (!r.ok) {
+        vpFail('网页播放准备失败\n' + (r.error || ''), path, title, true);
         return;
       }
-    }
+      if (r.stream) {
+        $('#vpInfo').textContent = r.preparing
+          ? `${vcodec} · 流式播放（后台缓存中）`
+          : `${vcodec} · 流式换壳（不落盘）`;
+      }
+    }).catch(e => {
+      if (vp && vp.path === path) $('#vpInfo').textContent = `${vcodec} · 流式播放`;
+    });
   }
 
   buildSub();
   buildEps();
   refreshTrees();          // 左上播放列表跟着高亮当前这部
-  vpLoadAt(resumeSec(path, vp.dur), true);
+  const resume = resumeSec(path, vp.dur);
+  saveProgressEntry(path, {
+    pos: vp.dur > 0 ? resume / vp.dur : 0,
+    title, kind: 'video', completed: false,
+  });
+  vpLoadAt(resume, true);
 }
 
 function vpFail(msg, path, title, showPot) {
@@ -2740,16 +3053,13 @@ function buildSub() {
 }
 
 
-function vpSave() {
+function vpSave(completed = false, beacon = false) {
   if (!vp) return;
   const dur = vp.dur || vpEl().duration;
   if (!dur || !isFinite(dur) || dur <= 0) return;
-  const pos = Math.max(0, Math.min(1, vpAbs() / dur));
-  PROG[vp.path] = { pos, title: vp.title, at: Date.now() / 1000 };
-  fetch(apiUrl('/api/progress'), {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: vp.path, pos, title: vp.title })
-  }).catch(() => {});
+  completed = completed || !!vp.finished;
+  const pos = completed ? 1 : Math.max(0, Math.min(1, vpAbs() / dur));
+  saveProgressEntry(vp.path, { pos, title: vp.title, kind: 'video', completed }, beacon);
 }
 
 function closePlayer() {
@@ -2811,10 +3121,10 @@ function vpFullscreen() {
     const now = Date.now();
     if (now - vpLastSave > 5000) { vpLastSave = now; vpSave(); }
   });
-  v.addEventListener('play', vpSyncUI);
+  v.addEventListener('play', () => { if (vp) vp.finished = false; vpSyncUI(); vpSave(false); });
   v.addEventListener('pause', () => { vpSyncUI(); vpSave(); });
   // 转码流播完（ffmpeg 输出结束）就是片尾
-  v.addEventListener('ended', () => { vpSyncUI(); vpSave(); });
+  v.addEventListener('ended', () => { if (vp) vp.finished = true; vpSyncUI(); vpSave(true); });
   v.addEventListener('progress', vpSyncUI);
   const clear = () => { $('#vpMsg').innerHTML = ''; };
   v.addEventListener('loadeddata', clear);
@@ -2895,6 +3205,120 @@ function vpFullscreen() {
   });
 })();
 
+const VIDEO_PATH_RE = /\.(?:mp4|m4v|mkv|webm|avi|mov|wmv|ts|m2ts|flv|rmvb)$/i;
+
+function historyKind(path, item, own) {
+  if (item && item.kind === 'comic') return own && own.kind === 'manhwa' ? '韩漫' : '漫画';
+  if (item && item.kind === 'audio') return '音乐';
+  if (item && item.kind === 'video') return own ? (TITLES[own.kind] || '视频') : '视频';
+  if (own && own.kind === 'comic') return '漫画';
+  if (own && own.kind === 'manhwa') return '韩漫';
+  if (own && ['anime', 'sleep', 'movie', 'av'].includes(own.kind)) return TITLES[own.kind];
+  if (AUDIO_PATH_RE.test(path)) return '音乐';
+  if (VIDEO_PATH_RE.test(path)) return '视频';
+  return '文件';
+}
+
+function historyPathExists(path, own) {
+  if (own) return true;
+  return (LIB.music || []).some(w => (w.tracks || []).some(t => t.path === path));
+}
+
+function historyOpen(path, item) {
+  const own = workOfPath(path);
+  if (own && (own.kind === 'comic' || own.kind === 'manhwa')) {
+    const c = (own.w.chapters || [])[own.idx];
+    if (c) {
+      const done = item.completed === true || Number(item.pos) >= 0.995;
+      const page = done ? 0 : (Number.isFinite(Number(item.page)) ? Number(item.page)
+        : resumePage(path, c.pages || 0));
+      openComic(path, item.title || own.w.title + ' ' + c.label, isPaged(c.ext), page);
+      return;
+    }
+  }
+  if (own && ['anime', 'sleep', 'movie', 'av'].includes(own.kind)) {
+    play(path, item.title || own.w.title);
+    return;
+  }
+  if (item.kind === 'audio' || AUDIO_PATH_RE.test(path)
+      || (LIB.music || []).some(w => (w.tracks || []).some(t => t.path === path))) {
+    playAudio(path, item.title || path.split(/[\\/]/).pop());
+    return;
+  }
+  if (VIDEO_PATH_RE.test(path)) {
+    play(path, item.title || path.split(/[\\/]/).pop());
+    return;
+  }
+  window.open(apiUrl('/file?path=' + encodeURIComponent(path)), '_blank');
+}
+
+async function forgetHistory(path) {
+  delete PROG[path];
+  const nr = $('#nR');
+  if (nr) nr.textContent = Object.keys(PROG).length || '';
+  drawNow();
+  if (TAB === 'history') render();
+  await apiPost('/api/progress', { key: path, clear: true });
+}
+
+async function clearHistory() {
+  if (!Object.keys(PROG).length || !confirm('清空全部浏览记录？')) return;
+  PROG = {};
+  const nr = $('#nR');
+  if (nr) nr.textContent = '';
+  drawNow();
+  if (TAB === 'history') render();
+  await apiPost('/api/progress', { clear_all: true });
+  toast('浏览记录已清空');
+}
+
+function drawHistory(v) {
+  $('#pageTitle').textContent = TITLES.history;
+  const items = Object.entries(PROG)
+    .sort((a, b) => (Number(b[1] && b[1].at) || 0) - (Number(a[1] && a[1].at) || 0));
+  $('#pageSub').textContent = `${items.length} 条记录`;
+  const head = el('div', 'historyHead');
+  head.appendChild(el('div', 'sec', '浏览记录'));
+  if (items.length) {
+    const clear = el('button', 'pillbtn ghost', '清空记录');
+    clear.onclick = clearHistory;
+    head.appendChild(clear);
+  }
+  v.appendChild(head);
+  if (!items.length) {
+    v.appendChild(el('div', 'empty', '还没有浏览记录\n打开漫画或播放视频后会自动保存。'));
+    return;
+  }
+  const list = el('div', 'historyList');
+  for (const [path, raw] of items) {
+    const p = raw && typeof raw === 'object' ? raw : {};
+    const own = workOfPath(path);
+    const exists = historyPathExists(path, own);
+    const row = el('div', 'historyItem' + (exists ? '' : ' missing'));
+    const main = el('div', 'hmain');
+    main.appendChild(el('div', 'htitle', esc(p.title || path.split(/[\\/]/).pop())));
+    const when = p.at ? fmtTime(Number(p.at)) : '时间未知';
+    main.appendChild(el('div', 'hmeta', historyKind(path, p, own) + ' · ' + when));
+    row.appendChild(main);
+    const pos = Math.max(0, Math.min(1, Number(p.pos) || 0));
+    const done = p.completed === true || pos >= 0.995;
+    row.appendChild(el('span', 'hstate', done
+      ? ((historyKind(path, p, own) === '漫画' || historyKind(path, p, own) === '韩漫') ? '已读完' : '已看完')
+      : (Math.round(pos * 100) + '%')));
+    const open = el('button', 'pillbtn hopen', exists ? (done ? '重看' : '继续') : '文件不存在');
+    open.disabled = !exists;
+    open.onclick = () => historyOpen(path, p);
+    row.appendChild(open);
+    const rm = el('button', 'hremove', '×');
+    rm.title = '删除这条记录';
+    rm.setAttribute('aria-label', '删除这条记录');
+    rm.onclick = () => forgetHistory(path);
+    row.appendChild(rm);
+    list.appendChild(row);
+  }
+  v.appendChild(list);
+}
+
 function drawNow() {
   const items = Object.entries(PROG).sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
   const nb = $('#nowbar');
@@ -2915,9 +3339,33 @@ function drawNow() {
 const PAGED_EXT = ['.cbz', '.pdf'];
 const isPaged = ext => PAGED_EXT.includes(String(ext || '').toLowerCase());
 
+/* 漫画的章节顺序不能直接拿服务端的扁平数组硬加减：
+   详情页会按相对目录拆成「话 / 卷 / 番外 / 特典」等分组，
+   翻到上一话/下一话也必须沿用这套顺序。普通漫画按分组顺序展开，
+   韩漫保持服务端给出的章节顺序。 */
+function chapterNavOf(own) {
+  if (!own || !own.w) return [];
+  if (own.kind !== 'comic') return own.w.chapters || [];
+  const out = [];
+  comicGroups(own.w).forEach(group => {
+    const groupLabel = String(group.label || '').replace(/（\d+）$/, '');
+    (group.episodes || []).forEach(ch => {
+      out.push(Object.assign({}, ch, { chapterGroup: groupLabel }));
+    });
+  });
+  return out;
+}
+
+function chapterNavLabel(ch, i) {
+  const text = epOptionText(ch.label, i, '话');
+  return ch.chapterGroup && ch.chapterGroup !== '话'
+    ? ch.chapterGroup + ' · ' + text
+    : text;
+}
+
 /* 切到同一部作品的另一话。下拉和左侧目录都走它 —— 逻辑只写一处。 */
 function openChapter(own, i) {
-  const c = (own.w.chapters || [])[i];
+  const c = chapterNavOf(own)[i];
   if (!c) return;
   savePlace();                       // 先记住这一本读到哪了
   openComic(c.path, own.w.title + ' ' + c.label, isPaged(c.ext), 0);
@@ -2929,8 +3377,11 @@ function openChapter(own, i) {
 function stepChapter(delta) {
   const own = workOfPath(reader.path);
   if (!own) return toast('找不到这一部的话数');
-  const i = own.idx + delta;
-  const n = (own.w.chapters || []).length;
+  const chapters = chapterNavOf(own);
+  const current = chapters.findIndex(c => c.path === reader.path);
+  if (current < 0) return toast('当前话不在可跳转目录中');
+  const i = current + delta;
+  const n = chapters.length;
   if (i < 0) return toast('已经是第一话');
   if (i >= n) return toast('已经是最后一话');
   openChapter(own, i);
@@ -2943,7 +3394,8 @@ function buildChaps() {
   const sel = $('#rChap');
   sel.innerHTML = '';
   const own = workOfPath(reader.path);
-  const chs = own ? (own.w.chapters || []) : [];
+  const chs = own ? chapterNavOf(own) : [];
+  const currentIdx = chs.findIndex(c => c.path === reader.path);
   // —— 左侧目录（本话列表）——
   const pane = $('#rChapPane');
   pane.innerHTML = '';
@@ -2951,9 +3403,9 @@ function buildChaps() {
     pane.appendChild(el('div', 'empty', '没找到这一部的话数'));
   } else {
     chs.forEach((c, i) => {
-      const cur = own.idx === i;
+      const cur = currentIdx === i;
       const b = el('button', 'titem flat' + (cur ? ' cur' : ''));
-      b.appendChild(el('span', 'tt', esc(epOptionText(c.label, i, '话'))));
+      b.appendChild(el('span', 'tt', esc(chapterNavLabel(c, i))));
       b.title = c.path || '';
       b.onclick = () => { if (!cur) openChapter(own, i); };
       pane.appendChild(b);
@@ -2972,11 +3424,11 @@ function buildChaps() {
   sel.style.display = '';
   sel.disabled = false;
   chs.forEach((c, i) => {
-    const o = el('option', '', epOptionText(c.label, i, '话'));
+     const o = el('option', '', chapterNavLabel(c, i));
     o.value = String(i);
     sel.appendChild(o);
   });
-  sel.value = String(own.idx);
+   sel.value = String(currentIdx < 0 ? 0 : currentIdx);
   sel.title = own.w.title + '　共 ' + chs.length + ' 话';
   sel.onchange = () => {
     const i = parseInt(sel.value, 10);
@@ -2986,10 +3438,13 @@ function buildChaps() {
   // 换话按钮的可用状态：到头就置灰。置灰比"点了弹提示"好 ——
   // 一眼就知道没有下一话，不必先点一次才知道。
   const pv = $('#rChapPrev'), nx = $('#rChapNext');
-  pv.disabled = own.idx <= 0;
-  nx.disabled = own.idx >= chs.length - 1;
-  pv.title = '上一话' + (own.idx > 0 ? '（' + epOptionText(chs[own.idx - 1].label, own.idx - 1, '话') + '）' : '');
-  nx.title = '下一话' + (own.idx < chs.length - 1 ? '（' + epOptionText(chs[own.idx + 1].label, own.idx + 1, '话') + '）' : '');
+   pv.disabled = currentIdx <= 0;
+   nx.disabled = currentIdx < 0 || currentIdx >= chs.length - 1;
+   pv.title = '上一话（-）' + (currentIdx > 0 ? ' · ' + chapterNavLabel(chs[currentIdx - 1], currentIdx - 1) : '');
+   nx.title = '下一话（=）' + (currentIdx >= 0 && currentIdx < chs.length - 1
+     ? ' · ' + chapterNavLabel(chs[currentIdx + 1], currentIdx + 1) : '');
+   pv.setAttribute('aria-label', '上一话，快捷键 -');
+   nx.setAttribute('aria-label', '下一话，快捷键 =');
 }
 
 const pageUrl = n => apiUrl(`/api/comic/page?path=${encodeURIComponent(reader.path)}&n=${n}`);
@@ -3024,7 +3479,11 @@ const spreadOfPage = n => {
 async function openComic(path, title, paged, startPage) {
   // 能分页的才进我们的阅读器：cbz（zip 图片）+ **pdf（服务端逐页渲染）**。
   // 其它（cbr/cb7…）确实没有内建支持，退回原文件交给浏览器是对的。
-  if (!paged) { window.open(apiUrl('/file?path=' + encodeURIComponent(path)), '_blank'); return; }
+  if (!paged) {
+    saveProgressEntry(path, { pos: 0, title, kind: 'comic', completed: false });
+    window.open(apiUrl('/file?path=' + encodeURIComponent(path)), '_blank');
+    return;
+  }
   const info = await fetch(apiUrl('/api/comic?path=' + encodeURIComponent(path))).then(r => r.json());
   if (info.error) return toast('打不开：' + info.error);
   reader = { pages: info.pages || [], spreads: [], si: 0, path, title };
@@ -3036,6 +3495,7 @@ async function openComic(path, title, paged, startPage) {
   refreshTrees();                              // 左侧作品树高亮正在读的这一部（要在 .on 之后）
   document.body.classList.add('reading');      // 锁住背景滚动
   refreshSpreads(startPage || 0);
+  window.reslibDesktop?.setReaderActive?.(true);
 }
 
 /* ---------------- 每部作品自己的阅读方式 ----------------
@@ -3381,7 +3841,7 @@ function step(d) {
   savePlace();
 }
 
-function savePlace() {
+function savePlace(beacon = false) {
   const total = reader.pages.length;
   if (!total) return;
   // 两种模式对 reader.si 的解释不同：翻页模式是「第几屏」，滚屏模式是「第几页」。
@@ -3394,12 +3854,11 @@ function savePlace() {
     if (!sp) return;
     page = sp[0];
   }
-  PROG[reader.path] = { pos: page / Math.max(1, total),
-                        title: reader.title, at: Date.now() / 1000 };
-  fetch(apiUrl('/api/progress'), {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: reader.path, pos: PROG[reader.path].pos, title: reader.title })
-  }).catch(() => {});
+  const completed = page >= total - 1;
+  saveProgressEntry(reader.path, {
+    pos: completed ? 1 : page / Math.max(1, total),
+    title: reader.title, kind: 'comic', completed, page, pages: total,
+  }, beacon);
 }
 
 function syncToggles() {
@@ -3422,8 +3881,8 @@ function syncToggles() {
   const pv = rmode.rtl ? '右侧上一页' : '左侧上一页';
   $('#rHint').textContent = rmode.scroll
     ? (narrow ? '上下滑动阅读 · 双指捏合缩放 · ←→ 换话'
-              : '↑ ↓ / 空格 滚动 · ← → 换话 · Ctrl+滚轮 缩放 · S 切回翻页 · Esc 关闭')
-    : (narrow ? `${nx} · ${pv} · 滑动翻页` : '← → 翻页 · 空格翻页 · Esc 关闭');
+              : '↑ ↓ / 空格 滚动 · ← → 或 - = 换话 · Ctrl+滚轮 缩放 · S 切回翻页 · Esc 关闭')
+    : (narrow ? `${nx} · ${pv} · 滑动翻页` : '← → / [ ] 翻页 · - = 换话 · 空格翻页 · Esc 关闭');
 }
 
 /* ---------------- 全屏沉浸模式 ----------------
@@ -3528,6 +3987,7 @@ function closeReader() {
   if (stripIO) { stripIO.disconnect(); stripIO = null; }
   clearTimeout(stripTimer); clearTimeout(placeTimer);
   $('#reader').classList.remove('on', 'scroll');
+  window.reslibDesktop?.setReaderActive?.(false);
   document.body.classList.remove('reading');
   if (DETAIL) render();
 }
@@ -3565,7 +4025,21 @@ document.addEventListener('click', e => {
   const nb = e.target.closest('nav button');
   if (nb) { go(nb.dataset.t); navDrawer.close(); }
 });
-$('#q').addEventListener('input', e => { QUERY = e.target.value; render(); });
+let searchTimer = 0;
+$('#q').addEventListener('input', e => {
+  QUERY = e.target.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => render(), 90);
+});
+$('#archiveTopBtn').onclick = openArchive;
+$('#restartTopBtn').onclick = restartResourceLibrary;
+$('#archiveClose').onclick = closeArchive;
+$('#archiveCancel').onclick = closeArchive;
+$('#archiveSave').onclick = saveArchiveInbox;
+$('#archivePick').onclick = pickArchiveInbox;
+$('#archiveRun').onclick = runArchive;
+$('#archiveOverlay').addEventListener('click', e => { if (e.target.id === 'archiveOverlay') closeArchive(); });
+
 $('#rPrev').onclick = () => step(-1);
 $('#rNext').onclick = () => step(1);
 $('#rClose').onclick = closeReader;
@@ -3684,6 +4158,18 @@ if (window.ResizeObserver) {
   }).observe($('#rstage'));
 }
 
+// 桌面端失焦时由系统全局快捷键传入动作，复用页面翻页及分类换话逻辑。
+window.reslibDesktop?.onReaderAction?.(action => {
+  if (!$('#reader').classList.contains('on') || $('#vp').classList.contains('on')) return;
+  if (action === 'page-prev') step(-1);
+  else if (action === 'page-next') step(1);
+  else if (action === 'chapter-prev') stepChapter(-1);
+  else if (action === 'chapter-next') stepChapter(1);
+});
+window.reslibDesktop?.onReaderShortcutStatus?.(failed => {
+  if (failed.length) toast('全局快捷键 ' + failed.join(' ') + ' 注册失败，可能已被其他程序占用');
+});
+
 document.addEventListener('keydown', e => {
   // 窄屏侧栏抽屉开着时，Esc 先收起它（比让 Esc 冒到播放器/阅读器更符合预期）
   if (e.key === 'Escape' && document.body.classList.contains('navopen')) {
@@ -3730,11 +4216,24 @@ document.addEventListener('keydown', e => {
     if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleReaderFull(); return; }
     if (e.key === 'l' || e.key === 'L') { e.preventDefault(); toggleRSide(); return; }
     if (e.key === 's' || e.key === 'S') { e.preventDefault(); flipMode('scroll'); return; }
-    // 缩放键。+/- 在多数键盘上要配合 Shift，所以把 '=' 和 '_' 也一并认下；
-    // 数字小键盘的 + - 在 e.key 里同样是 '+' '-'，自然覆盖。
-    if (e.key === '+' || e.key === '=') { e.preventDefault(); setZoom(rzoom * ZOOM_STEP); return; }
-    if (e.key === '-' || e.key === '_') { e.preventDefault(); setZoom(rzoom / ZOOM_STEP); return; }
+    // 缩放键保留 + / _；主键盘的 - / = 留给上一话 / 下一话。
+    if (e.key === '+') { e.preventDefault(); setZoom(rzoom * ZOOM_STEP); return; }
+    if (e.key === '_') { e.preventDefault(); setZoom(rzoom / ZOOM_STEP); return; }
     if (e.key === '0') { e.preventDefault(); setZoom(1); return; }
+    // - / = 是全局换话键：不随阅读方向改变语义，始终 - 上一话、= 下一话。
+    // 用 code 兜底不同键盘布局；带修饰键时放行，避免抢输入法快捷键。
+    const chapterNext = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
+      && (e.key === '=' || e.code === 'Equal');
+    const chapterPrev = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
+      && (e.key === '-' || e.code === 'Minus');
+    if (chapterNext || chapterPrev) { e.preventDefault(); stepChapter(chapterNext ? 1 : -1); return; }
+    // 方括号是全局快速翻页键：不随阅读方向改变语义，始终 [ 上一页、] 下一页。
+    // 用 code 兜底布局差异，但带修饰键时放行，避免抢浏览器或输入法快捷键。
+    const bracketNext = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
+      && (e.key === ']' || e.code === 'BracketRight');
+    const bracketPrev = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
+      && (e.key === '[' || e.code === 'BracketLeft');
+    if (bracketNext || bracketPrev) { e.preventDefault(); step(bracketNext ? 1 : -1); return; }
     // 滚屏模式：上下键就是滚动（浏览器默认行为即可），左右键用来**换话**。
     // 条漫里没有「左边一页」的概念，把左右键拿去做横向移动没人会想要；
     // 而一路滑到话末之后，最自然的下一步就是翻下一话。
@@ -3753,14 +4252,21 @@ document.addEventListener('keydown', e => {
     }
     if (fwd.includes(e.key)) { e.preventDefault(); step(1); return; }
     if (back.includes(e.key)) { e.preventDefault(); step(-1); return; }
-    if (e.key === 'Home') { e.preventDefault(); reader.si = 0; renderSpread(); return; }
-    if (e.key === 'End') { e.preventDefault(); reader.si = reader.spreads.length - 1; renderSpread(); return; }
+    if (e.key === 'Home') { e.preventDefault(); reader.si = 0; renderSpread(); savePlace(); return; }
+    if (e.key === 'End') { e.preventDefault(); reader.si = reader.spreads.length - 1; renderSpread(); savePlace(); return; }
     if (e.key === 'd' || e.key === 'D') { flipMode('dual'); return; }
     if (e.key === 'r' || e.key === 'R') { flipMode('rtl'); return; }
     return;
   }
   if (e.key === 'Escape' && DETAIL) back();
   if (e.key === '/' && document.activeElement !== $('#q')) { e.preventDefault(); $('#q').focus(); }
+});
+
+window.addEventListener('pagehide', () => {
+  window.reslibDesktop?.setReaderActive?.(false);
+  if (reader && reader.path && $('#reader').classList.contains('on')) savePlace(true);
+  if (vp) vpSave(false, true);
+  musicSaveProgress(true, false, true);
 });
 
 load();

@@ -1,1 +1,1 @@
-window.RESLIB_API_BASE = "http://127.0.0.1:8777";
+window.RESLIB_API_BASE = "";
