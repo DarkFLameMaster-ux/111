@@ -126,6 +126,7 @@ foreach ($selectedRole in $roles) {
     "desktop/preload.js",
     "desktop/reader-shortcuts.js",
     "backend/runtime.py",
+    "backend/catalog.py",
     "backend/display/compat.py",
     "backend/$frontend/server.py",
     "frontend/$frontend/dist/index.html",

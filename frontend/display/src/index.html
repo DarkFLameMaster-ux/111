@@ -2164,11 +2164,11 @@ function renderDetail(v) {
   groups.forEach((gr, i) => {
     const rawLabel = String(gr.label || ('分组 ' + (i + 1)));
     const m = rawLabel.match(/^版本\s*(\d+)\s*[·•]\s*(.+)$/);
-    const versionNo = m ? m[1] : '1';
-    const versionLabel = '版本 ' + versionNo;
+    const versionNo = gr.version_id || (m ? m[1] : '1');
+    const versionLabel = gr.version_label || ('版本 ' + (m ? m[1] : '1'));
     let set = versionMap.get(versionNo);
     if (!set) {
-      set = { key: versionNo, label: versionLabel, groups: [] };
+      set = { key: versionNo, legacyKey: m ? m[1] : '1', label: versionLabel, groups: [] };
       versionMap.set(versionNo, set);
       versionSets.push(set);
     }
@@ -2179,7 +2179,7 @@ function renderDetail(v) {
   // 版本偏好由服务端永久保存，按刮削条目标识索引，直到下次修改。
   const versionWorkKey = String(w.bgm_id || w.title || w.dir || (kind + ':' + DETAIL.idx));
   const savedVersionKey = loadVersionPrefs()[versionWorkKey];
-  let initialVersion = versionSets.findIndex(set => String(set.key) === String(savedVersionKey));
+  let initialVersion = versionSets.findIndex(set => String(set.key) === String(savedVersionKey) || set.legacyKey === String(savedVersionKey));
   if (initialVersion < 0) initialVersion = 0;
   let versionSelect = null;
   if (isVideo && versionSets.length > 1) {

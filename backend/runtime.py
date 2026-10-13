@@ -10,6 +10,8 @@ import time
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
+from catalog import Catalog, KINDS
+
 APP_ROOT = Path(__file__).resolve().parent.parent
 READ_API = {
     "/api/library", "/api/extras", "/api/poster", "/api/progress",
@@ -75,6 +77,58 @@ def install(lib, role, frontend, version):
     preference_file = lib.LOG_DIR / "playback-preferences.json"
     links_file = lib.LOG_DIR / "access-links.json"
     lib.UI_FILE = frontend
+    catalog = Catalog(lib, role)
+    lib.build_index = catalog.build
+    if role == "display" and hasattr(lib, "safe_path"):
+        original_safe_path = lib.safe_path
+
+        def visible_path(value):
+            path = original_safe_path(value)
+            if not catalog.allowed(path):
+                raise PermissionError("该资源已隐藏或从目录删除")
+            return path
+
+        lib.safe_path = visible_path
+
+    if role == "display" and hasattr(lib, "opds_novel_list"):
+        def novel_entries(query=None):
+            entries = []
+            for work in lib.SERVER_INDEX.get("novel", []):
+                for book in work.get("books", []):
+                    path = Path(book["path"])
+                    if query and query not in (work["title"] + " " + book["label"]).lower():
+                        continue
+                    entries.append(lib._entry(work["title"] + " · " + book["label"], lib.uid_of(path),
+                                              lib._mtime(path), lib._book_links(path),
+                                              content=lib.human(book.get("size", 0))))
+            return entries
+
+        def novel_feed():
+            return lib._feed("urn:reslib:nav:novel", "小说", "/opds/novel", novel_entries(), lib.ACQ_TYPE)
+
+        def search_feed(query):
+            from urllib.parse import quote
+            keyword = str(query or "").strip().lower()
+            entries = []
+            if keyword:
+                for kind in ("comic", "manhwa"):
+                    for work in lib.SERVER_INDEX.get(kind, []):
+                        for chapter in work.get("chapters", []):
+                            if keyword not in (work["title"] + " " + chapter["label"]).lower():
+                                continue
+                            path = Path(chapter["path"])
+                            links = lib._book_links(path)
+                            if lib.pse_ok(path, chapter):
+                                links.append(("http://vaemendis.net/opds-pse/stream",
+                                              f"/opds/pse?path={quote(str(path))}&page={{pageNumber}}", "image/jpeg",
+                                              f'pse:count={lib._q(str(chapter["pages"]))}'))
+                            entries.append(lib._entry(work["title"] + " · " + chapter["label"], lib.uid_of(path),
+                                                      lib._mtime(path), links, content=lib.human(chapter["size"])))
+                entries.extend(novel_entries(keyword))
+            return lib._feed("urn:reslib:search:" + quote(query), "搜索：" + query,
+                             "/opds/search", entries[:200], lib.ACQ_TYPE)
+
+        lib.opds_novel_list, lib.opds_search = novel_feed, search_feed
 
     def links():
         display = os.environ.get("RESLIB_PUBLIC_DISPLAY_URL", "http://127.0.0.1:8777")
@@ -92,6 +146,12 @@ def install(lib, role, frontend, version):
             return {"anime_version_preferences": lib.load_settings().get("anime_version_preferences", {})}
 
     class Handler(base):
+        def _read_json(self):
+            body = super()._read_json()
+            if role == "display" and isinstance(body, dict) and body.get("path") and not catalog.allowed(body["path"]):
+                raise PermissionError("该资源已隐藏或从目录删除")
+            return body
+
         def _gate(self):
             if not super()._gate():
                 return False
@@ -110,6 +170,7 @@ def install(lib, role, frontend, version):
             url = urlparse(self.path)
             route = url.path
             try:
+                catalog.sync(self.server)
                 if route == "/api/service":
                     self._json({"application": "moonshadow-reslib", "role": role, "version": version})
                     return
@@ -124,9 +185,15 @@ def install(lib, role, frontend, version):
                         self._json({"error": "此功能已移至资源管理程序"}, 403)
                         return
                     if route == "/api/extras":
-                        _, metadata = lib._load_meta_cached()
-                        self._json({"meta": metadata})
+                        self._json({"meta": catalog.metadata(self.server.index)})
                         return
+                    if route == "/api/progress":
+                        self._json({path: value for path, value in lib.load_progress().items() if catalog.allowed(path)})
+                        return
+                    if route == "/api/poster":
+                        directory = parse_qs(url.query).get("dir", [""])[0]
+                        if directory and not catalog.allowed(directory):
+                            raise PermissionError("该资源已隐藏或从目录删除")
                 if route in {"/api/library", "/api/categories"}:
                     with index_lock:
                         last = getattr(self.server, "reslib_index_at", 0)
@@ -134,6 +201,17 @@ def install(lib, role, frontend, version):
                             lib._set_server_index(self.server, lib.build_index())
                             self.server.reslib_index_at = time.monotonic()
                 if role == "management":
+                    if route == "/api/resources":
+                        query = parse_qs(url.query)
+                        with index_lock:
+                            if not catalog.raw:
+                                lib._set_server_index(self.server, lib.build_index())
+                        self._json({"resource": catalog.detail(query.get("kind", [None])[0], query.get("dir", [None])[0])})
+                        return
+                    if route == "/api/extras":
+                        import subscribe
+                        self._json({"meta": catalog.metadata(self.server.index), "subs": subscribe.load_subs()})
+                        return
                     if route == "/api/categories":
                         import classify
                         self._json(category_catalog(self.server.index, classify.CATEGORY_DIRS,
@@ -149,6 +227,8 @@ def install(lib, role, frontend, version):
                 super().do_GET()
             except (ValueError, TypeError) as exc:
                 self._json({"error": str(exc)}, 400)
+            except PermissionError as exc:
+                self._json({"error": str(exc)}, 403)
             except Exception as exc:
                 self._json({"error": str(exc)}, 500)
 
@@ -157,6 +237,7 @@ def install(lib, role, frontend, version):
                 return
             route = urlparse(self.path).path
             try:
+                catalog.sync(self.server)
                 if role == "display":
                     if route == "/api/preferences":
                         body = self._read_json()
@@ -178,6 +259,14 @@ def install(lib, role, frontend, version):
                 if role == "management" and route == "/api/subscriptions":
                     self._subscription()
                     return
+                if role == "management" and route == "/api/resources":
+                    with index_lock:
+                        if not catalog.raw:
+                            lib._set_server_index(self.server, lib.build_index())
+                        resource = catalog.update(self._read_json())
+                        lib._set_server_index(self.server, catalog.project())
+                    self._json({"ok": True, "resource": resource})
+                    return
                 if role == "management" and route == "/api/links":
                     display = str(self._read_json().get("display", "")).strip()
                     parsed = urlparse(display)
@@ -197,6 +286,8 @@ def install(lib, role, frontend, version):
                 super().do_POST()
             except (ValueError, TypeError) as exc:
                 self._json({"error": str(exc)}, 400)
+            except PermissionError as exc:
+                self._json({"error": str(exc)}, 403)
             except Exception as exc:
                 self._json({"error": str(exc)}, 500)
 

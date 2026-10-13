@@ -88,7 +88,7 @@ class BoundaryTests(unittest.TestCase):
 
     def test_display_blocks_management_and_keeps_playback(self):
         self.serve('display')
-        for route in ['settings', 'archive', 'reindex', 'scrape', 'subs', 'subscriptions', 'cache', 'comic/cache', 'health', 'links', 'categories']:
+        for route in ['settings', 'archive', 'reindex', 'scrape', 'subs', 'subscriptions', 'cache', 'comic/cache', 'health', 'links', 'categories', 'resources']:
             with self.subTest(route=route):
                 self.assertEqual(self.request('/api/' + route, {})[0], 403)
                 self.assertEqual(self.request('/api/' + route)[0], 403)

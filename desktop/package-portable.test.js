@@ -34,7 +34,7 @@ function packageFixture(t, version = '8.4.2') {
   write('node_modules/electron/dist/locales/zh-CN.pak', 'runtime locale');
   for (const file of [
     'desktop/main.js', 'desktop/preload.js', 'desktop/reader-shortcuts.js',
-    'backend/runtime.py', 'backend/display/server.py', 'backend/display/compat.py', 'backend/subscription/server.py',
+    'backend/runtime.py', 'backend/catalog.py', 'backend/display/server.py', 'backend/display/compat.py', 'backend/subscription/server.py',
     'frontend/display/dist/index.html', 'frontend/display/dist/config.js',
     'frontend/subscription/dist/index.html', 'frontend/subscription/dist/config.js',
   ]) write(file, `fixture: ${file}`);
@@ -84,6 +84,7 @@ test('portable build uses fixed paths, whitelists runtime inputs and reuses Elec
   assert.equal(fs.readFileSync(path.join(fixture.output, 'locales/zh-CN.pak'), 'utf8'), 'runtime locale');
   assert.ok(fs.existsSync(path.join(fixture.output, 'Moonshadow-display.exe')));
   assert.ok(fs.existsSync(path.join(packagedApp, 'backend/display/compat.py')));
+  assert.ok(fs.existsSync(path.join(packagedApp, 'backend/catalog.py')));
   const outputFiles = fs.readdirSync(packagedApp, { recursive: true });
   assert.equal(outputFiles.some(file => /private|node_modules|cache|logs|\.env|package-portable|test\.js/.test(file)), false);
   assert.equal(fs.readFileSync(path.join(fixture.root, 'dist/old-release/keep.txt'), 'utf8'), 'previous release');

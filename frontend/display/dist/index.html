@@ -4,7 +4,7 @@
   <script src="config.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="application-version" content="0.3.2">
+<meta name="application-version" content="0.4.0">
 <title>月影黑猫 · 资源库</title>
 <style>
 /* 内容布局保留原资源库逻辑；月影主题统一在下方定义。
@@ -990,7 +990,7 @@ main{min-width:0;min-height:0;background:transparent}
     <button id="navToggle" title="目录" aria-label="打开目录">☰</button>
     <h1 id="pageTitle">动画</h1>
     <span class="sub" id="pageSub"></span>
-    <span class="appVersion" aria-label="软件版本 0.3.2">软件 v0.3.2</span>
+    <span class="appVersion" aria-label="软件版本 0.4.0">软件 v0.4.0</span>
     <span class="spacer"></span>
     <div class="topbarMark" aria-hidden="true"><span class="moon">☾</span><span>BLACK CAT / MOONLIT SHELF</span></div>
     <div class="searchbox">
@@ -2164,11 +2164,11 @@ function renderDetail(v) {
   groups.forEach((gr, i) => {
     const rawLabel = String(gr.label || ('分组 ' + (i + 1)));
     const m = rawLabel.match(/^版本\s*(\d+)\s*[·•]\s*(.+)$/);
-    const versionNo = m ? m[1] : '1';
-    const versionLabel = '版本 ' + versionNo;
+    const versionNo = gr.version_id || (m ? m[1] : '1');
+    const versionLabel = gr.version_label || ('版本 ' + (m ? m[1] : '1'));
     let set = versionMap.get(versionNo);
     if (!set) {
-      set = { key: versionNo, label: versionLabel, groups: [] };
+      set = { key: versionNo, legacyKey: m ? m[1] : '1', label: versionLabel, groups: [] };
       versionMap.set(versionNo, set);
       versionSets.push(set);
     }
@@ -2179,7 +2179,7 @@ function renderDetail(v) {
   // 版本偏好由服务端永久保存，按刮削条目标识索引，直到下次修改。
   const versionWorkKey = String(w.bgm_id || w.title || w.dir || (kind + ':' + DETAIL.idx));
   const savedVersionKey = loadVersionPrefs()[versionWorkKey];
-  let initialVersion = versionSets.findIndex(set => String(set.key) === String(savedVersionKey));
+  let initialVersion = versionSets.findIndex(set => String(set.key) === String(savedVersionKey) || set.legacyKey === String(savedVersionKey));
   if (initialVersion < 0) initialVersion = 0;
   let versionSelect = null;
   if (isVideo && versionSets.length > 1) {
