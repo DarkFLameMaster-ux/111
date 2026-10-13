@@ -4,18 +4,12 @@
   <script src="config.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="application-version" content="0.2.0">
+<meta name="application-version" content="0.3.1">
 <title>月影黑猫 · 资源库</title>
 <style>
-/* ------------------------------------------------------------------
-   设计取自 Spotify 设计系统（popular-web-designs / templates/spotify.md）
-   核心：near-black 沉浸 + 内容优先（封面是唯一色彩源）+ 药丸/圆形几何
-        + 字重对比（700/400）而非字号变化 + 重阴影（深色背景上轻阴影看不见）
-
-   字体：原站用 SpotifyMixUI（自有无衬线）。
-   这里刻意不引 Google Fonts —— 这是本机离线工具，国内拉 CDN 字体会卡住整个页面。
-   按该系统的原则，字重/字号/字距比具体字体更决定观感，故用系统 CJK 栈。
-   ------------------------------------------------------------------ */
+/* 内容布局保留原资源库逻辑；月影主题统一在下方定义。
+   借鉴动漫官网的主题舞台、番剧站的竖幅海报与清晰分区。
+   使用系统字体和内置矢量，桌面壳与离线网页都不依赖外部 CDN。 */
 :root{
   --bg:#121212;         /* 最深背景 */
   --surface:#181818;    /* 卡片/侧栏 */
@@ -113,8 +107,6 @@ main{overflow:auto;padding:0 0 20px}
 .searchbox input::placeholder{color:#8a8a8a}
 .searchbox input:focus{outline:0;box-shadow:var(--accent) 0 0 0 1px inset}
 .searchbox .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8a8a8a;font-size:13px}
-.archiveTopBtn{background:linear-gradient(135deg,#a98bff,#d7a9ff);border:0;border-radius:999px;color:#17131f;cursor:pointer;padding:9px 15px;font:700 12px var(--font);white-space:nowrap;box-shadow:0 5px 18px rgba(169,139,255,.22)}
-.archiveTopBtn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 .restartTopBtn{background:transparent;border:0;border-radius:999px;color:var(--fg);cursor:pointer;padding:9px 15px;font:700 12px var(--font);white-space:nowrap;box-shadow:var(--border) 0 0 0 1px inset}
 .restartTopBtn:hover{background:#1a1a1a;box-shadow:#9f87c8 0 0 0 1px inset;transform:translateY(-1px)}
 .restartTopBtn:disabled{cursor:wait;opacity:.65;transform:none}
@@ -551,11 +543,6 @@ body.reading{overflow:hidden}
 ::-webkit-scrollbar-thumb:hover{background:#4d4d4d}
 ::-webkit-scrollbar-track{background:transparent}
 
-.archiveOverlay{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;background:rgba(5,3,10,.72);backdrop-filter:blur(8px)}
-.archiveOverlay[hidden]{display:none}
-.archiveDialog{width:min(620px,calc(100vw - 30px));background:linear-gradient(145deg,#1b1630,#12101f);border:1px solid rgba(211,183,255,.25);border-radius:18px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
-.archiveDialogHead{display:flex;gap:16px;align-items:flex-start}.archiveDialog h2{margin:0;font-size:24px}.archiveDialog p{margin:5px 0 0;color:var(--dim);font-size:12.5px}.archiveClose{margin-left:auto;width:32px;height:32px;border:0;border-radius:50%;background:var(--surface2);color:var(--dim);font-size:22px;line-height:1;cursor:pointer}.archiveClose:hover{color:var(--fg);background:#30264d}
-.archiveLabel{display:flex;flex-direction:column;gap:7px;margin-top:18px;color:var(--dim);font-size:12px}.archiveLabel input,.archiveLabel select{width:100%;background:#0f0c19;color:var(--fg);border:1px solid #493d63;border-radius:9px;padding:10px 12px;font:400 13px var(--font)}.archiveLabel input:focus,.archiveLabel select:focus{outline:0;border-color:#b99bff}.archiveFieldRow{display:flex;align-items:flex-end;gap:10px}.archivePathRow{display:flex;gap:8px;align-items:center}.archivePathRow input{flex:1}.archivePick{white-space:nowrap}.archiveSave{white-space:nowrap;margin-bottom:0}.archiveHint{margin-top:12px;color:#aaa0be;font-size:12px;line-height:1.6}.archiveActions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}.archiveRun{background:var(--accent);color:#17131f}.archiveRun:hover{background:#d9bfff}.archiveRun:disabled,.archiveSave:disabled{opacity:.5;cursor:wait}.archiveResult{margin-top:16px;max-height:190px;overflow:auto;white-space:pre-wrap;background:#0d0b15;border:1px solid #30264d;border-radius:9px;padding:11px;color:#c9bedb;font:400 11px/1.55 var(--mono)}
 /* ---- 刮削元数据 / 订阅面板 ---- */
 .panel{display:flex;gap:20px;background:var(--surface);border-radius:var(--r-card);
   padding:18px;margin-bottom:26px;align-items:flex-start}
@@ -754,101 +741,215 @@ video::cue{background:rgba(0,0,0,.72);color:#fff;font-size:0.92em;line-height:1.
 }
 
 
-/* ---------------- 月影黑猫主题 ---------------- */
+/* ---------------- 月影黑猫 · 五更琉璃 ---------------- */
 :root{
-  --bg:#0b0912;
-  --surface:#151225;
-  --surface2:#201a34;
-  --card:#241d3b;
-  --fg:#f8f3ff;
-  --dim:#b8adcf;
-  --border:#4b3d66;
-  --accent:#c58bff;
-  --accent-strong:#9f73ff;
-  --neg:#ff91b7;
-  --warn:#f6c776;
-  --blue:#93b4ff;
-  --shadow-lg:rgba(7,4,17,.7) 0 14px 34px;
-  --shadow-md:rgba(7,4,17,.45) 0 8px 18px;
+  color-scheme:dark;
+  --bg:#0e0c17;--surface:#181522;--surface2:#242032;--card:#30283e;
+  --fg:#f4eff9;--dim:#afa5be;--border:#40364f;
+  --accent:#c5a2ef;--accent-strong:#a77cdd;--pink:#e9b4c9;
+  --neg:#f195ac;--warn:#e7c28b;--blue:#a5b9e8;
+  --r-card:14px;--r-sm:9px;--sidebar:240px;
+  --line:rgba(207,181,238,.12);
+  --shadow-lg:0 16px 42px rgba(5,3,12,.42);
+  --shadow-md:0 8px 22px rgba(5,3,12,.28);
 }
-body{
-  background:
-    radial-gradient(ellipse at 84% -12%, rgba(133,92,199,.22), transparent 42%),
-    radial-gradient(ellipse at 12% 110%, rgba(44,47,116,.2), transparent 46%),
-    var(--bg);
-}
-aside{background:linear-gradient(180deg,rgba(20,15,37,.98),rgba(10,9,18,.98));border-right-color:rgba(197,139,255,.18)}
-.brand{position:relative;letter-spacing:.35px}
-.brand::after{content:'✦  moonlit shelf';position:absolute;left:41px;bottom:8px;color:rgba(184,173,207,.7);font:500 9px/1 var(--mono);letter-spacing:.35px;text-transform:uppercase}
-.brand .dot{background:radial-gradient(circle at 30% 25%,#fff5ff 0 12%,#dfb8ff 13% 26%,var(--accent-strong) 55%,#5b3c91 100%);color:#1a1027;box-shadow:0 0 0 1px rgba(240,220,255,.35),0 0 20px rgba(197,139,255,.45)}
-nav button:hover,.thead:hover,.titem:hover{background:rgba(197,139,255,.11)}
-nav button.on{background:linear-gradient(90deg,rgba(159,115,255,.23),rgba(32,26,52,.7));box-shadow:inset 2px 0 var(--accent)}
-.titem.cur{color:var(--accent)}
-aside .foot{border-top-color:rgba(197,139,255,.16)}
-main{background:linear-gradient(145deg,rgba(21,18,37,.12),transparent 36%)}
-.topbar{background:linear-gradient(rgba(11,9,18,.96) 72%,transparent)}
-.topbar h1{letter-spacing:.1px;text-shadow:0 0 22px rgba(197,139,255,.18)}
-.searchbox input{background:rgba(32,26,52,.9);box-shadow:rgba(197,139,255,.3) 0 0 0 1px inset}
-.searchbox input:focus{box-shadow:var(--accent) 0 0 0 1px inset,0 0 18px rgba(197,139,255,.16)}
-.card{background:linear-gradient(145deg,rgba(36,29,59,.96),rgba(21,18,37,.96));border:1px solid rgba(197,139,255,.08)}
-.card:hover{background:linear-gradient(145deg,rgba(53,40,82,.98),rgba(28,23,49,.98));box-shadow:0 14px 30px rgba(9,5,20,.5),0 0 0 1px rgba(197,139,255,.2)}
-.cover{box-shadow:0 9px 20px rgba(8,4,17,.5),0 0 0 1px rgba(197,139,255,.1)}
-.badge.a,.ep.seen::after{background:var(--accent)}
-.badge.a{color:#241334}
-.playcircle,.loginBox button{background:linear-gradient(135deg,#e1b8ff,var(--accent-strong));box-shadow:0 9px 22px rgba(117,73,188,.35)}
-.pillbtn:hover,.rtoggle:hover,.ricon:hover,.vpb:hover{background:rgba(197,139,255,.16)}
-.nowbar{background:linear-gradient(90deg,rgba(36,29,59,.94),rgba(21,18,37,.94));border-color:rgba(197,139,255,.12)}
-#reader,#vp{background:rgba(8,6,15,.96)}
-#rstage{background:radial-gradient(ellipse at 50% 15%,rgba(91,60,145,.13),transparent 55%),#0a0811}
-.rtoggle.on{color:#1a1027;background:var(--accent)}
-#toast{box-shadow:0 8px 30px rgba(9,5,20,.5),0 0 0 1px rgba(197,139,255,.18)}
-@media(max-width:860px){aside{background:linear-gradient(180deg,#171129,#0b0912)}}
-
-/* ---------------- 五更琉璃 / 黑猫识别层 ----------------
-   使用内置矢量与渐变，保持桌面壳和离线网页都能稳定显示。 */
-.brand{padding-bottom:16px}
+body{grid-template-columns:var(--sidebar) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;
+  background:radial-gradient(ellipse at 86% 0,rgba(105,73,143,.1),transparent 48%),var(--bg)}
+button,input,select{font-family:var(--font)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,[role=button]:focus-visible{
+  outline:2px solid var(--accent);outline-offset:3px}
+::selection{background:#674a82;color:#fff}
+*{scrollbar-width:thin;scrollbar-color:#42364f transparent}
+aside{min-height:0;padding:25px 15px 16px;gap:0;background:linear-gradient(180deg,#16121f,#100d18);
+  border-right:1px solid var(--line)}
+.brand{padding:0 8px 24px;gap:11px}
+.brand::after{content:none}
 .brand .dot{display:none}
-.brandMark{width:30px;height:30px;flex:0 0 auto;display:grid;place-items:center;
-  border:1px solid rgba(239,210,255,.42);border-radius:10px 10px 12px 12px;
-  background:linear-gradient(145deg,#e4bdff 0%,#a06dff 52%,#432c74 100%);
-  box-shadow:0 0 0 3px rgba(197,139,255,.08),0 0 22px rgba(197,139,255,.3)}
-.brandMark svg{width:23px;height:23px;fill:#1a1027;filter:drop-shadow(0 1px 0 rgba(255,255,255,.28))}
-.brandCopy{display:flex;flex-direction:column;gap:2px;min-width:0}
-.brandCopy strong{font-size:15px;line-height:1.1;letter-spacing:.3px}
-.brandCopy small{color:#c7b7df;font:500 9px/1 var(--mono);letter-spacing:1.2px;text-transform:uppercase}
-.catCard{position:relative;overflow:hidden;margin:2px 4px 12px;padding:13px 12px 12px;
-  border:1px solid rgba(217,174,255,.2);border-radius:12px;
-  background:linear-gradient(145deg,rgba(55,37,83,.72),rgba(19,14,35,.88));
-  box-shadow:inset 0 1px rgba(255,255,255,.06),0 10px 24px rgba(6,3,16,.24)}
-.catCard::before{content:'';position:absolute;inset:-40%;opacity:.42;pointer-events:none;
-  background:repeating-radial-gradient(circle at 76% 18%,rgba(236,207,255,.8) 0 1px,transparent 1.5px 18px);
-  transform:rotate(-16deg)}
-.catCardTop{position:relative;display:flex;align-items:center;gap:9px}
-.catCardMoon{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;
-  color:#fff3ff;font-size:20px;line-height:1;text-shadow:0 0 14px #e0b9ff}
-.catCardName{display:flex;flex-direction:column;gap:1px}
-.catCardName strong{font-size:12px;letter-spacing:.4px}
-.catCardName span{color:#b8a7d1;font:500 9px var(--mono);letter-spacing:.8px}
-.catCard p{position:relative;margin:10px 0 0;color:#d2c5e2;font-size:10.5px;line-height:1.55}
-.catCard p::before{content:'“';color:#d5a7ff;font:700 18px/0 Georgia;vertical-align:-5px;margin-right:3px}
-.topbarMark{display:flex;align-items:center;gap:7px;margin-right:4px;color:#bca9d6;font:500 9px var(--mono);letter-spacing:1.1px}
-.topbarMark .moon{color:#ead4ff;font-size:17px;line-height:1;text-shadow:0 0 12px rgba(224,185,255,.75)}
-.appVersion{display:inline-flex;align-items:center;flex:0 0 auto;white-space:nowrap;padding:4px 8px;
-  border:1px solid rgba(197,139,255,.24);border-radius:var(--pill);background:rgba(197,139,255,.08);
-  color:var(--dim);font:500 11px/1.4 var(--font)}
-.topbar h1{flex:0 0 auto}
-@media(min-width:861px) and (max-width:1200px){
-  .topbar{flex-wrap:wrap}.topbarMark,.topbar .spacer{display:none}
-  .searchbox{order:9;width:100%}.searchbox input{width:100%}
+.brandMark{width:38px;height:38px;flex:0 0 auto;display:grid;place-items:center;
+  border:1px solid rgba(207,181,238,.35);border-radius:12px;
+  background:linear-gradient(145deg,#ddc5f4,#a57cce);box-shadow:0 4px 14px rgba(158,112,206,.15)}
+.brandMark svg{width:27px;height:27px;fill:#21172e}
+.brandCopy{display:flex;flex-direction:column;gap:6px;min-width:0}
+.brandCopy strong{font-size:18px;line-height:1;letter-spacing:1.3px}
+.brandCopy small{color:#a79ab9;font:500 8px/1 var(--mono);letter-spacing:1.5px}
+.catCard{position:relative;flex:0 0 auto;overflow:hidden;margin:0 2px 22px;padding:14px;
+  border:1px solid var(--line);border-radius:12px;background:linear-gradient(120deg,#292034,#1b1626)}
+.catCard::after{content:'✧';position:absolute;right:13px;top:5px;font:50px/1 Georgia;color:rgba(212,185,237,.12)}
+.catCardTop{display:flex;align-items:center;gap:10px}
+.catCardMoon{font:29px/1 Georgia;color:#dbc2f1}
+.catCardName{display:flex;flex-direction:column;gap:4px}
+.catCardName strong{font-size:13px;font-weight:600;letter-spacing:2px}
+.catCardName span{color:#a798b9;font:9px/1 var(--mono);letter-spacing:1.2px}
+.catCard p{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line);color:#b8a9c7;font-size:11px}
+.navLabel{padding:0 12px 9px;color:#8d819e;font-size:10px;letter-spacing:2px}
+nav{display:flex;flex-direction:column;gap:4px}
+nav button{padding:11px 12px;min-height:41px;font-size:13px;gap:12px;color:#b5a9c4;border:1px solid transparent}
+.navIcon{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+nav button:hover,.thead:hover,.titem:hover{background:rgba(194,163,227,.07);color:var(--fg)}
+nav button.on{color:#e3cef5;background:linear-gradient(90deg,#35283f,#282033);
+  border-color:rgba(197,162,239,.15);box-shadow:inset 3px 0 var(--accent);font-weight:600}
+nav button .n{font-size:10px;color:#92849f;background:rgba(197,162,239,.07);border-radius:5px;padding:3px 5px}
+nav button.on .n{color:#dbc1f0;background:rgba(197,162,239,.13)}
+.treepane{border-top:1px solid var(--line);margin-top:21px;padding-top:13px}
+aside .treepane::before{content:'作品目录';display:block;padding:0 12px 8px;color:#8d819e;font-size:10px;letter-spacing:2px}
+.thead{padding:9px 10px;color:#aa9bb9;letter-spacing:.4px}
+.titem{font-size:11.5px;padding:7px 8px 7px 24px}
+.titem .tm{font-size:9px;color:#8f809e}
+.titem.cur{color:var(--accent)}
+aside .foot{flex:0 0 auto;border-top-color:var(--line);padding:13px 8px 0;color:#8e819f}
+aside .foot .copyurl{background:#201a2b;border:1px solid var(--line);color:#b7a1cf}
+aside .foot .copyurl:hover{background:#2b2238}
+main{min-width:0;min-height:0;background:transparent}
+.topbar{min-height:80px;padding:20px 32px 18px;gap:12px;border-bottom:1px solid var(--line);
+  background:rgba(14,12,23,.94);backdrop-filter:blur(14px);margin-bottom:26px}
+.topbar h1{flex:0 0 auto;font-size:20px;letter-spacing:1px;text-shadow:none}
+.topbar .sub{font-size:11px;color:#94879f}
+.appVersion{display:inline-flex;flex:0 0 auto;white-space:nowrap;padding:3px 7px;border:1px solid var(--line);
+  border-radius:5px;color:#8d819b;font:10px/1.5 var(--mono)}
+.topbarMark{display:none}
+.searchbox{min-width:150px;flex:0 1 230px}
+.searchbox input{width:100%;padding:10px 14px 10px 34px;border-radius:9px;background:#1c1727;
+  box-shadow:inset 0 0 0 1px var(--line);font-size:12px}
+.searchbox input::placeholder,.searchbox .ic{color:#8f819f}
+.searchbox input:focus{box-shadow:inset 0 0 0 1px var(--accent)}
+.restartTopBtn{color:#b7a8c6;box-shadow:inset 0 0 0 1px var(--line)}
+.restartTopBtn:hover{background:#241c30;box-shadow:inset 0 0 0 1px #685176}
+.view{padding:0 32px 28px;max-width:1600px;margin:0 auto}
+.shelfHero{position:relative;isolation:isolate;display:flex;align-items:center;min-height:224px;overflow:hidden;
+  margin:0 0 28px;padding:31px 38px;border:1px solid rgba(197,162,239,.19);border-radius:18px;
+  background:radial-gradient(ellipse at 88% 60%,rgba(140,94,177,.24),transparent 46%),linear-gradient(110deg,#221a30,#181324 64%,#251a31)}
+.shelfHero::before{content:'';position:absolute;inset:9px;border:1px solid rgba(217,187,242,.07);
+  border-radius:11px;pointer-events:none;z-index:-1}
+.shelfHero::after{content:'';position:absolute;width:280px;height:280px;right:20px;top:-75px;
+  border:1px solid rgba(220,191,244,.1);border-radius:50%;z-index:-1}
+.shelfHeroCopy{position:relative;z-index:1;max-width:70%}
+.shelfEyebrow{display:flex;align-items:center;gap:9px;color:#c7addc;font:9px/1.5 var(--mono);letter-spacing:2.4px;margin-bottom:13px}
+.shelfEyebrow::before{content:'';width:20px;height:1px;background:#a98ac0}
+.shelfHero h2{margin:0;color:#f2e7f8;font:400 clamp(26px,2.7vw,38px)/1.45 'Noto Serif CJK SC','Songti SC','SimSun',serif;letter-spacing:3px}
+.shelfHero h2 span{color:#d7b4e7}
+.shelfHero p{margin:12px 0 16px;color:#b5a3c6;font-size:12px;letter-spacing:.6px}
+.shelfSignature{display:flex;align-items:center;gap:9px;color:#ddc5ee;font-size:10px;letter-spacing:1.2px}
+.shelfSignature::before{content:'✦';color:var(--pink);font-size:11px}
+.shelfSignature small{color:#9784a7;font:8px/1 var(--mono);letter-spacing:1.5px}
+.moonEmblem{position:absolute;width:240px;height:240px;right:28px;top:50%;transform:translateY(-50%);color:#d6b6eb;opacity:.9;pointer-events:none}
+.shelfHeading{display:flex;align-items:center;gap:13px;margin:0 0 18px}
+.shelfHeading h2{margin:0;font-size:17px;font-weight:600;letter-spacing:1px}
+.shelfHeading::before{content:'✧';font-size:19px;color:var(--accent)}
+.shelfHeading span{color:#8f819e;font-size:11px}
+.shelfHeading::after{content:'';height:1px;flex:1;background:var(--line);margin-left:3px}
+.grid{grid-template-columns:repeat(auto-fill,minmax(166px,1fr));gap:22px 18px;align-items:stretch}
+.card{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;min-width:0;padding:9px 9px 13px;
+  background:#181421;border:1px solid rgba(204,175,232,.08);border-radius:12px;contain-intrinsic-size:auto 320px}
+.card:hover{background:#241c30;border-color:rgba(197,162,239,.35);box-shadow:0 10px 24px rgba(5,3,12,.3);transform:translateY(-4px)}
+.card .cover{flex:0 0 auto;aspect-ratio:3/4;margin-bottom:12px;border-radius:7px;background:#221a2d;box-shadow:none}
+.card .cover img{transition:transform .3s ease}
+.card:hover .cover img{transform:scale(1.035)}
+.card .t{font-size:13px;font-weight:600;line-height:1.55;padding:0 3px;margin-bottom:5px}
+.card .m{font-size:10px;color:#a99ab9;padding:0 3px;line-height:1.8}
+.card>div:last-child:not(.cover):not(.t):not(.m){margin-top:4px;padding:0 3px}
+.badge{border-radius:4px;background:#272030;color:#b1a1c0;padding:2px 6px;font-size:9px;margin:4px 4px 0 0;line-height:1.6}
+.badge.a{background:rgba(197,162,239,.17);color:#d2b3e9}
+.badge.w{color:var(--warn)}
+.cover .gen{background:linear-gradient(145deg,rgba(24,16,35,.2),rgba(15,9,25,.48));font-size:14px;font-weight:500;line-height:1.7}
+.back{font-size:12px;margin:0 0 18px;color:#ac99bc}
+.dhead{align-items:center;gap:30px;padding:28px;border:1px solid var(--line);border-radius:16px;
+  background:radial-gradient(ellipse at 90% 20%,rgba(129,78,162,.12),transparent 60%),#1a1424;margin-bottom:25px}
+.dhead .cover{aspect-ratio:3/4;box-shadow:0 10px 30px rgba(6,3,12,.4);border:1px solid var(--line);border-radius:8px}
+.dhead h2{font-size:clamp(24px,3vw,36px);line-height:1.4;font-weight:600;letter-spacing:.3px;overflow-wrap:anywhere}
+.dhead .kicker{font-size:10px;letter-spacing:2.5px;color:var(--accent);margin-bottom:10px}
+.dhead .meta{font-size:12px;line-height:1.9}
+.playcircle{color:#261633;background:linear-gradient(130deg,#dfc5f3,#b88dd7);box-shadow:0 4px 16px rgba(156,106,192,.2)}
+.playcircle:hover{box-shadow:0 0 0 4px rgba(197,162,239,.1),0 6px 20px rgba(156,106,192,.25)}
+.pillbtn{font-size:11px;font-weight:600;letter-spacing:.5px;padding:10px 17px;border-radius:8px}
+.pillbtn.ghost{box-shadow:inset 0 0 0 1px var(--line);color:#c6b4d7}
+.pillbtn:hover,.pillbtn.ghost:hover,.rtoggle:hover,.ricon:hover,.vpb:hover{background:#33273f;box-shadow:inset 0 0 0 1px rgba(197,162,239,.22)}
+.sec{margin-top:20px;font-size:16px;letter-spacing:.4px}
+.ep{border:1px solid var(--line);padding:12px 6px;background:#1d1729;font-weight:500;font-size:12px}
+.ep:hover{background:#32243f;border-color:rgba(197,162,239,.4)}
+.ep.seen::after{background:var(--accent)}
+.resourceTab{border-radius:8px}.resourceTab.on{color:#281432}
+.stat,.issue,.historyItem,.empty{border:1px solid var(--line);background:#1b1526}
+.stat{padding:22px 19px;background:linear-gradient(135deg,#241a31,#1a1523)}
+.stat .v{font-size:25px;color:#ddc3ef;font-weight:500;margin-bottom:9px}
+.stat .l{font-size:11px;line-height:1.8}
+.issue{padding:17px 20px;border-radius:10px}.issue .t{font-weight:500}.issue .m{line-height:1.8}
+.empty{padding:48px 20px;color:#b1a1c0}
+.historyList{max-width:none}.historyItem{padding:15px 18px;border-radius:10px}
+.musicHero{background:radial-gradient(ellipse at 92% 10%,rgba(170,112,203,.2),transparent 55%),#241a30;border:1px solid var(--line);border-radius:16px;padding:26px 30px}
+.musicHero h2{font-size:28px;font-weight:500;letter-spacing:2px}.musicHero p{color:#bca5cf;line-height:1.9}
+.musicChip{background:rgba(197,162,239,.09);border:1px solid var(--line);color:#d2b3e6}
+.musicGroupHead{margin-top:26px}.musicGroupTitle{font-weight:500;font-size:16px}
+.musicRow{background:#1a1525;border:1px solid var(--line);padding:11px 13px}
+.musicRow .play{background:var(--accent);color:#281432}.musicRow .queueAdd:hover{background:#33243f}
+.musicQueuePanel{background:#1c1529;border-color:var(--line)}
+.nowbar{padding:12px 32px;min-height:66px;background:rgba(24,18,33,.98);border-color:var(--line);box-shadow:0 -6px 24px rgba(4,2,9,.12)}
+.nowbar .lbl{font-size:10px;letter-spacing:1px;color:#a38daf}
+.nowbar .lbl::before{content:'☾';display:inline-block;color:#d7b5eb;font-size:21px;vertical-align:-2px;margin-right:10px}
+.nowbar .tt{font-size:12px;font-weight:500}.nowbar .sub{font-size:10px;color:#8f7e9d}
+#musicbar{left:var(--sidebar);background:#191221;border-color:var(--line)}
+#reader,#vp{background:rgba(9,6,15,.98)}
+#rstage{background:#09070f}
+.rtoggle.on{color:#281432;background:var(--accent)}
+#toast{background:#2d213b;border:1px solid rgba(197,162,239,.3);box-shadow:var(--shadow-lg)}
+.loginBox{border-color:var(--line)}.loginBox button{background:var(--accent);color:#281432}
+@media(min-width:861px) and (max-width:1250px){
+  .topbar{flex-wrap:wrap;gap:10px}.topbar .spacer{display:none}
+  .searchbox{order:9;flex:1 1 100%;width:100%}.searchbox input{width:100%}
+  .appVersion{margin-right:auto}
 }
-.pillbtn,.playcircle,.vpb,.rtoggle{transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
-.pillbtn:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(224,185,255,.28) inset,0 8px 20px rgba(108,61,164,.18)}
-.playcircle:hover{box-shadow:0 0 0 4px rgba(197,139,255,.12),0 0 26px rgba(197,139,255,.4)}
-.vpb:hover,.rtoggle:hover{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(224,185,255,.2) inset,0 0 14px rgba(197,139,255,.16)}
-.playcircle:focus-visible,.pillbtn:focus-visible,.vpb:focus-visible,.rtoggle:focus-visible,
-nav button:focus-visible,.catCard:focus-visible{outline:2px solid #f1d9ff;outline-offset:2px}
-@media(max-width:860px){.catCard{margin-top:8px}.topbarMark{display:none}}
-
+@media(max-width:860px){
+  body{grid-template-columns:minmax(0,1fr)}
+  aside{width:272px;background:linear-gradient(180deg,#181220,#100c18);padding-top:24px}
+  .topbar{min-height:0;padding:14px 18px 13px;margin-bottom:18px;gap:9px}
+  .topbar h1{font-size:18px}.topbar .sub{font-size:10px}.topbarMark{display:none}
+  .appVersion{font-size:9px;margin-left:auto}
+  .searchbox{flex:1 1 100%;width:100%}
+  .view{padding:0 18px 22px}
+  .shelfHero{min-height:190px;padding:25px 23px;margin-bottom:23px;border-radius:14px}
+  .shelfHeroCopy{max-width:73%}.shelfHero h2{font-size:27px;letter-spacing:1.3px}
+  .shelfHero p{max-width:240px;font-size:11px;line-height:1.8;margin:9px 0 12px}
+  .shelfEyebrow{font-size:8px;letter-spacing:1.5px;margin-bottom:10px}
+  .shelfSignature{font-size:9px;letter-spacing:.5px}.shelfSignature small{display:none}
+  .moonEmblem{width:185px;height:185px;right:-26px;opacity:.5}
+  .shelfHeading{margin-bottom:14px;gap:9px}.shelfHeading h2{font-size:15px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:16px 12px}
+  .card{padding:7px 7px 11px}.card .t{font-size:12px}.card .m{font-size:10px}
+  .badge{font-size:9px;padding:2px 5px}
+  .dhead{flex-direction:row;align-items:center;gap:20px;padding:22px}
+  .dhead .cover{width:130px!important;flex:0 0 130px!important;margin:0!important}
+  .dhead h2{font-size:23px}.dhead .meta{font-size:11px}
+  .nowbar{grid-column:1/-1;padding:10px 18px}.nowbar .lbl{display:none}
+  #musicbar{left:0}.musicQueuePanel{width:min(390px,calc(100vw - 24px))}
+}
+@media(max-width:520px){
+  .topbar .sub{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .topbar .appVersion{display:none}
+  .shelfHero{min-height:180px;padding:23px 20px}.shelfHero h2{font-size:25px}
+  .shelfHeroCopy{max-width:83%}.shelfEyebrow{letter-spacing:1px;font-size:7px}
+  .shelfHero h2 span{display:block}
+  .moonEmblem{right:-61px;opacity:.25}.shelfHero::after{right:-145px}
+  .shelfHero p{max-width:205px}.shelfSignature{font-size:8px}
+  .dhead{flex-direction:column;align-items:stretch;padding:22px 20px;gap:20px}
+  .dhead .cover{width:140px!important;flex:0 0 auto!important;margin:0 auto!important}
+  .dhead h2{font-size:24px}.dhead .kicker{font-size:9px}
+  .statgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .stat{padding:18px 13px}.stat .v{font-size:22px}
+  .musicHero{padding:22px 20px}.musicHero h2{font-size:24px}
+  .musicList{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:860px) and (max-height:460px){
+  .topbar{padding:8px 14px}.shelfHero{min-height:155px;padding:20px 24px}
+}
+@media(max-height:820px){
+  aside{padding:18px 15px 12px}.brand{padding-bottom:18px}
+  .catCard{padding:11px;margin-bottom:16px}.catCard p{display:none}
+  nav{gap:3px}nav button{padding:9px 12px;min-height:36px}
+  aside .treepane{margin-top:16px;padding-top:10px}
+  aside .foot{padding-top:9px}
+}
+@media(max-height:520px){
+  aside{overflow-y:auto}aside .treepane{flex:0 0 auto;max-height:180px}
+}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
     transition-duration:.01ms!important;scroll-behavior:auto!important}
@@ -866,24 +967,19 @@ nav button:focus-visible,.catCard:focus-visible{outline:2px solid #f1d9ff;outlin
     <div class="catCardTop"><span class="catCardMoon" aria-hidden="true">☾</span><span class="catCardName"><strong>五更琉璃</strong><span>BLACK CAT ARCHIVE</span></span></div>
     <p>把杂乱的收藏，交给夜色整理。</p>
   </div>
-  <nav>
-    <button data-t="health">体检 <span class="n" id="nH"></span></button>
-    <button data-t="anime">动画 <span class="n" id="nA"></span></button>
-    <button data-t="sleep">助眠 <span class="n" id="nS"></span></button>
-    <button data-t="movie">电影 <span class="n" id="nF"></span></button>
-    <button data-t="av">AV <span class="n" id="nV"></span></button>
-    <button data-t="comic">漫画 <span class="n" id="nC"></span></button>
-    <button data-t="manhwa">韩漫 <span class="n" id="nK"></span></button>
-    <button data-t="music">音乐 <span class="n" id="nM"></span></button>
-    <button data-t="history">记录 <span class="n" id="nR"></span></button>
+  <div class="navLabel">我的资源库</div>
+  <nav aria-label="资源分区">
+    <button data-t="anime"><svg class="navIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z M4 9h16 M8 5v4 M16 5v4 M10 12l5 2-5 2z"/></svg>动画 <span class="n" id="nA"></span></button>
+    <button data-t="sleep"><svg class="navIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10 M17 4v4 M15 6h4"/></svg>助眠 <span class="n" id="nS"></span></button>
+    <button data-t="movie"><svg class="navIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z M8 4v16 M16 4v16 M4 8h4 M4 16h4 M16 8h4 M16 16h4"/></svg>电影 <span class="n" id="nF"></span></button>
+    <button data-t="av"><svg class="navIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z M10 9l5 3-5 3z"/></svg>AV <span class="n" id="nV"></span></button>
+    <button data-t="comic"><svg class="navIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6C9 4 6 4 3 5v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1z M12 6v14"/></svg>漫画 <span class="n" id="nC"></span></button>
+    <button data-t="manhwa"><svg class="navIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6z M9 7h6 M9 11h6 M9 15h6"/></svg>韩漫 <span class="n" id="nK"></span></button>
+    <button data-t="music"><svg class="navIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l11-2v12 M9 8l11-2 M9 17c0 2-5 4-5 1s5-4 5-1 M20 15c0 2-5 4-5 1s5-4 5-1"/></svg>音乐 <span class="n" id="nM"></span></button>
+    <button data-t="history"><svg class="navIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V3 M4 8h5 M4 8a8 8 0 1 1-1 7 M12 7v5l3 2"/></svg>记录 <span class="n" id="nR"></span></button>
   </nav>
   <div class="treepane"><div class="tree" id="tree"></div></div>
   <div class="foot">
-    <div style="margin-bottom:7px">OPDS</div>
-    <button class="copyurl" id="opdsBtn" title="点击复制完整地址">
-      <span id="opdsUrl">127.0.0.1:8777/opds</span>
-      <span class="cp">复制</span>
-    </button>
     <div style="margin-top:10px" id="footSize"></div>
   </div>
 </aside>
@@ -892,17 +988,16 @@ nav button:focus-visible,.catCard:focus-visible{outline:2px solid #f1d9ff;outlin
 <main>
   <div class="topbar">
     <button id="navToggle" title="目录" aria-label="打开目录">☰</button>
-    <h1 id="pageTitle">体检</h1>
+    <h1 id="pageTitle">动画</h1>
     <span class="sub" id="pageSub"></span>
-    <span class="appVersion" aria-label="软件版本 0.2.0">软件 v0.2.0</span>
+    <span class="appVersion" aria-label="软件版本 0.3.1">软件 v0.3.1</span>
     <span class="spacer"></span>
     <div class="topbarMark" aria-hidden="true"><span class="moon">☾</span><span>BLACK CAT / MOONLIT SHELF</span></div>
     <div class="searchbox">
       <span class="ic">⌕</span>
-      <input id="q" type="search" placeholder="搜作品…" autocomplete="off">
+      <input id="q" type="search" placeholder="搜索收藏的作品…" aria-label="搜索收藏的作品" autocomplete="off">
     </div>
-    <button class="restartTopBtn" id="restartTopBtn" type="button" title="重新扫描并启动资源库服务">重启资源库</button>
-    <button class="archiveTopBtn" id="archiveTopBtn" type="button">一键归档</button>
+    <button class="restartTopBtn" id="restartTopBtn" type="button" title="刷新收藏列表">刷新列表</button>
   </div>
   <div class="view" id="view"></div>
 </main>
@@ -915,17 +1010,6 @@ nav button:focus-visible,.catCard:focus-visible{outline:2px solid #f1d9ff;outlin
   </div>
   <span class="spacer"></span>
   <button class="playcircle" id="nowPlay" title="继续播放" style="width:42px;height:42px;font-size:16px">▶</button>
-</div>
-
-<div class="archiveOverlay" id="archiveOverlay" hidden>
-  <div class="archiveDialog" role="dialog" aria-modal="true" aria-labelledby="archiveTitle">
-    <div class="archiveDialogHead"><div><h2 id="archiveTitle">一键归档</h2><p>扫描待整理目录，分类移动后自动刮削动画与电影。</p></div><button class="archiveClose" id="archiveClose" type="button" aria-label="关闭">×</button></div>
-    <label class="archiveLabel">默认待整理目录<div class="archivePathRow"><input id="archiveInbox" type="text" spellcheck="false" placeholder="选择待整理目录，例如 00-待整理"><button class="pillbtn ghost archivePick" id="archivePick" type="button">选择文件夹</button></div></label>
-    <div class="archiveFieldRow"><label class="archiveLabel" style="flex:1">本次分区<select id="archiveCategory"><option value="">自动识别</option><option>动画</option><option>电影</option><option>漫画</option><option>小说</option><option>音乐</option><option>游戏</option><option>助眠</option><option>AV</option></select></label><button class="pillbtn ghost archiveSave" id="archiveSave" type="button">保存默认目录</button></div>
-    <div class="archiveHint">选择分区后，本次目录内的资源会统一放入该分区；选择“自动识别”则沿用现有分类规则。</div>
-    <div class="archiveResult" id="archiveResult" hidden></div>
-    <div class="archiveActions"><button class="pillbtn ghost" id="archiveCancel" type="button">取消</button><button class="pillbtn archiveRun" id="archiveRun" type="button">开始归档</button></div>
-  </div>
 </div>
 
 <div id="musicbar" aria-label="音乐播放器">
@@ -1102,9 +1186,9 @@ async function apiFetch(path, opts) {
   return r;
 }
 
-let LIB = null, HEALTH = null, PROG = {};
-let META = {}, SUBS = {}, SETTINGS = {};   // 刮削元数据 / 订阅 / 设置
-let TAB = localStorage.tab || 'health';
+let LIB = null, PROG = {};
+let META = {}, SETTINGS = {}; // 作品信息 / 播放偏好
+let TAB = ['anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music', 'history'].includes(localStorage.tab) ? localStorage.tab : 'anime';
 let QUERY = '';
 let DETAIL = null;                 // {kind, idx}
 /* 阅读器状态。
@@ -1131,7 +1215,7 @@ function saveVersionPref(workKey, versionKey) {
   SETTINGS.anime_version_preferences = prefs;
   // 连续快速切换时排队写入，保证服务端最后保存的是最后一次选择。
   versionPrefSaveQueue = versionPrefSaveQueue.then(async () => {
-    const saved = await apiPost('/api/settings', { anime_version_preferences: prefs });
+    const saved = await apiPost('/api/preferences', { anime_version_preferences: prefs });
     if (saved && !saved.error) SETTINGS = saved;
     else toast('版本偏好保存失败');
   }).catch(() => toast('版本偏好保存失败'));
@@ -1141,7 +1225,7 @@ let reader = { pages: [], spreads: [], si: 0, path: '', title: '' };
 
 /* 支持 ?tab=anime&work=0 深链接：可收藏、也方便无头截图核查 */
 const QP = new URLSearchParams(location.search);
-if (['health', 'anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music', 'history'].includes(QP.get('tab'))) TAB = QP.get('tab');
+if (['anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music', 'history'].includes(QP.get('tab'))) TAB = QP.get('tab');
 if (QP.has('work')) DETAIL = { kind: TAB, idx: parseInt(QP.get('work'), 10) || 0 };
 /* ?read=<章节序号>&page=<页序号> —— 直接打开阅读器（也方便无头截图验收）
    &dual=0/1 &rtl=0/1 &cover=0/1 —— 临时覆盖阅读模式，用于分享特定视图和自动化验证 */
@@ -1156,7 +1240,7 @@ for (const k of ['dual', 'rtl', 'cover', 'scroll']) {
 }
 /* ?zoom=2 —— 直接指定缩放，便于分享和自动化验收 */
 const ZOOM_QP = QP.has('zoom') ? parseFloat(QP.get('zoom')) : null;
-const ROUTE_TABS = ['health', 'anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music', 'history'];
+const ROUTE_TABS = ['anime', 'sleep', 'movie', 'av', 'comic', 'manhwa', 'music', 'history'];
 let ROUTE_DEPTH = 0;
 
 /*
@@ -1167,7 +1251,7 @@ let ROUTE_DEPTH = 0;
 */
 function routeUrl() {
   const p = new URLSearchParams();
-  if (TAB !== 'health') p.set('tab', TAB);
+  if (TAB !== 'anime') p.set('tab', TAB);
   if (DETAIL) p.set('work', DETAIL.idx);
   const q = p.toString();
   return q ? '?' + q : location.pathname;
@@ -1192,7 +1276,7 @@ function seedHistory() {
 function routeFromLocation(state = history.state) {
   const p = new URLSearchParams(location.search);
   const stateTab = state && state.reslibRoute && ROUTE_TABS.includes(state.tab) ? state.tab : null;
-  const tab = ROUTE_TABS.includes(p.get('tab')) ? p.get('tab') : (stateTab || 'health');
+  const tab = ROUTE_TABS.includes(p.get('tab')) ? p.get('tab') : (stateTab || 'anime');
   const raw = p.get('work');
   const stateIdx = state && state.reslibRoute && state.detail ? state.detail.idx : NaN;
   const idx = raw == null ? stateIdx : parseInt(raw, 10);
@@ -1349,7 +1433,7 @@ function pickLeaf(lf) {
   if (lf.kind === 'novel') {
     // 小说还没有独立的浏览页，先在体检页提示一下，别假装能打开
     closeOverlays();
-    go('health');
+    go('anime');
     toast('小说的浏览页还没做');
     return;
   }
@@ -1415,10 +1499,9 @@ async function loadExtras() {
   try {
     const [ex, st] = await Promise.all([
       apiFetch('/api/extras').then(r => r.json()),
-      apiFetch('/api/settings').then(r => r.json()),
+      apiFetch('/api/preferences').then(r => r.json()),
     ]);
     META = (ex && ex.meta) || {};
-    SUBS = (ex && ex.subs) || {};
     if (st && !st.error) SETTINGS = st;
   } catch (e) { /* 拿不到就当没有，界面照常能用 */ }
 }
@@ -1459,86 +1542,15 @@ function saveProgressEntry(key, fields, beacon = false) {
   }).catch(() => {});
 }
 
-/* ---------------- 一键归档 ---------------- */
-function openArchive() {
-  const ov = $('#archiveOverlay');
-  $('#archiveInbox').value = SETTINGS.inbox_dir || '';
-  $('#archiveCategory').value = '';
-  $('#archiveResult').hidden = true;
-  $('#archiveResult').textContent = '';
-  $('#archiveRun').disabled = false;
-  ov.hidden = false;
-  setTimeout(() => $('#archiveInbox').focus(), 30);
-}
-function closeArchive() { $('#archiveOverlay').hidden = true; }
-async function saveArchiveInbox() {
-  const input = $('#archiveInbox');
-  const dir = input.value.trim();
-  if (!dir) { toast('请先填写待整理目录'); return; }
-  const r = await apiPost('/api/settings', { inbox_dir: dir });
-  if (r && !r.error) { SETTINGS = r; toast('默认待整理目录已保存'); }
-  else toast((r && r.error) || '保存失败');
-}
-async function pickArchiveInbox() {
-  if (!window.reslibDesktop || !window.reslibDesktop.pickFolder) {
-    toast('当前网页模式不能弹出文件夹选择器，请直接填写路径');
-    return;
-  }
-  const dir = await window.reslibDesktop.pickFolder();
-  if (dir) $('#archiveInbox').value = dir;
-}
-async function runArchive() {
-  const run = $('#archiveRun'), result = $('#archiveResult');
-  const dir = $('#archiveInbox').value.trim();
-  const category = $('#archiveCategory').value;
-  if (!dir) { toast('请先填写待整理目录'); return; }
-  run.disabled = true; run.textContent = '归档与刮削中…'; result.hidden = false; result.textContent = '正在扫描并移动资源，请稍候……';
-  const r = await apiPost('/api/archive', { inbox_dir: dir, category, save_inbox: true });
-  if (r && r.ok) {
-    result.textContent = `已归档 ${r.moved || 0} 项\n刮削新资源 ${r.scraped || 0} 部` + (r.scrape_fail ? `，未匹配 ${r.scrape_fail} 部` : '') + '\n\n' + (r.output || '');
-    SETTINGS.inbox_dir = dir;
-    await Promise.all([refreshLib(), loadExtras()]);
-    if (LIB && LIB.stats) {
-      $('#nH').textContent = HEALTH ? HEALTH.filter(i => i.level === 'warn').length || '' : '';
-      $('#footSize').textContent = `合计 ${size(LIB.stats.total_size)}`;
-    }
-    render(); refreshTrees(); toast('归档完成');
-  } else {
-    result.textContent = (r && (r.error || r.output)) || '归档失败';
-    toast('归档失败');
-  }
-  run.disabled = false; run.textContent = '开始归档';
-}
-
-async function restartResourceLibrary() {
-  const b = $('#restartTopBtn');
-  if (!b || b.disabled) return;
-  b.disabled = true;
-  const label = b.textContent;
-  b.textContent = '重启中…';
-  try {
-    // 桌面壳可以完整重启展示服务，重启完成后它会重新载入首页。
-    if (window.reslibDesktop && window.reslibDesktop.retry) {
-      const ok = await window.reslibDesktop.retry();
-      if (!ok) throw new Error('桌面服务没有响应');
-      return;
-    }
-    // 直接用浏览器访问时，退回到同一套重新扫描逻辑，不要求用户手动开终端。
-    const r = await apiPost('/api/reindex', {});
-    if (!r || !r.ok) throw new Error((r && r.error) || '重新扫描失败');
-    await load();
-    render();
-    refreshTrees();
-    toast('资源库已重新扫描');
-  } catch (e) {
-    toast('重启失败：' + (e && e.message ? e.message : e));
-    b.disabled = false;
-    b.textContent = label;
-  }
+async function refreshCollection() {
+  const button = $('#restartTopBtn');
+  button.disabled = true;
+  try { await load(true); toast('收藏列表已刷新'); }
+  catch (error) { toast('刷新失败：' + error.message); }
+  finally { button.disabled = false; }
 }
 
 const metaOf = dir => META[dir] || null;
-const subOf = t => SUBS[t] || null;
 /* 刮削来的封面优先 —— 比「第一话第一页」更像封面 */
 const posterUrl = dir => apiUrl('/api/poster?dir=' + encodeURIComponent(dir));
 const CONF = { high: '匹配可信', medium: '匹配一般', low: '匹配存疑' };
@@ -1565,10 +1577,6 @@ function metaPanel(w) {
 
   if (!m) {
     body.appendChild(el('div', 'name', '暂无数据'));
-    const a = el('div', 'acts');
-    const b = el('button', 'pillbtn', '刮削');
-    b.onclick = () => runScrape(w, b);
-    a.appendChild(b); body.appendChild(a);
     return wrap;
   }
 
@@ -1615,9 +1623,6 @@ function metaPanel(w) {
   }
 
   const a = el('div', 'acts');
-  const rb = el('button', 'pillbtn', '重新刮削');
-  rb.onclick = () => runScrape(w, rb);
-  a.appendChild(rb);
   if (m.source_url || m.bgm_url) {
     const lk = el('a', 'lnk', '在 ' + esc(m.source_name || 'Bangumi') + ' 查看 ↗');
     lk.href = m.source_url || m.bgm_url; lk.target = '_blank'; lk.rel = 'noopener';
@@ -1627,260 +1632,11 @@ function metaPanel(w) {
   return wrap;
 }
 
-async function runScrape(w, btn) {
-  const old = btn.textContent;
-  btn.disabled = true; btn.textContent = '刮削中…';
-  const r = await apiPost('/api/scrape', { dir: w.dir, title: w.dir_name || w.title });
-  btn.disabled = false; btn.textContent = old;
-  if (r && r.ok) { toast('刮削完成'); await loadExtras(); render(); }
-  else toast('没找到匹配的条目');
-}
-
-/* ---- 漫画：订阅面板 ---- */
-function subPanel(w) {
-  const wrap = el('div');
-  wrap.appendChild(el('div', 'sec', '订阅更新'));
-  const p = el('div', 'panel');
-  const body = el('div', 'body');
-  p.appendChild(body); wrap.appendChild(p);
-  const s = subOf(w.title);
-
-  if (!s) {
-    body.appendChild(el('div', 'name', '暂无订阅'));
-    const a = el('div', 'acts');
-    const b = el('button', 'pillbtn', '添加订阅');
-    b.onclick = () => subSearch(w, body);
-    a.appendChild(b); body.appendChild(a);
-    return wrap;
-  }
-
-  const lab = el('label', 'subrow');
-  const cb = el('input'); cb.type = 'checkbox'; cb.checked = s.enabled !== false;
-  cb.onchange = async () => {
-    const r = await apiPost('/api/subs', { action: 'toggle', name: w.title, enabled: cb.checked });
-    if (r.error) { toast(r.error); cb.checked = !cb.checked; return; }
-    toast(cb.checked ? '已开启定时订阅' : '已暂停定时订阅');
-    await loadExtras(); render();
-  };
-  lab.appendChild(cb);
-  lab.appendChild(el('span', '', '每天定时查更新（' +
-    fmtHour(SETTINGS.subscribe_hour, SETTINGS.subscribe_minute) + '）'));
-  body.appendChild(lab);
-
-  const st = el('div', 'substat');
-  st.appendChild(el('span', '', '订阅源'));
-  st.appendChild(el('b', '', esc(s.source + ' / ' + s.slug)));
-  st.appendChild(el('span', '', '源站'));
-  st.appendChild(el('b', '', s.known + ' 话' + (w.count ? '，本地 ' + w.count + ' 话' : '')));
-  st.appendChild(el('span', '', '上次检查'));
-  st.appendChild(el('b', '', s.last_check ? fmtTime(s.last_check) : '从未'));
-  body.appendChild(st);
-
-  if (s.last_new && s.last_new.length) {
-    body.appendChild(el('div', 'newlist',
-      '最近新增：' + esc(s.last_new.slice(0, 8).join('、'))));
-  }
-  if (s.pending && s.pending.length) {
-    body.appendChild(el('div', 'warns',
-      '⚠ 有 ' + s.pending.length + ' 话还没下下来，下次检查会重试'));
-  }
-  if (s.last_error) {
-    body.appendChild(el('div', 'warns', '⚠ ' + esc(s.last_error)));
-  }
-
-  const a = el('div', 'acts');
-  const nb = el('button', 'pillbtn', '立即检查更新');
-  nb.onclick = async () => {
-    nb.disabled = true; const t = nb.textContent; nb.textContent = '检查中…';
-    const r = await apiPost('/api/subs', { action: 'check', name: w.title, download: true });
-    nb.disabled = false; nb.textContent = t;
-    if (r.error) toast(r.error);
-    else if (r.downloaded) toast('下了 ' + r.downloaded + ' 话新内容');
-    else if (r.updated) toast('有更新，但没下下来（看下方提示）');
-    else toast('没有新内容');
-    await loadExtras();
-    if (r.downloaded) await refreshLib();
-    render();
-  };
-  a.appendChild(nb);
-
-  const rb = el('button', 'pillbtn ghost', '取消订阅');
-  rb.onclick = async () => {
-    if (!confirm('取消《' + w.title + '》的订阅？已下载的内容不会删。')) return;
-    await apiPost('/api/subs', { action: 'remove', name: w.title });
-    toast('已取消订阅'); await loadExtras(); render();
-  };
-  a.appendChild(rb);
-  body.appendChild(a);
-  return wrap;
-}
-
-function subSearch(w, body) {
-  const box = el('div');
-  const f = el('div', 'field');
-  const inp = el('input'); inp.type = 'text'; inp.value = w.title;
-  inp.style.flex = '1'; inp.style.minWidth = '220px';
-  const sb = el('button', 'pillbtn', '搜索');
-  f.appendChild(inp); f.appendChild(sb);
-  box.appendChild(f);
-  body.appendChild(box);
-  const hits = el('div', 'hits');
-  body.appendChild(hits);
-
-  async function go() {
-    hits.innerHTML = '';
-    hits.appendChild(el('div', 'orig', '搜索中…'));
-    const r = await apiPost('/api/subs', { action: 'search', q: inp.value });
-    hits.innerHTML = '';
-    const list = (r && r.hits) || [];
-    if (!list.length) {
-      hits.appendChild(el('div', 'orig', '没搜到。换个关键词试试。'));
-      return;
-    }
-    list.forEach(h => {
-      const slug = h[0], t = h[1];
-      const b = el('button', '', esc(t) + '<small>' + esc(slug) + '</small>');
-      b.onclick = async () => {
-        b.disabled = true;
-        const rr = await apiPost('/api/subs', { action: 'add', name: w.title, slug: slug });
-        if (rr.error) { toast(rr.error); b.disabled = false; return; }
-        toast('已订阅'); await loadExtras(); render();
-      };
-      hits.appendChild(b);
-    });
-  }
-  sb.onclick = go;
-  inp.onkeydown = e => { if (e.key === 'Enter') go(); };
-  go();
-}
-
-/* ---- 体检页：定时设置 ---- */
-function settingsPanel() {
-  const wrap = el('div');
-  wrap.appendChild(el('div', 'sec', '定时订阅设置'));
-  const p = el('div', 'panel');
-  const body = el('div', 'body');
-  p.appendChild(body); wrap.appendChild(p);
-  body.appendChild(el('div', 'name', '漫画自动更新'));
-
-  const f = el('div', 'field');
-  f.appendChild(el('span', '', '每日'));
-  const hh = el('input'); hh.type = 'number'; hh.min = 0; hh.max = 23;
-  hh.value = SETTINGS.subscribe_hour != null ? SETTINGS.subscribe_hour : 12;
-  const mm = el('input'); mm.type = 'number'; mm.min = 0; mm.max = 59;
-  mm.value = SETTINGS.subscribe_minute || 0;
-  f.appendChild(hh); f.appendChild(el('span', '', ':')); f.appendChild(mm);
-  body.appendChild(f);
-
-  const mk = (checked, label) => {
-    const l = el('label', 'subrow');
-    const c = el('input'); c.type = 'checkbox'; c.checked = checked;
-    l.appendChild(c); l.appendChild(el('span', '', label));
-    return [l, c];
-  };
-  const f2 = el('div', 'field');
-  const [l1, c1] = mk(SETTINGS.subscribe_download !== false,
-    '自动下载更新');
-  f2.appendChild(l1); body.appendChild(f2);
-  const f3 = el('div', 'field');
-  const [l2, c2] = mk(SETTINGS.auto_scrape !== false,
-    '自动刮削新动画 / 电影');
-  f3.appendChild(l2); body.appendChild(f3);
-
-  const a = el('div', 'acts');
-  const sv = el('button', 'pillbtn', '保存设置');
-  sv.onclick = async () => {
-    SETTINGS = await apiPost('/api/settings', {
-      subscribe_hour: Math.max(0, Math.min(23, parseInt(hh.value, 10) || 0)),
-      subscribe_minute: Math.max(0, Math.min(59, parseInt(mm.value, 10) || 0)),
-      subscribe_download: c1.checked,
-      auto_scrape: c2.checked,
-    });
-    toast('已保存');
-  };
-  a.appendChild(sv);
-
-  const ca = el('button', 'pillbtn ghost', '刮削全部动画 / 电影');
-  ca.onclick = async () => {
-    ca.disabled = true; const t = ca.textContent; ca.textContent = '刮削中…';
-    const r = await apiPost('/api/scrape', { all: true });
-    ca.disabled = false; ca.textContent = t;
-    toast('新刮 ' + (r.scraped || 0) + ' 部，未匹配 ' + (r.fail || 0) + ' 部');
-    await loadExtras(); render();
-  };
-  a.appendChild(ca);
-  body.appendChild(a);
-
-  const vids = (LIB.anime || []).concat(LIB.movie || []);
-  if (vids.length) {
-    const miss = vids.filter(x => !metaOf(x.dir)).length;
-    body.appendChild(el('div', 'orig', miss
-      ? '还有 ' + miss + ' 部动画/电影没有刮削数据。'
-      : '所有动画和电影都已有刮削数据。'));
-  }
-  return wrap;
-}
-
-/* ---- 体检页：播放缓存 ---- */
-function cachePanel() {
-  const wrap = el('div');
-  wrap.appendChild(el('div', 'sec', '播放缓存'));
-  const p = el('div', 'panel');
-  const body = el('div', 'body');
-  p.appendChild(body); wrap.appendChild(p);
-
-  body.appendChild(el('div', 'name', '换壳缓存（MKV → MP4）'));
-
-  const line = el('div', 'substat');
-  body.appendChild(line);
-  const acts = el('div', 'acts');
-  const rb = el('button', 'pillbtn', '刷新');
-  const cb = el('button', 'pillbtn ghost', '清空缓存');
-  acts.appendChild(rb); acts.appendChild(cb);
-  body.appendChild(acts);
-
-  async function loadCache() {
-    const [c, pp] = await Promise.all([
-      fetch(apiUrl('/api/cache')).then(r => r.json()).catch(() => null),
-      fetch(apiUrl('/api/comic/cache')).then(r => r.json()).catch(() => null),
-    ]);
-    line.innerHTML = '';
-    if (!c) { line.appendChild(el('span', '', '读取失败')); return; }
-    line.appendChild(el('span', '', '换壳（视频）'));
-    line.appendChild(el('b', '', c.count + ' 个 · ' + size(c.bytes)));
-    line.appendChild(el('span', '', '上限'));
-    line.appendChild(el('b', '', size(c.cap)));
-    if (pp) {
-      line.appendChild(el('span', '', '渲染页（PDF）'));
-      line.appendChild(el('b', '', pp.files + ' 页 · ' + size(pp.bytes)));
-      line.appendChild(el('span', '', '上限'));
-      line.appendChild(el('b', '', size(pp.cap)));
-    }
-    line.appendChild(el('span', '', '位置'));
-    line.appendChild(el('b', '', esc((c.dir || '').split('\\').slice(-2).join('\\'))));
-  }
-  rb.onclick = loadCache;
-  cb.onclick = async () => {
-    if (!confirm('清空缓存？原片不会删除。')) return;
-    const [r, r2] = await Promise.all([
-      apiPost('/api/cache', { clear: true }),
-      apiPost('/api/comic/cache', { clear: true }),
-    ]);
-    const c = (r && r.cleared) || {}, pp = (r2 && r2.cleared) || {};
-    toast('已清理 ' + ((c.removed || 0) + (pp.removed || 0)) + ' 个文件，释放 '
-          + size((c.freed || 0) + (pp.freed || 0)));
-    await loadCache();
-  };
-  loadCache();
-  return wrap;
-}
-
-async function load() {
+async function load(refresh = false) {
   // 走 apiFetch：401 时弹出登录遮罩并中断，而不是把 undefined 当成数据渲染出白屏。
   try {
-    [LIB, HEALTH, PROG] = await Promise.all([
-      apiFetch('/api/library').then(r => r.json()),
-      apiFetch('/api/health').then(r => r.json()),
+    [LIB, PROG] = await Promise.all([
+      apiFetch('/api/library' + (refresh ? '?refresh=1' : '')).then(r => r.json()),
       apiFetch('/api/progress').then(r => r.json()),
     ]);
   } catch (e) {
@@ -1889,7 +1645,6 @@ async function load() {
   }
   await loadExtras();
   const s = LIB.stats;
-  $('#nH').textContent = HEALTH.filter(i => i.level === 'warn').length || '';
   $('#nA').textContent = s.anime_works;
   $('#nS').textContent = s.sleep_works || '';
   $('#nF').textContent = s.movie_works || '';
@@ -1899,12 +1654,6 @@ async function load() {
   $('#nM').textContent = s.music_tracks;
   $('#nR').textContent = Object.keys(PROG).length || '';
   $('#footSize').textContent = `合计 ${size(s.total_size)}`;
-  $('#opdsUrl').textContent = (API_BASE || location.origin) + '/opds';
-  $('#opdsBtn').onclick = () => {
-    navigator.clipboard.writeText((API_BASE || location.origin) + '/opds')
-      .then(() => toast('OPDS 地址已复制'))
-      .catch(() => toast((API_BASE || location.origin) + '/opds'));
-  };
   drawNow();
   render();
   refreshTrees();
@@ -1966,19 +1715,58 @@ window.addEventListener('popstate', e => {
   applyRouteFromLocation(e.state);
 });
 
-const TITLES = { health: '体检', anime: '动画', sleep: '助眠', movie: '电影', av: 'AV',
+const TITLES = { anime: '动画', sleep: '助眠', movie: '电影', av: 'AV',
                  comic: '漫画', manhwa: '韩漫', music: '音乐', history: '记录' };
 
 function render() {
-  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.t === TAB));
+  document.querySelectorAll('nav button').forEach(b => {
+    const current = b.dataset.t === TAB;
+    b.classList.toggle('on', current);
+    if (current) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
   const v = $('#view'); v.innerHTML = '';
   const list = matches();
   if (DETAIL) return renderDetail(v);
   if (TAB === 'history') return drawHistory(v);
   $('#pageTitle').textContent = TITLES[TAB];
   $('#pageSub').textContent = subFor(TAB, list);
-  ({ health: drawHealth, anime: drawAnime, sleep: drawSleep, movie: drawMovies, av: drawAv,
+  if (list[TAB]) drawShelfIntro(v, list[TAB].length);
+  ({ anime: drawAnime, sleep: drawSleep, movie: drawMovies, av: drawAv,
      comic: drawComic, manhwa: drawManhwa, music: drawMusic }[TAB])(v, list);
+}
+
+/* 展示层：只装饰已有列表，不改变筛选、路由或作品索引。 */
+function drawShelfIntro(v, count) {
+  if (TAB === 'music') return; // 音乐已有曲目统计横幅。
+  if (!QUERY.trim()) {
+    const hero = el('section', 'shelfHero');
+    hero.setAttribute('aria-label', '五更琉璃的月下收藏');
+    hero.innerHTML = `<div class="shelfHeroCopy">
+      <div class="shelfEyebrow">GOKOU RURI / PRIVATE COLLECTION</div>
+      <h2>夜色正好，<span>故事未眠。</span></h2>
+      <p>在月光停驻的地方，收藏每一个喜欢的世界。</p>
+      <div class="shelfSignature">五更琉璃 · 黒猫 <small>MOONSHADOW ARCHIVE</small></div>
+    </div>
+    <svg class="moonEmblem" viewBox="0 0 260 260" fill="none" aria-hidden="true">
+      <circle cx="130" cy="126" r="103" stroke="currentColor" stroke-opacity=".13"/>
+      <circle cx="130" cy="126" r="87" stroke="currentColor" stroke-opacity=".2" stroke-dasharray="2 9"/>
+      <path d="M130 24V12M130 240v-12M16 126h12M232 126h12" stroke="currentColor" stroke-opacity=".35"/>
+      <path d="M174 56c-12-6-25-7-38-2-31 11-47 45-36 76 11 30 45 46 76 35 12-4 22-12 29-23-21 11-48 0-57-22-10-25 2-53 26-64Z" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-opacity=".55"/>
+      <path d="M82 156c0-18 9-34 22-40l-2-27 26 17c7-1 14-1 21 1l24-18-1 30c12 9 17 23 15 39-3 25-22 39-54 39-33 0-51-16-51-41Z" fill="#1a1225" stroke="currentColor" stroke-opacity=".7"/>
+      <path d="m110 143 12 3-8 7m43-10-12 3 8 7" stroke="#e6bedc" stroke-width="2" stroke-linecap="round"/>
+      <path d="m128 160 6 4 6-4m-6 4v5" stroke="currentColor" stroke-linecap="round"/>
+      <path d="m110 193-20 8 4 16 27-13-5 29 17-12 16 12-4-29 27 13 4-16-21-8-13 8-19-8Z" fill="#b890cb" fill-opacity=".18" stroke="currentColor" stroke-opacity=".55"/>
+      <path d="m57 69 3-10 3 10 10 3-10 3-3 10-3-10-10-3Zm146 25 2-7 2 7 7 2-7 2-2 7-2-7-7-2Z" fill="#e8bfd8" fill-opacity=".8"/>
+      <circle cx="54" cy="168" r="2" fill="currentColor" fill-opacity=".55"/>
+      <circle cx="191" cy="193" r="2" fill="currentColor" fill-opacity=".55"/>
+    </svg>`;
+    v.appendChild(hero);
+  }
+  const heading = el('div', 'shelfHeading');
+  heading.appendChild(el('h2', '', QUERY.trim() ? '搜索结果' : '收藏书架'));
+  heading.appendChild(el('span', '', count + (TAB === 'sleep' ? ' 组收藏' : ' 部作品')));
+  v.appendChild(heading);
 }
 
 function matches() {
@@ -2000,44 +1788,7 @@ function subFor(tab, L) {
   if (tab === 'manhwa') return `${L.manhwa.length} 部 / ${(s.manhwa_chapters || 0)} 话 · 条漫竖向滚屏`;
   if (tab === 'music') return `${s.music_artists} 位 / ${s.music_tracks} 首`;
   if (tab === 'history') return `${Object.keys(PROG).length} 条记录`;
-  return `需要处理 ${HEALTH.filter(i => i.level === 'warn').length} 项`;
-}
-
-/* ---------------- 体检 ---------------- */
-function drawHealth(v) {
-  const s = LIB.stats;
-  const sg = el('div', 'statgrid');
-  [['动画', s.anime_works + ' 部', s.anime_eps + ' 集 · 特典 ' + s.anime_extras],
-   ['漫画', s.comic_works + ' 部', s.comic_chapters + ' 话'],
-   ['韩漫', (s.manhwa_works || 0) + ' 部', (s.manhwa_chapters || 0) + ' 话 · 条漫'],
-   ['AV', (s.av_works || 0) + ' 部', (s.av_count || 0) + ' 个文件'],
-   ['音乐', s.music_artists + ' 位', s.music_tracks + ' 首'],
-   ['总体积', size(s.total_size), '扫描 ' + LIB.elapsed + 's']].forEach(([l, a, b]) => {
-    const d = el('div', 'stat');
-    d.appendChild(el('div', 'v', esc(a)));
-    d.appendChild(el('div', 'l', esc(l + ' · ' + b)));
-    sg.appendChild(d);
-  });
-  v.appendChild(sg);
-
-  v.appendChild(el('div', 'sec', '需要处理'));
-  if (!HEALTH.length) v.appendChild(el('div', 'issue ok', '<div class="t">✓ 一切正常</div>'));
-  HEALTH.forEach(i => {
-    const d = el('div', 'issue ' + (i.level === 'warn' ? '' : 'info'));
-    d.appendChild(el('div', 't', (i.level === 'warn' ? '⚠ ' : 'ℹ ') + '[' + esc(i.kind) + '] ' + esc(i.work)));
-    d.appendChild(el('div', 'm', esc(i.msg)));
-    if (i.hint) d.appendChild(el('div', 'h', '→ ' + esc(i.hint)));
-    v.appendChild(d);
-  });
-
-  v.appendChild(settingsPanel());
-  v.appendChild(cachePanel());
-
-  v.appendChild(el('div', 'sec', 'Moeli Reader'));
-  const c = el('div', 'issue info');
-  c.appendChild(el('div', 't', 'OPDS 地址'));
-  c.appendChild(el('div', 'm', '<code>' + esc((API_BASE || location.origin) + '/opds') + '</code>'));
-  v.appendChild(c);
+  return '';
 }
 
 /* ---------------- 动画 ---------------- */
@@ -2387,11 +2138,8 @@ function renderDetail(v) {
   h.appendChild(info);
   v.appendChild(h);
 
-  // 刮削信息（动画/电影）/ 订阅面板（漫画）：紧跟在标题下面、剧集列表之前
-  if (isSleep) v.appendChild(el('div', 'orig', '助眠资源；未接入影视刮削。'));
-  else if (isAv) v.appendChild(el('div', 'orig',
-    'AV 资源；元数据（movie.nfo / poster.jpg / fanart.jpg）由 JavSP 生成在作品目录里，不走 Bangumi 刮削。'));
-  else v.appendChild(isVideo ? metaPanel(w) : subPanel(w));
+  // 作品信息显示在标题和剧集列表之间。
+  if (isVideo && !isSleep && !isAv) v.appendChild(metaPanel(w));
 
   // 服务端按一级目录保留版本边界：正片、妹妹s1/妹妹s2、CDs、Scans、SPs
   // 各自成区；旧索引没有 groups 时退回原来的两个数组。
@@ -4031,14 +3779,7 @@ $('#q').addEventListener('input', e => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => render(), 90);
 });
-$('#archiveTopBtn').onclick = openArchive;
-$('#restartTopBtn').onclick = restartResourceLibrary;
-$('#archiveClose').onclick = closeArchive;
-$('#archiveCancel').onclick = closeArchive;
-$('#archiveSave').onclick = saveArchiveInbox;
-$('#archivePick').onclick = pickArchiveInbox;
-$('#archiveRun').onclick = runArchive;
-$('#archiveOverlay').addEventListener('click', e => { if (e.target.id === 'archiveOverlay') closeArchive(); });
+$('#restartTopBtn').onclick = refreshCollection;
 
 $('#rPrev').onclick = () => step(-1);
 $('#rNext').onclick = () => step(1);

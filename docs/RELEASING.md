@@ -61,7 +61,7 @@ npm ci
 npm run desktop:portable
 ```
 
-命令先执行发布检查，再生成 `dist/v<版本>/Moonshadow-Reslib-<版本>-win32-<架构>/`。
+命令先执行发布检查，再生成 两个目录：`dist/v<版本>/Moonshadow-display-<版本>-win32-<架构>/` 与 `Moonshadow-management-<版本>-win32-<架构>/`。
 完整目录内包含程序及运行文件；分发时保留目录内容，不能只复制 `.exe`。
 已有同版本产物不会被覆盖。需要修订时先提升版本；旧包可保留用于回退。
 个人资源管线与 Python 环境不包含在包内，移动到其他位置时通过 `RESLIB_SCRIPT_DIR` 和

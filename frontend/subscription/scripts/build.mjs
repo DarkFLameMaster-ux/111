@@ -9,7 +9,7 @@ if (typeof version !== 'string' || !/^\d+\.\d+\.\d+(?:-[\w.-]+)?(?:\+[\w.-]+)?$/
   throw new Error('Root package.json must contain a semantic version.');
 }
 const dist = resolve(root, 'dist');
-const apiBase = (process.env.RESLIB_SUB_API_BASE || 'http://127.0.0.1:8781').replace(/\/+$/, '');
+const apiBase = (process.env.RESLIB_SUB_API_BASE || '').replace(/\/+$/, '');
 await mkdir(dist, { recursive: true });
 await cp(resolve(root, 'public'), dist, { recursive: true });
 await writeFile(resolve(dist, 'config.js'), `window.RESLIB_SUB_API_BASE = ${JSON.stringify(apiBase)};\n`, 'utf8');

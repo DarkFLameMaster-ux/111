@@ -1,3 +1,5 @@
+﻿param([ValidateSet("all", "display", "management")][string]$Role = "all")
+
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
@@ -36,7 +38,14 @@ try {
 
 $distRoot = Join-Path $appRoot "dist"
 $versionRoot = Join-Path $distRoot "v$version"
-$artifactName = "Moonshadow-Reslib-$version-win32-$architecture"
+$roles = if ($Role -eq "all") { @("display", "management") } else { @($Role) }
+# Check both destinations before packaging either role.
+foreach ($selectedRole in $roles) {
+    $existing = Join-Path $versionRoot "Moonshadow-$selectedRole-$version-win32-$architecture"
+    if (Test-Path -LiteralPath $existing) { throw "Portable build already exists: $existing" }
+}
+foreach ($selectedRole in $roles) {
+$artifactName = "Moonshadow-$selectedRole-$version-win32-$architecture"
 $output = Join-Path $versionRoot $artifactName
 if (Test-Path -LiteralPath $output) {
     throw "Portable build already exists; no files were changed: $output. Bump the version or move the existing artifact before rebuilding."
@@ -66,19 +75,17 @@ function Copy-ArtifactTree([string]$Source, [string]$Destination) {
     }
 }
 
+$frontend = if ($selectedRole -eq "display") { "display" } else { "subscription" }
 $sourceFiles = @(
     "desktop/main.js",
     "desktop/preload.js",
     "desktop/reader-shortcuts.js",
-    "backend/display/server.py",
+    "backend/runtime.py",
     "backend/display/compat.py",
-    "backend/subscription/server.py",
-    "frontend/display/dist/index.html",
-    "frontend/display/dist/config.js",
-    "frontend/display/dist/version.json",
-    "frontend/subscription/dist/index.html",
-    "frontend/subscription/dist/config.js",
-    "frontend/subscription/dist/version.json"
+    "backend/$frontend/server.py",
+    "frontend/$frontend/dist/index.html",
+    "frontend/$frontend/dist/config.js",
+    "frontend/$frontend/dist/version.json"
 )
 # Validate all inputs before creating an output directory.
 foreach ($relative in $sourceFiles) {
@@ -106,22 +113,24 @@ try {
         Copy-Item -LiteralPath (Join-Path $appRoot $relative) -Destination $target
     }
     $packagedManifest = [ordered]@{
-        name = $manifest.name
+        name = "$($manifest.name)-$selectedRole"
         version = $version
         description = $manifest.description
         main = "desktop/main.js"
+        reslibRole = $selectedRole
     }
     $utf8 = [System.Text.UTF8Encoding]::new($false)
     [System.IO.File]::WriteAllText((Join-Path $resourceApp "package.json"), ($packagedManifest | ConvertTo-Json) + "`n", $utf8)
     $buildInfo = [ordered]@{
-        name = $manifest.name
+        name = "$($manifest.name)-$selectedRole"
         version = $version
+        role = $selectedRole
         platform = "win32"
         architecture = $architecture
         electronVersion = (Get-Content -LiteralPath (Join-Path $electronDist "version") -Raw).Trim()
     }
     [System.IO.File]::WriteAllText((Join-Path $staging "build-info.json"), ($buildInfo | ConvertTo-Json) + "`n", $utf8)
-    Rename-Item -LiteralPath (Join-Path $staging "electron.exe") -NewName "Moonshadow-Reslib.exe"
+    Rename-Item -LiteralPath (Join-Path $staging "electron.exe") -NewName "Moonshadow-$selectedRole.exe"
 
     New-Item -ItemType Directory -Path $versionRoot -Force | Out-Null
     Assert-NoLinks $versionRoot
@@ -142,4 +151,5 @@ try {
     throw
 }
 
-Write-Output "Portable build created: $output\Moonshadow-Reslib.exe"
+Write-Output "Portable build created: $output\Moonshadow-$selectedRole.exe"
+}

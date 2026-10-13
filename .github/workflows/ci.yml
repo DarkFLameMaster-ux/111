@@ -31,6 +31,8 @@ jobs:
         run: npm run release:check
       - name: Check Python syntax
         run: python -m compileall -q backend
+      - name: Verify isolated service roles
+        run: python -m unittest discover -s backend -p "test_*.py"
       - name: Verify reproducible tracked frontends
         run: git diff --exit-code -- frontend/display/dist frontend/subscription/dist
       - name: Check whitespace

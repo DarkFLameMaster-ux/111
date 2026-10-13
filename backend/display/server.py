@@ -1,44 +1,8 @@
-#!/usr/bin/env python
-"""资源显示后端。
-
-复用现有资源库索引、OPDS、视频/漫画流式接口；前端可以由本服务提供，
-也可以部署到 GitHub Pages，通过 RESLIB_CORS_ORIGIN 跨域访问。
-"""
-from __future__ import annotations
-
-import os
+"""Independent display service."""
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from runtime import main
 
-APP_ROOT = Path(__file__).resolve().parents[2]
-
-
-def configured_path(name: str, fallback: Path) -> Path:
-    value = os.environ.get(name)
-    if not value:
-        return fallback
-    candidate = Path(value).expanduser()
-    return candidate if candidate.is_absolute() else (APP_ROOT / candidate).resolve()
-
-
-SCRIPT_DIR = configured_path("RESLIB_SCRIPT_DIR", APP_ROOT.parent / "_归档脚本")
-FRONTEND = configured_path("RESLIB_DISPLAY_DIST", APP_ROOT / "frontend" / "display" / "dist" / "index.html")
-sys.path.insert(0, str(SCRIPT_DIR))
-
-import lib  # noqa: E402
-from compat import prepare  # noqa: E402
-
-prepare(lib, os.environ.get("RESLIB_CORS_ORIGIN", "*"))
-lib.UI_FILE = FRONTEND
-
-# 默认绑定全部网卡，配合资源库 settings.json 的 allow_nets/auth 让同一 Wi‑Fi
-# 下的设备可以访问。需要仅本机时可显式设置 RESLIB_HOST=127.0.0.1。
-host = os.environ.get("RESLIB_HOST", "0.0.0.0")
-port = int(os.environ.get("RESLIB_PORT", "8777"))
-tls_port = int(os.environ.get("RESLIB_TLS_PORT", "0"))
-if tls_port == 0:
-    # 兼容旧 lib.py：旧逻辑用 ``or`` 处理端口，会把显式 0 回退为默认 HTTPS 端口。
-    lib.TLS_PORT_DEFAULT = 0
-
-sys.argv = ["lib.py", "serve", "--host", host, "--port", str(port), "--tls-port", str(tls_port)]
-raise SystemExit(lib.main())
+if __name__ == "__main__":
+    raise SystemExit(main("display"))

@@ -3,63 +3,156 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="application-version" content="0.2.0">
+  <meta name="application-version" content="0.3.1">
   <script src="config.js"></script>
-  <title>资源订阅控制台</title>
+  <title>月影黑猫 · 资源管理</title>
   <style>
-    :root{color-scheme:dark;font-family:system-ui,"Microsoft YaHei",sans-serif;background:#101114;color:#eee}
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 0,#243044,#101114 42%)}
-    main{max-width:1080px;margin:0 auto;padding:38px 20px 60px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:28px}
-    h1{font-size:clamp(28px,5vw,48px);margin:0 0 8px;letter-spacing:-.04em}.muted{color:#9da7b8}.pill{border:1px solid #3c8cff55;border-radius:999px;padding:7px 12px;color:#92c1ff;background:#17243a}
-    .panel{background:#171a20d9;border:1px solid #ffffff12;border-radius:18px;padding:20px;box-shadow:0 18px 50px #0005;margin:16px 0}
-    form{display:flex;gap:10px;flex-wrap:wrap}input,button{font:inherit;border-radius:10px;border:1px solid #ffffff1c;padding:11px 13px;background:#0f1115;color:#fff}input{flex:1;min-width:210px}button{cursor:pointer;background:#2369d1;border-color:#448cff}button.secondary{background:#242a35;border-color:#ffffff20}button.danger{background:#652936;border-color:#ad4257}
-    .row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:14px 0;border-top:1px solid #ffffff10}.row:first-child{border-top:0}.title{font-weight:700;font-size:17px}.meta{font-size:13px;color:#9da7b8;margin-top:5px}.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.empty{padding:24px;text-align:center;color:#9da7b8}
-    #toast{position:fixed;right:20px;bottom:20px;background:#202630;color:#fff;border:1px solid #ffffff2a;border-radius:10px;padding:12px 15px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}.show{opacity:1!important;transform:none!important}
-    @media(max-width:650px){.hero{display:block}.actions{justify-content:flex-start;margin-top:10px}}
-    /* 五更琉璃 / 黑猫主题：与展示前端共用月影紫黑、月轮和微弱星点。 */
-    :root{--ruri:#d09aff;--ruri-hot:#a66cff;--night:#0b0912;--panel:#171329e8}
-    body{background:
-      radial-gradient(circle at 84% -8%,rgba(162,104,255,.28),transparent 34%),
-      radial-gradient(circle at 10% 105%,rgba(72,67,166,.22),transparent 42%),var(--night)}
-    body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.22;
-      background-image:radial-gradient(rgba(237,216,255,.85) 0 1px,transparent 1.5px);
-      background-size:54px 54px;mask-image:linear-gradient(180deg,#000,transparent 75%)}
-    main{position:relative}
-    .hero{position:relative}
-    .hero::after{content:'☾';position:absolute;right:22px;top:-10px;color:rgba(231,200,255,.16);
-      font-size:124px;line-height:1;pointer-events:none;text-shadow:0 0 34px rgba(208,154,255,.2)}
-    .pill{position:relative;z-index:1;border-color:rgba(208,154,255,.38);color:#e1c6ff;
-      background:linear-gradient(135deg,rgba(50,32,78,.9),rgba(24,18,47,.9));box-shadow:0 0 22px rgba(137,83,212,.15)}
-    h1{position:relative;z-index:1;text-shadow:0 0 28px rgba(208,154,255,.23)}
-    .panel{background:var(--panel);border-color:rgba(208,154,255,.13);box-shadow:0 18px 50px rgba(4,2,12,.45),inset 0 1px rgba(255,255,255,.03)}
-    button{background:linear-gradient(135deg,#9d63e8,#7243ba);border-color:#d09aff88;box-shadow:0 7px 18px rgba(87,42,145,.25);transition:transform .16s,box-shadow .16s,filter .16s}
-    button:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 10px 23px rgba(87,42,145,.38),0 0 0 1px rgba(236,213,255,.18) inset}
-    button.secondary{background:#242039;border-color:rgba(208,154,255,.18)}
-    button.danger{background:#652936;border-color:#ad4257}
-    input:focus{outline:2px solid rgba(208,154,255,.6);outline-offset:1px}
-    .row{border-top-color:rgba(208,154,255,.1)}
-    .title{color:#faf5ff}.muted,.meta{color:#b8adcc}
-    #toast{background:#211936;border-color:rgba(208,154,255,.35);box-shadow:0 12px 32px rgba(4,2,12,.45)}
-    .heroBrand{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-    .appVersion{position:relative;z-index:1;display:inline-flex;flex:0 0 auto;white-space:nowrap;padding:4px 8px;
-      border:1px solid rgba(208,154,255,.24);border-radius:999px;background:rgba(208,154,255,.08);color:#b8adcc;font-size:11px}
+    :root{color-scheme:dark;--bg:#0e0c17;--panel:#1b1526;--fg:#f4eff9;--dim:#afa5be;
+      --accent:#c5a2ef;--line:rgba(207,181,238,.14);font-family:'Segoe UI','Microsoft YaHei UI',system-ui,sans-serif;color:var(--fg);background:var(--bg)}
+    *{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#42364f transparent}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 90% 0,rgba(115,75,145,.17),transparent 50%),var(--bg);font-size:14px;line-height:1.6}
+    main{max-width:1080px;margin:0 auto;padding:30px 28px 60px}
+    .masthead{display:flex;align-items:center;gap:12px;padding:0 0 26px;margin-bottom:27px;border-bottom:1px solid var(--line)}
+    .brandMark{width:38px;height:38px;display:grid;place-items:center;border:1px solid rgba(207,181,238,.35);border-radius:12px;background:linear-gradient(145deg,#ddc5f4,#a57cce);color:#21172e}
+    .brandMark svg{width:27px;height:27px;fill:currentColor}
+    .brandText{display:flex;flex-direction:column;gap:4px}.brandText strong{font-size:16px;letter-spacing:1px;font-weight:600}.brandText small{font:8px/1.5 ui-monospace,Consolas,monospace;letter-spacing:1.5px;color:#a79ab9}
+    .appVersion{margin-left:auto;display:inline-flex;padding:4px 8px;border:1px solid var(--line);border-radius:5px;color:#96879f;font:10px/1.5 ui-monospace,Consolas,monospace;white-space:nowrap}
+    .hero{position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(197,162,239,.19);border-radius:18px;
+      padding:32px 36px;margin-bottom:28px;background:radial-gradient(ellipse at 100% 50%,rgba(156,106,189,.22),transparent 55%),linear-gradient(110deg,#261c33,#181324)}
+    .hero::before{content:'';position:absolute;inset:9px;border:1px solid rgba(217,187,242,.07);border-radius:11px;pointer-events:none;z-index:-1}
+    .hero::after{content:'☾';position:absolute;right:34px;top:-35px;color:rgba(214,181,235,.2);font:210px/1.2 Georgia;pointer-events:none;z-index:-1;transform:rotate(-12deg)}
+    .heroBrand{display:flex;align-items:center;gap:8px;margin-bottom:13px}
+    .pill{font:9px/1.5 ui-monospace,Consolas,monospace;letter-spacing:2px;color:#c7addc}
+    .pill::before{content:'✦';color:#e9b4c9;margin-right:9px}
+    h1{font:400 clamp(25px,4vw,36px)/1.5 'Songti SC','SimSun',serif;letter-spacing:2px;margin:0 0 11px}
+    .hero .muted{max-width:75%;font-size:12px;letter-spacing:.3px;line-height:1.9}
+    .muted{color:var(--dim)}
+    #health{display:inline-flex;align-items:center;margin-top:20px;padding:5px 11px;border-radius:6px;border:1px solid var(--line);background:rgba(197,162,239,.07);font-size:11px;color:#d2b3e6}
+    #health::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.7;margin-right:8px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin:18px 0;box-shadow:0 8px 26px rgba(4,2,10,.15)}
+    .panelHead{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}
+    .panelEyebrow{color:#967fa8;font:9px/1.5 ui-monospace,Consolas,monospace;letter-spacing:1.8px;margin-bottom:7px}
+    h2{margin:0;font-size:18px;font-weight:500;letter-spacing:.7px}
+    .panelNote{margin:7px 0 0;color:#9e8dae;font-size:11px}
+    form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;align-items:end}
+    .field{display:flex;flex-direction:column;gap:8px;font-size:11px;color:#bca9ce;min-width:0}
+    input,button{font:inherit;border-radius:8px;padding:11px 14px;color:var(--fg);min-height:42px}
+    input{width:100%;min-width:0;background:#120e1b;border:1px solid var(--line);font-size:12px}
+    input::placeholder{color:#80718f}
+    input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    button{cursor:pointer;background:linear-gradient(120deg,#d4b6ee,#be99de);color:#281a32;border:1px solid transparent;font-size:11px;font-weight:600;letter-spacing:.3px;white-space:nowrap;transition:background .16s,border-color .16s,transform .16s}
+    button:hover{filter:brightness(1.06);transform:translateY(-1px)}
+    button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+    button.secondary{background:#282033;color:#c5aed7;border-color:var(--line)}
+    button.secondary:hover{background:#372940;border-color:#715280}
+    button.danger{background:rgba(188,77,110,.12);color:#e4a3b8;border-color:rgba(217,130,158,.2)}
+    button.danger:hover{background:rgba(188,77,110,.23)}
+    .row{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:22px 0;border-top:1px solid var(--line)}
+    .row>div:first-child{min-width:0;flex:1}.title{font-weight:600;font-size:14px;color:#e6d9ef;overflow-wrap:anywhere}
+    .meta{font-size:11px;color:#9e8bae;margin-top:7px;line-height:1.9;overflow-wrap:anywhere}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .row button{padding:8px 12px;min-height:34px;font-size:10px}
+    .empty{padding:42px 18px;text-align:center;color:#a993bd;background:rgba(197,162,239,.03);border:1px dashed var(--line);border-radius:10px;font-size:12px}
+    #toast{position:fixed;right:20px;bottom:20px;background:#2d213b;color:var(--fg);border:1px solid rgba(197,162,239,.3);border-radius:10px;padding:12px 16px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;box-shadow:0 12px 30px rgba(4,2,12,.35);max-width:calc(100vw - 40px);font-size:12px}
+    .show{opacity:1!important;transform:none!important}
+    @media(max-width:700px){main{padding:22px 18px 40px}.masthead{padding-bottom:22px;margin-bottom:22px}
+      .hero{padding:27px 24px}.hero::after{right:-45px;opacity:.6}.hero .muted{max-width:85%}
+      .panel{padding:23px 20px}.panelHead{align-items:flex-start;flex-wrap:wrap;gap:14px}
+      form{grid-template-columns:minmax(0,1fr)}form button{margin-top:3px}
+      .row{align-items:flex-start;flex-direction:column;gap:14px}.row .actions{justify-content:flex-start}.row .actions button{min-height:38px}
+      h1{font-size:26px}.pill{font-size:8px;letter-spacing:1px}.panelEyebrow{font-size:8px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}
+    [hidden]{display:none!important}nav{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}nav button[aria-current=page]{background:#e0c4f6;color:#21172e}
+    select{background:#120e1b;color:var(--fg);padding:11px;border:1px solid var(--line);border-radius:8px;max-width:100%}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.grid .panel{margin:0}.wide{grid-column:1/-1}
+    .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:16px 0}.controls input[type=search]{flex:1;min-width:180px}
+    .check{display:flex;align-items:center;gap:8px}.check input{width:16px;min-height:16px;accent-color:var(--accent)}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#120e1b;padding:16px;border-radius:8px;max-height:330px;overflow:auto;font-size:12px}
+    .notice{padding:14px;background:#312038;color:#e1c9ed;border:1px solid var(--line);border-radius:10px;margin:16px 0}
+    a{color:#d5b3f0;overflow-wrap:anywhere}button:disabled{opacity:.55;cursor:wait;transform:none}
+    .resourceTitle{font-weight:600}.row input{max-width:100%}.sourceEdit{display:flex;gap:8px;margin-top:10px}.sourceEdit input{flex:1}
+    .categoryNav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:20px 0}
+    .categoryNav button{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#21192d;color:#c5aed7;border-color:var(--line);white-space:normal;text-align:left}
+    .categoryNav button[aria-pressed=true],.subcategories button[aria-pressed=true]{background:#d4b6ee;color:#281a32;border-color:#e3ccf7}
+    .categoryNav small{font:11px ui-monospace,Consolas,monospace;opacity:.8}.subcategories{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.subcategories button{display:flex;align-items:center;gap:10px}
+    .categoryHeading{display:flex;gap:12px;align-items:center;padding:18px 0 8px;border-bottom:1px solid var(--line)}.categoryHeading h3{font-size:15px;margin:0}.categoryHeading small{color:var(--dim)}
+    .metrics{display:flex;gap:12px;flex-wrap:wrap}.metric{padding:14px 20px;border:1px solid var(--line);border-radius:10px;flex:1;min-width:130px}.metric strong{display:block;font-size:23px}
+    #feedback{position:sticky;top:8px;z-index:10}.issue{padding:15px 0;border-top:1px solid var(--line)}.issue small{display:block;color:var(--dim)}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}.categoryNav{grid-template-columns:repeat(2,minmax(0,1fr))}.sourceEdit{flex-wrap:wrap}.sourceEdit input{flex-basis:100%}.hero .muted{max-width:100%}}
   </style>
 </head>
-<body>
-<main>
-  <section class="hero"><div><div class="heroBrand"><div class="pill">五更琉璃 · 黑猫订阅台</div><span class="appVersion" aria-label="软件版本 0.2.0">软件 v0.2.0</span></div><h1>漫画更新控制台</h1><div class="muted">在月影下管理订阅、检查新话，并把下载写回现有资源库作品目录。</div></div><div id="health" class="muted">连接中…</div></section>
-  <section class="panel"><h2>添加订阅</h2><form id="addForm"><input id="name" required placeholder="作品名，例如：上伊那牡丹"><input id="slug" placeholder="可选：包子漫画 slug"><button>添加订阅</button></form><div id="search" class="muted" style="margin-top:12px"></div></section>
-  <section class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>当前订阅</h2><div class="actions"><button id="checkAll">立即检查全部</button><button id="refresh" class="secondary">刷新</button></div></div><div id="list"><div class="empty">正在读取…</div></div></section>
-</main><div id="toast"></div>
+<body><main>
+<header class="masthead"><span class="brandMark" aria-hidden="true">☾</span><span class="brandText"><strong>月影黑猫 · 资源管理</strong><small>GOKOU RURI / LIBRARY MANAGEMENT</small></span><span class="appVersion">软件 v0.3.1</span></header>
+<section class="hero"><div class="pill">五更琉璃 · 黒猫 / CARE FOR YOUR COLLECTION</div><h1>收藏井然，故事常新。</h1><div class="muted">资源归档、订阅来源、更新任务与作品资料，集中在这里管理。</div><div id="health" role="status">连接中…</div></section>
+<nav aria-label="管理分区"><button data-tab="resources" aria-current="page">资源管理</button><button data-tab="subscriptions">订阅与来源</button><button data-tab="automation">刮削与定时</button><button data-tab="links">订阅链接</button></nav>
+<div id="feedback" class="notice" role="status" hidden></div>
+<section id="resources" class="tab">
+  <div id="metrics" class="metrics"></div>
+  <div class="panel"><div class="panelHead"><div><div class="panelEyebrow">01 / RESOURCE LIBRARY</div><h2>资源目录</h2></div><button id="reindex">重新扫描资源</button></div>
+  <div id="categoryNav" class="categoryNav" role="group" aria-label="资源分类"></div><div id="subcategories" class="subcategories" role="group" aria-label="小说子分类" hidden></div>
+  <div class="controls"><strong id="categoryTitle">全部分类</strong><input id="resourceSearch" type="search" aria-label="搜索资源" placeholder="搜索作品或目录…"><span id="resourceCount" class="muted" aria-live="polite"></span></div><div id="resourceList"></div></div>
+  <div class="panel"><div class="panelHead"><div><div class="panelEyebrow">02 / ORGANIZE</div><h2>资源归档</h2><p class="panelNote">新资源先放入待整理目录，沿用现有分类与归档流程。</p></div></div>
+    <label class="field">默认待整理目录<input id="archiveInbox" placeholder="00-待整理的完整路径"></label>
+    <div class="controls"><button id="pickFolder" class="secondary">选择文件夹</button><button id="saveInbox" class="secondary">保存默认目录</button><select id="archiveCategory" aria-label="归档分区"><option value="">自动识别</option></select><button id="archiveRun">开始归档</button></div><p class="panelNote">自动识别沿用现有分类规则；手动选择分区只对本次归档生效。小说保留日系轻小说与网文子分类。</p><pre id="archiveResult" hidden></pre>
+  </div>
+  <div class="panel"><div class="panelHead"><h2>资源体检</h2><button id="healthRefresh" class="secondary">刷新体检</button></div><div id="issues"></div></div>
+</section>
+<section id="subscriptions" class="tab" hidden>
+  <div class="panel"><div class="panelEyebrow">01 / SUBSCRIPTION SOURCE</div><h2>添加订阅</h2><p class="panelNote">支持包子漫画作品链接或来源标识；留空时按作品名匹配来源。</p>
+    <form id="addForm"><label class="field">作品名称<input id="name" required placeholder="输入作品名"></label><label class="field">订阅来源链接<input id="slug" placeholder="https://www.baozimh.com/comic/…"></label><button type="submit">添加订阅</button></form>
+    <div class="controls"><button id="searchSource" class="secondary">搜索来源</button><label class="check"><input type="checkbox" id="addDownload" checked>有更新时自动下载</label></div><div id="sourceResults"></div>
+  </div>
+  <div class="panel"><div class="panelHead"><div><div class="panelEyebrow">02 / FOLLOWED STORIES</div><h2>当前订阅</h2></div><div class="actions"><button id="checkAll">检查全部</button><button id="refresh" class="secondary">刷新</button></div></div><label class="check"><input type="checkbox" id="checkDownload">本次检查下载新话</label><div id="list"></div></div>
+</section>
+<section id="automation" class="tab" hidden><div class="grid">
+  <div class="panel"><div class="panelEyebrow">01 / METADATA</div><h2>作品刮削</h2><p class="muted">沿用当前动画、电影的刮削来源。单部作品可在资源目录中操作。</p><label class="check"><input type="checkbox" id="scrapeForce">重新刮削已有资料</label><div class="controls"><button id="scrapeAll">刮削动画与电影</button></div><pre id="scrapeResult" hidden></pre></div>
+  <div class="panel"><div class="panelEyebrow">02 / AUTOMATION</div><h2>定时任务</h2><p class="muted">由资源管理服务执行；需保持该服务运行。</p><label class="field">每日订阅检查时间<input id="scheduleTime" type="time" required></label><div class="controls"><label class="check"><input type="checkbox" id="autoDownload">自动下载订阅更新</label><label class="check"><input type="checkbox" id="autoScrape">自动刮削新作品</label></div><button id="saveSettings">保存设置</button></div>
+  <div class="panel wide"><div class="panelHead"><div><div class="panelEyebrow">03 / STORAGE</div><h2>播放与阅读缓存</h2></div><button id="clearCache" class="secondary">清理缓存</button></div><p id="cacheInfo" class="muted"></p></div>
+</div></section>
+<section id="links" class="tab" hidden><div class="panel"><div class="panelEyebrow">01 / READER CONNECTION</div><h2>阅读器订阅链接</h2><p class="muted">OPDS 由资源浏览服务提供。将下面的地址添加到 Moeli 等阅读器；资源浏览服务需保持运行。</p><label class="field">电脑访问地址<input id="publicAddress" placeholder="例如 http://192.168.1.10:8777"></label><div class="controls"><button id="saveAddress" class="secondary">保存访问地址</button></div><label class="field">OPDS 地址<input id="opdsLink" readonly></label><div class="controls"><button id="copyOpds">复制订阅链接</button></div><p class="panelNote">同一台电脑使用默认地址；手机访问时改为电脑的局域网或 Tailscale 地址。保存地址仅更新链接，访问仍受原有登录与网络白名单保护。</p></div><div class="panel"><h2>资源浏览入口</h2><p><a id="displayLink" target="_blank" rel="noopener"></a></p></div></section>
+</main><div id="toast" role="status"></div>
 <script>
-const API=String(window.RESLIB_SUB_API_BASE||'').replace(/\/+$/,''); const url=p=>API+(p.startsWith('/')?p:'/'+p);
-const $=s=>document.querySelector(s); const toast=m=>{const e=$('#toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2600)};
-async function req(path, options){const r=await fetch(url(path),{headers:{'Content-Type':'application/json'},...options});const j=await r.json();if(!r.ok||j.error)throw Error(j.error||('HTTP '+r.status));return j}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-async function health(){try{const j=await req('/health');$('#health').textContent=`在线 · ${j.enabled||0}/${j.subscriptions||0} 个启用`}catch(e){$('#health').textContent='后端未连接'}}
-function render(subs){const entries=Object.entries(subs||{});if(!entries.length){$('#list').innerHTML='<div class="empty">还没有订阅。添加一个作品开始吧。</div>';return}$('#list').innerHTML=entries.map(([name,s])=>{const fresh=(s.last_new||[]).join('、')||'暂无新话';const err=s.last_error?`<span style="color:#ff9aa8">${esc(s.last_error)}</span>`:'';return `<div class="row"><div><div class="title">${esc(name)} ${s.enabled===false?'<span class="muted">（已停用）</span>':''}</div><div class="meta">已知 ${s.known||0} 话 · 最近检查 ${s.last_check?new Date(s.last_check*1000).toLocaleString():'从未'} · ${esc(fresh)} ${err}</div></div><div class="actions"><button class="secondary" data-action="toggle" data-name="${esc(name)}">${s.enabled===false?'启用':'停用'}</button><button data-action="check" data-name="${esc(name)}">检查</button><button class="danger" data-action="remove" data-name="${esc(name)}">删除</button></div></div>`}).join('')}
-async function load(){try{const j=await req('/api/subscriptions');render(j.subscriptions);await health()}catch(e){$('#list').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>'}}
-$('#addForm').onsubmit=async e=>{e.preventDefault();try{const j=await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'add',name:$('#name').value,slug:$('#slug').value||undefined})});if(!j.ok)throw Error('添加失败');$('#name').value='';$('#slug').value='';toast('订阅已添加');await load()}catch(x){toast(x.message)}};
-$('#list').onclick=async e=>{const b=e.target.closest('button[data-action]');if(!b)return;const name=b.dataset.name;try{if(b.dataset.action==='remove'){if(!confirm('确定删除订阅「'+name+'」？'))return;await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'remove',name})});toast('已删除')}else if(b.dataset.action==='toggle'){const disable=b.textContent.includes('停用');await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'toggle',name,enabled:disable?false:true})});toast(disable?'已停用':'已启用')}else{await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'check',name,download:true})});toast('检查完成')}await load()}catch(x){toast(x.message)}};
-$('#checkAll').onclick=async()=>{try{await req('/api/subscriptions',{method:'POST',body:JSON.stringify({action:'check',download:true})});toast('全部检查完成');await load()}catch(x){toast(x.message)}};$('#refresh').onclick=load;load();
+const API=String(window.RESLIB_SUB_API_BASE||'').replace(/\/+$/,'');
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+let library={}, subscriptions={}, settings={}, metadata={}, categoryCatalog=[], activeCategory='';
+const bytes=n=>{let i=0;const units=['B','KB','MB','GB','TB'];while(n>=1024&&i<4){n/=1024;i++}return (n||0).toFixed(1)+' '+units[i]};
+function feedback(message,error=false){const e=$('#feedback');e.textContent=message;e.hidden=false;e.style.borderColor=error?'#cf7898':''}
+async function req(route,body){const response=await fetch(API+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await response.json();if(!response.ok||j.error||j.ok===false)throw Error(j.error||('请求失败 '+response.status));return j}
+async function task(button,operation){if(button.disabled)return;const label=button.textContent;button.disabled=true;button.textContent='处理中…';try{await operation()}catch(e){feedback(e.message,true)}finally{button.disabled=false;button.textContent=label}}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==b.dataset.tab);document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-current',x===b?'page':'false'));history.replaceState(null,'','#'+b.dataset.tab)});
+const requestedTab=document.querySelector('nav button[data-tab="'+location.hash.slice(1).replace(/[^a-z]/g,'')+'"]');if(requestedTab)requestedTab.click();
+function resources(){return categoryCatalog.flatMap(({kind,label})=>(library[kind]||[]).map(w=>({...w,kind,category:label})))}
+function categoryButton(id,label,count,selected=activeCategory===id){return `<button type="button" data-category="${esc(id)}" aria-pressed="${selected}"><span>${esc(label)}</span><small>${count}</small></button>`}
+function renderCategories(){const kind=activeCategory.split('/')[0],parent=categoryCatalog.find(c=>c.id===kind),child=(parent?.children||[]).find(c=>c.id===activeCategory);$('#categoryNav').innerHTML=categoryButton('','全部分类',resources().length)+categoryCatalog.map(c=>categoryButton(c.id,c.label,c.count,kind===c.id)).join('');$('#subcategories').hidden=!parent?.children?.length;$('#subcategories').innerHTML=parent?.children?.length?categoryButton(parent.id,'全部'+parent.label,parent.count)+parent.children.map(c=>categoryButton(c.id,c.label,c.count)).join(''):'';$('#categoryTitle').textContent=child?parent.label+' / '+child.label:parent?.label||'全部分类'}
+function resourceRow(w){const dir=w.dir||w.path||'',meta=metadata[dir],title=meta?.title_cn||meta?.title||w.title||w.name||dir,unit={anime:'集',movie:'个视频',sleep:'个视频',av:'个视频',comic:'话',manhwa:'话',novel:'本',music:'首',game:'个文件'}[w.kind]||'个条目';return `<div class="row" data-kind="${esc(w.kind)}"><div><div class="resourceTitle">${esc(title)}</div><div class="meta">${esc(w.category+(w.subcategory?' / '+w.subcategory:''))} · ${w.count??(w.episodes||w.chapters||w.tracks||[]).length} ${unit} · ${bytes(w.size||0)}${['anime','movie'].includes(w.kind)?' · '+(meta?'已有作品资料':'未刮削'):''}<br>${esc(dir)}</div></div>${['anime','movie'].includes(w.kind)?`<button class="secondary" data-scrape="${esc(dir)}" data-title="${esc(w.dir_name||w.title)}">刮削此作品</button>`:''}</div>`}
+function renderResources(){const q=$('#resourceSearch').value.trim().toLowerCase(),parent=categoryCatalog.find(c=>c.id===activeCategory.split('/')[0]),child=(parent?.children||[]).find(c=>c.id===activeCategory);const items=resources().filter(w=>(!parent||parent.kind===w.kind)&&(!child||w.subcategory===child.subcategory)&&[w.title,w.name,w.dir,w.path,metadata[w.dir]?.title_cn,metadata[w.dir]?.title].join(' ').toLowerCase().includes(q));$('#resourceCount').textContent=items.length+' 项';const shown=items.slice(0,150);$('#resourceList').innerHTML=categoryCatalog.map(c=>{const works=shown.filter(w=>w.kind===c.kind);if(!works.length)return '';return `${!activeCategory?`<div class="categoryHeading"><h3>${esc(c.label)}</h3><small>${items.filter(w=>w.kind===c.kind).length} 项</small></div>`:''}${works.map(resourceRow).join('')}`}).join('')||'<div class="empty">'+(q?'没有匹配的资源':'此分类暂无已归档资源')+'</div>';if(items.length>150)$('#resourceList').insertAdjacentHTML('beforeend','<p class="muted">当前显示前 150 项，请通过搜索或分类缩小范围。</p>');renderCategories()}
+async function loadLibrary(){library=await req('/api/library');const catalog=await req('/api/categories');categoryCatalog=catalog.categories;metadata=(await req('/api/extras')).meta||{};const selected=$('#archiveCategory').value;$('#archiveCategory').innerHTML='<option value="">自动识别</option>'+catalog.archive_categories.map(c=>`<option value="${esc(c.value)}">${esc(c.label)}</option>`).join('');$('#archiveCategory').value=selected;const s=library.stats||{};$('#metrics').innerHTML=[['分类',categoryCatalog.length],['作品 / 目录',resources().length],['资源条目',categoryCatalog.reduce((sum,c)=>sum+c.items,0)],['总容量',bytes(s.total_size||0)]].map(([k,v])=>`<div class="metric"><span class="muted">${k}</span><strong>${v}</strong></div>`).join('');renderResources()}
+async function loadHealth(){const items=await req('/api/health');$('#issues').innerHTML=items.map(i=>`<div class="issue">${esc(i.work||i.kind)} · ${esc(i.msg)}<small>${esc(i.hint||'')}</small></div>`).join('')||'<div class="empty">没有需要处理的问题</div>'}
+async function loadSettings(){settings=await req('/api/settings');$('#archiveInbox').value=settings.inbox_dir||'';$('#scheduleTime').value=String(settings.subscribe_hour??12).padStart(2,'0')+':'+String(settings.subscribe_minute??0).padStart(2,'0');$('#autoDownload').checked=settings.subscribe_download!==false;$('#autoScrape').checked=settings.auto_scrape!==false}
+function sourceUrl(s){return 'https://www.baozimh.com/comic/'+encodeURIComponent(s.slug||'')}
+async function loadSubscriptions(){subscriptions=(await req('/api/subscriptions')).subscriptions||{};$('#list').innerHTML=Object.entries(subscriptions).map(([name,s])=>`<div class="row"><div><div class="title">${esc(name)} ${s.enabled===false?'（已暂停）':''}</div><div class="meta">已知 ${s.known||0} 话 · 待下载 ${s.pending||0} 话 · 最近检查 ${s.last_check?new Date(s.last_check*1000).toLocaleString():'从未'}<br>${esc((s.last_new||[]).join('、'))}${s.last_error?'<br>错误：'+esc(s.last_error):''}</div><div class="sourceEdit"><input aria-label="${esc(name)}的订阅来源" value="${esc(sourceUrl(s))}"><button class="secondary" data-action="update" data-name="${esc(name)}">保存来源</button></div></div><div class="actions"><button class="secondary" data-action="toggle" data-name="${esc(name)}">${s.enabled===false?'启用':'暂停'}</button><button class="secondary" data-action="download" data-name="${esc(name)}">${s.auto_download===false?'启用自动下载':'暂停自动下载'}</button><button data-action="check" data-name="${esc(name)}">检查</button><button class="danger" data-action="remove" data-name="${esc(name)}">取消订阅</button></div></div>`).join('')||'<div class="empty">还没有订阅，添加作品开始追更。</div>'}
+async function loadCache(){const [video,comic]=await Promise.all([req('/api/cache'),req('/api/comic/cache')]);$('#cacheInfo').textContent='视频 '+bytes(video.bytes??video.total_size??video.size??0)+' · 阅读 '+bytes(comic.bytes??comic.total_size??comic.size??0)}
+async function initialize(){try{const service=await req('/api/service');if(service.role!=='management')throw Error('连接的不是资源管理服务');await Promise.all([loadLibrary().then(loadHealth),loadSettings(),loadSubscriptions(),loadCache()]);const links=await req('/api/links');showLinks(links);$('#health').textContent='资源管理服务在线 · v'+service.version}catch(e){$('#health').textContent='连接失败';feedback(e.message,true)}}
+$('#resourceSearch').oninput=renderResources;
+for(const selector of ['#categoryNav','#subcategories'])$(selector).onclick=e=>{const b=e.target.closest('[data-category]');if(b){activeCategory=b.dataset.category;renderResources()}};
+$('#reindex').onclick=e=>task(e.currentTarget,async()=>{await req('/api/reindex',{});await loadLibrary();await loadHealth();feedback('资源目录已重新扫描；浏览端刷新列表后可见。')});
+$('#resourceList').onclick=e=>{const b=e.target.closest('[data-scrape]');if(b)task(b,async()=>{await req('/api/scrape',{dir:b.dataset.scrape,title:b.dataset.title});await loadLibrary();feedback('作品资料已更新')})};
+$('#pickFolder').onclick=async()=>{if(!window.reslibDesktop?.pickFolder){feedback('网页模式下请直接输入待整理目录的完整路径');return}const dir=await window.reslibDesktop.pickFolder();if(dir)$('#archiveInbox').value=dir};
+$('#saveInbox').onclick=e=>task(e.currentTarget,async()=>{await req('/api/settings',{inbox_dir:$('#archiveInbox').value.trim()});feedback('默认待整理目录已保存')});
+$('#archiveRun').onclick=e=>task(e.currentTarget,async()=>{const dir=$('#archiveInbox').value.trim();if(!dir)throw Error('请先填写待整理目录');const j=await req('/api/archive',{inbox_dir:dir,category:$('#archiveCategory').value,save_inbox:true});$('#archiveResult').hidden=false;$('#archiveResult').textContent=`已归档 ${j.moved||0} 项，刮削 ${j.scraped||0} 部\n${j.output||''}`;await loadLibrary();await loadHealth();feedback('归档完成')});
+$('#healthRefresh').onclick=e=>task(e.currentTarget,loadHealth);
+$('#addForm').onsubmit=e=>{e.preventDefault();task(e.submitter,async()=>{await req('/api/subscriptions',{action:'add',name:$('#name').value,source_url:$('#slug').value,auto_download:$('#addDownload').checked});$('#name').value='';$('#slug').value='';await loadSubscriptions();feedback('订阅已添加')})};
+$('#searchSource').onclick=e=>task(e.currentTarget,async()=>{if(!$('#name').value.trim())throw Error('请先填写作品名称');const j=await req('/api/subscriptions',{action:'search',q:$('#name').value});$('#sourceResults').innerHTML=(j.items||[]).map(([slug,name])=>`<div class="row"><span>${esc(name)}</span><button class="secondary" data-slug="${esc(slug)}">使用此来源</button></div>`).join('')||'<p class="muted">未找到来源，请输入完整作品链接。</p>'});
+$('#sourceResults').onclick=e=>{const b=e.target.closest('[data-slug]');if(b){$('#slug').value=sourceUrl({slug:b.dataset.slug});feedback('来源已填入，可点击添加订阅')}};
+function checkMessage(j){const r=j.result||{};return `检查 ${r.checked||0} 部，更新 ${r.updated||0} 部，下载 ${r.downloaded||0} 话，错误 ${r.errors||0} 项`}
+$('#list').onclick=e=>{const b=e.target.closest('[data-action]');if(!b)return;task(b,async()=>{const name=b.dataset.name,action=b.dataset.action,s=subscriptions[name];if(action==='remove'&&!confirm('取消《'+name+'》的订阅？已下载文件会保留。'))return;const body={action,name};if(action==='toggle')body.enabled=s.enabled===false;if(action==='download'){body.action='toggle';body.auto_download=s.auto_download===false}if(action==='update')body.source_url=b.closest('.row').querySelector('input').value;if(action==='check')body.download=$('#checkDownload').checked;const j=await req('/api/subscriptions',body);await loadSubscriptions();feedback(action==='check'?checkMessage(j):'订阅已更新')})};
+$('#checkAll').onclick=e=>task(e.currentTarget,async()=>{const j=await req('/api/subscriptions',{action:'check',download:$('#checkDownload').checked});await loadSubscriptions();feedback(checkMessage(j))});$('#refresh').onclick=e=>task(e.currentTarget,loadSubscriptions);
+$('#scrapeAll').onclick=e=>task(e.currentTarget,async()=>{const j=await req('/api/scrape',{all:true,force:$('#scrapeForce').checked});$('#scrapeResult').hidden=false;$('#scrapeResult').textContent=`完成 ${j.scraped||0} 部，跳过 ${j.skip||0} 部，未匹配 ${j.fail||0} 部`;await loadLibrary();feedback('刮削任务已结束')});
+$('#saveSettings').onclick=e=>task(e.currentTarget,async()=>{const value=$('#scheduleTime').value;if(!/^\d{2}:\d{2}$/.test(value))throw Error('请填写有效时间');const [hour,minute]=value.split(':').map(Number);await req('/api/settings',{subscribe_hour:hour,subscribe_minute:minute,subscribe_download:$('#autoDownload').checked,auto_scrape:$('#autoScrape').checked});feedback('定时设置已保存')});
+$('#clearCache').onclick=e=>task(e.currentTarget,async()=>{if(!confirm('清理播放与阅读缓存？原始资源保留，之后播放时重新生成缓存。'))return;await req('/api/cache',{clear:true});await req('/api/comic/cache',{clear:true});await loadCache();feedback('缓存已清理')});
+function showLinks(links){$('#publicAddress').value=links.display;$('#opdsLink').value=links.opds;$('#displayLink').textContent=links.display;$('#displayLink').href=links.display}
+$('#saveAddress').onclick=e=>task(e.currentTarget,async()=>{showLinks(await req('/api/links',{display:$('#publicAddress').value}));feedback('访问地址已保存')});
+$('#copyOpds').onclick=e=>task(e.currentTarget,async()=>{await navigator.clipboard.writeText($('#opdsLink').value);feedback('OPDS 订阅链接已复制')});
+initialize();
 </script></body></html>

@@ -1,6 +1,6 @@
 {
   "name": "moonshadow-blackcat-reslib",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "private": true,
   "description": "月影黑猫资源库：网页、订阅管理与 Windows 桌面端",
   "main": "desktop/main.js",
@@ -14,7 +14,11 @@
     "version:show": "node scripts/version.mjs show",
     "version:bump": "node scripts/version.mjs bump",
     "version:check": "node scripts/version.mjs check",
-    "release:check": "npm run build && npm run check && npm test && npm run version:check"
+    "release:check": "npm run build && npm run check && npm test && npm run version:check",
+    "desktop:management": "electron . --management",
+    "desktop:display": "electron .",
+    "desktop:portable:display": "npm run release:check && powershell -NoProfile -ExecutionPolicy Bypass -File desktop/package-portable.ps1 -Role display",
+    "desktop:portable:management": "npm run release:check && powershell -NoProfile -ExecutionPolicy Bypass -File desktop/package-portable.ps1 -Role management"
   },
   "engines": {
     "node": ">=22"

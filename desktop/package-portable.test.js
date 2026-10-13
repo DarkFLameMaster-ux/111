@@ -32,7 +32,7 @@ function packageFixture(t, version = '8.4.2') {
   write('node_modules/electron/dist/locales/zh-CN.pak', 'runtime locale');
   for (const file of [
     'desktop/main.js', 'desktop/preload.js', 'desktop/reader-shortcuts.js',
-    'backend/display/server.py', 'backend/display/compat.py', 'backend/subscription/server.py',
+    'backend/runtime.py', 'backend/display/server.py', 'backend/display/compat.py', 'backend/subscription/server.py',
     'frontend/display/dist/index.html', 'frontend/display/dist/config.js',
     'frontend/subscription/dist/index.html', 'frontend/subscription/dist/config.js',
   ]) write(file, `fixture: ${file}`);
@@ -47,7 +47,7 @@ function packageFixture(t, version = '8.4.2') {
     'backend/display/__pycache__/server.pyc', 'backend/private.json', 'desktop/private.json',
   ]) write(file, 'must never be packaged');
   write('dist/old-release/keep.txt', 'previous release');
-  const output = path.join(root, 'dist', `v${version}`, `Moonshadow-Reslib-${version}-win32-x64`);
+  const output = path.join(root, 'dist', `v${version}`, `Moonshadow-display-${version}-win32-x64`);
   function run() {
     return spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(root, 'desktop/package-portable.ps1')], { encoding: 'utf8', timeout: 30000 });
   }
@@ -62,11 +62,19 @@ test('portable build derives version, copies only runtime inputs and preserves p
   const manifest = JSON.parse(fs.readFileSync(path.join(packagedApp, 'package.json')));
   const buildInfo = JSON.parse(fs.readFileSync(path.join(fixture.output, 'build-info.json')));
   assert.equal(manifest.version, '8.4.2');
+  assert.equal(manifest.reslibRole, 'display');
+  assert.equal(fs.existsSync(path.join(packagedApp, 'backend/subscription/server.py')), false);
+  assert.equal(fs.existsSync(path.join(packagedApp, 'frontend/subscription')), false);
+  const manager = path.join(fixture.root, 'dist/v8.4.2/Moonshadow-management-8.4.2-win32-x64');
+  assert.ok(fs.existsSync(path.join(manager, 'Moonshadow-management.exe')));
+  assert.equal(JSON.parse(fs.readFileSync(path.join(manager, 'resources/app/package.json'))).reslibRole, 'management');
+  assert.equal(fs.existsSync(path.join(manager, 'resources/app/frontend/display')), false);
+  assert.ok(fs.existsSync(path.join(manager, 'resources/app/backend/subscription/server.py')));
   assert.equal(manifest.description, '资源库打包测试');
   assert.equal(buildInfo.version, manifest.version);
   assert.equal(buildInfo.architecture, 'x64');
   assert.equal(fs.readFileSync(path.join(fixture.output, 'locales/zh-CN.pak'), 'utf8'), 'runtime locale');
-  assert.ok(fs.existsSync(path.join(fixture.output, 'Moonshadow-Reslib.exe')));
+  assert.ok(fs.existsSync(path.join(fixture.output, 'Moonshadow-display.exe')));
   assert.ok(fs.existsSync(path.join(packagedApp, 'backend/display/compat.py')));
   const outputFiles = fs.readdirSync(packagedApp, { recursive: true });
   assert.equal(outputFiles.some(file => /private|node_modules|cache|logs|\.env|package-portable|test\.js/.test(file)), false);

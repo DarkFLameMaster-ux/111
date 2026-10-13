@@ -28,7 +28,7 @@ for (const frontend of ['display', 'subscription']) {
     for (const version of ['1.2.3-preview.1+fixture', '1.3.0']) {
       const manifest = { name: 'reslib-build-fixture', version };
       await writeFile(join(fixture, 'package.json'), JSON.stringify(manifest));
-      const expectedApi = version === '1.3.0' ? 'https://example.invalid/api' : frontend === 'display' ? '' : 'http://127.0.0.1:8781';
+      const expectedApi = version === '1.3.0' ? 'https://example.invalid/api' : '';
       if (version === '1.3.0') env[apiKey] = `${expectedApi}/`;
       const result = spawnSync(process.execPath, [join(app, 'scripts', 'build.mjs')], {
         cwd: tmpdir(), env, encoding: 'utf8',

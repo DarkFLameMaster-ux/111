@@ -4,11 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function desktopFixture({ appRoot = 'C:\\fixture\\reslib-app', env = {}, files = [] } = {}) {
+function desktopFixture({ appRoot = 'C:\\fixture\\reslib-app', env = {}, files = [], role = 'display' } = {}) {
   const handlers = new Map();
   const windows = [];
   const state = {};
   const app = {
+    setPath() {}, getPath: () => 'C:\\profile', requestSingleInstanceLock: () => true,
     getVersion: () => '8.4.2-test.1',
     whenReady: () => ({ then(callback) { state.ready = callback; } }),
     on() {},
@@ -36,8 +37,9 @@ function desktopFixture({ appRoot = 'C:\\fixture\\reslib-app', env = {}, files =
   };
   const context = vm.createContext({
     __dirname: path.win32.join(appRoot, 'desktop'),
-    process: { env, execPath: path.win32.join(appRoot, 'Moonshadow-Reslib.exe'), platform: 'win32' },
+    process: { env, argv: [], execPath: path.win32.join(appRoot, 'Moonshadow-Reslib.exe'), platform: 'win32' },
     require(name) {
+      if (name === '../package.json') return { reslibRole: role };
       if (name === 'electron') return electron;
       if (name === 'path') return path.win32;
       if (name === 'fs') return { existsSync: candidate => files.includes(candidate) };
@@ -55,7 +57,7 @@ test('runtime version stays visible in the window, About panel and renderer API'
   vm.runInContext('bootServices = async () => {};', fixture.context);
   await fixture.state.ready();
   const win = fixture.windows[0];
-  assert.equal(win.options.title, '月影黑猫 · 资源库 v8.4.2-test.1');
+  assert.equal(win.options.title, '月影黑猫 · 资源浏览 v8.4.2-test.1');
   let prevented = false;
   win.events.get('page-title-updated')({ preventDefault() { prevented = true; } }, 'Web page title');
   assert.equal(prevented, true);
@@ -93,4 +95,26 @@ test('preload exposes a read-only version request', async () => {
     }),
   });
   assert.equal(await api.getVersion(), '8.4.2-test.1');
+});
+
+test('each role starts only its own service and reuses only an identified compatible service', async () => {
+  for (const role of ['display', 'management']) {
+    const fixture = desktopFixture({ role });
+    vm.runInContext(`
+      globalThis.starts = [];
+      serviceIdentity = async () => null;
+      startService = (name, script) => { starts.push({name, script}); return null; };
+      loadDisplay = async () => {};
+    `, fixture.context);
+    await vm.runInContext('bootServices()', fixture.context);
+    const starts = vm.runInContext('starts', fixture.context);
+    assert.equal(starts.length, 1);
+    assert.equal(starts[0].name, role);
+    assert.equal(starts[0].script, role === 'display' ? 'display\\server.py' : 'subscription\\server.py');
+    vm.runInContext(`serviceIdentity = async () => ({status:200, application:'moonshadow-reslib',role:APP_ROLE,version:APP_VERSION});`, fixture.context);
+    await vm.runInContext('bootServices()', fixture.context);
+    assert.equal(starts.length, 1, 'compatible running service must be reused, not spawned or stopped');
+    vm.runInContext(`serviceIdentity = async () => ({status:200, role:'legacy'});`, fixture.context);
+    await assert.rejects(vm.runInContext('bootServices()', fixture.context), /端口/);
+  }
 });

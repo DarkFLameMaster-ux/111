@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 setlocal
 cd /d "%~dp0"
 if not exist "node_modules\electron\dist\electron.exe" (
@@ -22,4 +23,8 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-call npm run desktop
+if /i "%~1"=="management" (
+  call npm run desktop:management
+) else (
+  call npm run desktop:display
+)
