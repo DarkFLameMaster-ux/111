@@ -16,7 +16,7 @@ if (!hasLock) app.quit();
 const APP_VERSION = app.getVersion();
 const WINDOW_TITLE = `${APP_NAME} v${APP_VERSION}`;
 
-// A portable release adds version and application directories below dist.
+// Portable programs use fixed role directories below dist/current.
 // Walk ancestors so both source checkouts and portable releases can reuse the
 // project's existing _归档脚本 directory without bundling its private settings.
 function ancestorScriptDirs(start) {

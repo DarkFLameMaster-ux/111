@@ -1,4 +1,7 @@
-﻿param([ValidateSet("all", "display", "management")][string]$Role = "all")
+param(
+    [ValidateSet("all", "display", "management")][string]$Role = "all",
+    [string]$BackupRoot = $env:RESLIB_BACKUP_DIR
+)
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
@@ -37,25 +40,64 @@ try {
 }
 
 $distRoot = Join-Path $appRoot "dist"
-$versionRoot = Join-Path $distRoot "v$version"
+$currentRoot = Join-Path $distRoot "current"
 $roles = if ($Role -eq "all") { @("display", "management") } else { @($Role) }
-# Check both destinations before packaging either role.
-foreach ($selectedRole in $roles) {
-    $existing = Join-Path $versionRoot "Moonshadow-$selectedRole-$version-win32-$architecture"
-    if (Test-Path -LiteralPath $existing) { throw "Portable build already exists: $existing" }
+if (-not $BackupRoot) {
+    $BackupRoot = Join-Path ([System.IO.Path]::GetPathRoot($appRoot)) "Reslib-backups"
 }
-foreach ($selectedRole in $roles) {
-$artifactName = "Moonshadow-$selectedRole-$version-win32-$architecture"
-$output = Join-Path $versionRoot $artifactName
-if (Test-Path -LiteralPath $output) {
-    throw "Portable build already exists; no files were changed: $output. Bump the version or move the existing artifact before rebuilding."
+$BackupRoot = [System.IO.Path]::GetFullPath($BackupRoot)
+$appPrefix = $appRoot.TrimEnd('\') + '\'
+if ($BackupRoot.Equals($appRoot, [System.StringComparison]::OrdinalIgnoreCase) -or
+    $BackupRoot.StartsWith($appPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Backups must be outside the source project. Set RESLIB_BACKUP_DIR or -BackupRoot."
 }
+$electronVersion = (Get-Content -LiteralPath (Join-Path $electronDist "version") -Raw).Trim()
 
 function Assert-NoLinks([string]$Source) {
     $entry = Get-Item -LiteralPath $Source -Force
     if ($entry.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
         throw "Refusing to package a symbolic link or junction: $Source"
     }
+}
+
+function Assert-PathAncestors([string]$Target) {
+    for ($candidate = $Target; $candidate; $candidate = Split-Path -Parent $candidate) {
+        if (Test-Path -LiteralPath $candidate) { Assert-NoLinks $candidate }
+    }
+}
+
+function Assert-TreeNoLinks([string]$Source) {
+    Assert-NoLinks $Source
+    foreach ($entry in Get-ChildItem -LiteralPath $Source -Force -Recurse) {
+        Assert-NoLinks $entry.FullName
+    }
+}
+
+function Assert-Confined([string]$Target, [string]$Root) {
+    $absolute = [System.IO.Path]::GetFullPath($Target)
+    $prefix = [System.IO.Path]::GetFullPath($Root).TrimEnd('\') + '\'
+    if (-not $absolute.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing a build move outside its intended directory: $Target"
+    }
+    Assert-PathAncestors $absolute
+}
+
+function Read-CurrentBuild([string]$Output, [string]$SelectedRole) {
+    if (-not (Test-Path -LiteralPath $Output)) { return $null }
+    Assert-TreeNoLinks $Output
+    $infoPath = Join-Path $Output "build-info.json"
+    $appManifest = Join-Path $Output "resources\app\package.json"
+    if (-not (Test-Path -LiteralPath $infoPath -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $appManifest -PathType Leaf)) {
+        throw "Current directory is not a recognized portable build: $Output"
+    }
+    $info = Get-Content -LiteralPath $infoPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $oldManifest = Get-Content -LiteralPath $appManifest -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($info.role -ne $SelectedRole -or $info.platform -ne "win32" -or
+        $oldManifest.reslibRole -ne $SelectedRole -or $info.version -ne $oldManifest.version) {
+        throw "Current portable build identity is invalid: $Output"
+    }
+    return $info
 }
 
 function Copy-ArtifactTree([string]$Source, [string]$Destination) {
@@ -75,8 +117,11 @@ function Copy-ArtifactTree([string]$Source, [string]$Destination) {
     }
 }
 
-$frontend = if ($selectedRole -eq "display") { "display" } else { "subscription" }
-$sourceFiles = @(
+# Validate both roles before staging or changing either current program.
+$inputs = @{}
+foreach ($selectedRole in $roles) {
+    $frontend = if ($selectedRole -eq "display") { "display" } else { "subscription" }
+    $inputs[$selectedRole] = @(
     "desktop/main.js",
     "desktop/preload.js",
     "desktop/reader-shortcuts.js",
@@ -86,9 +131,9 @@ $sourceFiles = @(
     "frontend/$frontend/dist/index.html",
     "frontend/$frontend/dist/config.js",
     "frontend/$frontend/dist/version.json"
-)
+    )
 # Validate all inputs before creating an output directory.
-foreach ($relative in $sourceFiles) {
+foreach ($relative in $inputs[$selectedRole]) {
     $source = Join-Path $appRoot $relative
     if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
         throw "Required input is missing: $relative. Run npm run build first."
@@ -97,17 +142,50 @@ foreach ($relative in $sourceFiles) {
         Assert-NoLinks $candidate
     }
 }
+}
 
-# Build in a unique staging directory. Never delete dist or overwrite an old
-# release. A failed build remains clearly marked for inspection.
+# The fixed paths keep shortcuts current. Serialize builds and reject updates
+# while an executable from a selected current directory is still running.
 New-Item -ItemType Directory -Path $distRoot -Force | Out-Null
-Assert-NoLinks $distRoot
-$staging = Join-Path $distRoot (".packaging-$version-" + [guid]::NewGuid().ToString("N"))
-$resourceApp = Join-Path $staging "resources\app"
+Assert-PathAncestors $distRoot
+Assert-PathAncestors $currentRoot
+Assert-PathAncestors $BackupRoot
+$lock = [System.IO.File]::Open((Join-Path $distRoot ".portable-build.lock"), "OpenOrCreate", "ReadWrite", "None")
 try {
-    Copy-ArtifactTree $electronDist $staging
+$buildProcesses = @(Get-CimInstance Win32_Process)
+foreach ($selectedRole in $roles) {
+    $output = Join-Path $currentRoot $selectedRole
+    Assert-Confined $output $distRoot
+    $null = Read-CurrentBuild $output $selectedRole
+    $outputPrefix = $output.TrimEnd('\') + '\'
+    foreach ($buildProcess in $buildProcesses) {
+        if (-not $buildProcess.ExecutablePath) { continue }
+        # CIM can return an 8.3 path (e.g. DARKFL~1). Expand it before comparing
+        # with the long project path so aliases cannot bypass the running guard.
+        $runningExe = Get-Item -LiteralPath $buildProcess.ExecutablePath -ErrorAction SilentlyContinue
+        if ($runningExe -and $runningExe.FullName.StartsWith($outputPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Close the running $selectedRole program before updating: $output"
+        }
+    }
+}
+foreach ($selectedRole in $roles) {
+$output = Join-Path $currentRoot $selectedRole
+$oldInfo = Read-CurrentBuild $output $selectedRole
+$reuseRuntime = $null -ne $oldInfo -and $oldInfo.architecture -eq $architecture -and $oldInfo.electronVersion -eq $electronVersion -and
+    (Test-Path -LiteralPath (Join-Path $output "Moonshadow-$selectedRole.exe") -PathType Leaf) -and
+    (Test-Path -LiteralPath (Join-Path $output "version") -PathType Leaf)
+if ($reuseRuntime) {
+    $reuseRuntime = (Get-Content -LiteralPath (Join-Path $output "version") -Raw).Trim() -eq $electronVersion
+}
+$staging = Join-Path $distRoot (".packaging-$selectedRole-" + [guid]::NewGuid().ToString("N"))
+$resourceApp = Join-Path $staging "resources\app"
+$backup = $null
+$oldMoved = $false
+$newMoved = $false
+try {
+    if (-not $reuseRuntime) { Copy-ArtifactTree $electronDist $staging }
     New-Item -ItemType Directory -Path $resourceApp -Force | Out-Null
-    foreach ($relative in $sourceFiles) {
+    foreach ($relative in $inputs[$selectedRole]) {
         $target = Join-Path $resourceApp $relative
         New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $appRoot $relative) -Destination $target
@@ -127,29 +205,65 @@ try {
         role = $selectedRole
         platform = "win32"
         architecture = $architecture
-        electronVersion = (Get-Content -LiteralPath (Join-Path $electronDist "version") -Raw).Trim()
+        electronVersion = $electronVersion
     }
     [System.IO.File]::WriteAllText((Join-Path $staging "build-info.json"), ($buildInfo | ConvertTo-Json) + "`n", $utf8)
-    Rename-Item -LiteralPath (Join-Path $staging "electron.exe") -NewName "Moonshadow-$selectedRole.exe"
-
-    New-Item -ItemType Directory -Path $versionRoot -Force | Out-Null
-    Assert-NoLinks $versionRoot
-    # Move only this build's staging directory, confined to the project's dist.
-    $resolvedDist = (Resolve-Path -LiteralPath $distRoot).Path.TrimEnd('\') + '\'
-    $resolvedStaging = (Resolve-Path -LiteralPath $staging).Path
-    $resolvedOutput = [System.IO.Path]::GetFullPath($output)
-    if (-not $resolvedStaging.StartsWith($resolvedDist, [System.StringComparison]::OrdinalIgnoreCase) -or
-        -not $resolvedOutput.StartsWith($resolvedDist, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Refusing to move a build outside the project dist directory."
+    if (-not $reuseRuntime) {
+        Rename-Item -LiteralPath (Join-Path $staging "electron.exe") -NewName "Moonshadow-$selectedRole.exe"
     }
-    if (Test-Path -LiteralPath $output) { throw "Another build already created $output; staging was preserved." }
-    # Directory.Move fails atomically if another build wins the destination;
-    # Move-Item could instead nest staging inside that newly created directory.
-    [System.IO.Directory]::Move($resolvedStaging, $resolvedOutput)
+
+    New-Item -ItemType Directory -Path $currentRoot -Force | Out-Null
+    Assert-Confined $staging $distRoot
+    Assert-Confined $output $distRoot
+    if ($null -ne $oldInfo) {
+        $backup = Join-Path $BackupRoot ("portable\" + (Get-Date -Format "yyyyMMdd-HHmmssfff") + "-" + [guid]::NewGuid().ToString("N") + "\$selectedRole")
+        Assert-Confined $backup $BackupRoot
+        New-Item -ItemType Directory -Path (Split-Path -Parent $backup) -Force | Out-Null
+    }
+    if ($reuseRuntime) {
+        # Preserve only the replaced app and its metadata, not another Electron
+        # runtime. Source history is maintained by local Git commits and tags.
+        New-Item -ItemType Directory -Path (Join-Path $backup "resources") -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $output "build-info.json") -Destination (Join-Path $backup "build-info.json")
+        [System.IO.Directory]::Move((Join-Path $output "resources\app"), (Join-Path $backup "resources\app"))
+        $oldMoved = $true
+        [System.IO.Directory]::Move($resourceApp, (Join-Path $output "resources\app"))
+        $newMoved = $true
+        [System.IO.File]::Replace((Join-Path $staging "build-info.json"), (Join-Path $output "build-info.json"), (Join-Path $backup "build-info.json"))
+    } else {
+        # First install or runtime upgrade. Keep the previous complete runtime
+        # outside the project so a failed upgrade can be rolled back.
+        if ($null -ne $oldInfo) {
+            [System.IO.Directory]::Move($output, $backup)
+            $oldMoved = $true
+        }
+        [System.IO.Directory]::Move($staging, $output)
+        $newMoved = $true
+    }
 } catch {
+    if ($oldMoved) {
+        if ($reuseRuntime) {
+            if ($newMoved) { [System.IO.Directory]::Move((Join-Path $output "resources\app"), $resourceApp) }
+            [System.IO.Directory]::Move((Join-Path $backup "resources\app"), (Join-Path $output "resources\app"))
+            Copy-Item -LiteralPath (Join-Path $backup "build-info.json") -Destination (Join-Path $output "build-info.json") -Force
+        } else {
+            if ($newMoved) { [System.IO.Directory]::Move($output, $staging) }
+            [System.IO.Directory]::Move($backup, $output)
+        }
+    }
     Write-Warning "Packaging failed. Any partial output is preserved at: $staging"
     throw
 }
 
-Write-Output "Portable build created: $output\Moonshadow-$selectedRole.exe"
+if ($reuseRuntime) {
+    try {
+        [System.IO.Directory]::Delete((Join-Path $staging "resources"))
+        [System.IO.Directory]::Delete($staging)
+    } catch { Write-Warning "Update succeeded; empty staging directory could not be removed: $staging" }
+}
+Write-Output "Current portable build: $output\Moonshadow-$selectedRole.exe"
+if ($backup) { Write-Output "Previous app backed up outside the project: $backup" }
+}
+} finally {
+    $lock.Dispose()
 }

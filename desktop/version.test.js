@@ -68,12 +68,14 @@ test('runtime version stays visible in the window, About panel and renderer API'
   assert.equal(fixture.handlers.get('reslib:version')(), '8.4.2-test.1');
 });
 
-test('portable version directories locate the original project pipeline', () => {
-  const fixture = desktopFixture({
-    appRoot: 'C:\\fixture\\reslib-app\\dist\\v8.4.2\\release\\resources\\app',
-    files: ['C:\\fixture\\_归档脚本\\lib.py'],
-  });
-  assert.equal(vm.runInContext('SCRIPT_DIR', fixture.context), 'C:\\fixture\\_归档脚本');
+test('fixed current directories and legacy packages locate the original project pipeline', () => {
+  for (const location of ['current\\display', 'current\\management', 'v8.4.2\\release']) {
+    const fixture = desktopFixture({
+      appRoot: `C:\\fixture\\reslib-app\\dist\\${location}\\resources\\app`,
+      files: ['C:\\fixture\\_归档脚本\\lib.py'],
+    });
+    assert.equal(vm.runInContext('SCRIPT_DIR', fixture.context), 'C:\\fixture\\_归档脚本');
+  }
 });
 
 test('explicit script directory wins, resolves against app root, and fails clearly if missing', () => {

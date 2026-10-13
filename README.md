@@ -64,10 +64,14 @@ cmd /c backend\start-subscription.cmd
 npm run desktop:portable
 ```
 
-产物分别位于 `dist/v<版本>/Moonshadow-display-<版本>-win32-<架构>/Moonshadow-display.exe`
-和 `dist/v<版本>/Moonshadow-management-<版本>-win32-<架构>/Moonshadow-management.exe`。
+产物固定为 `dist/current/display/Moonshadow-display.exe`
+和 `dist/current/management/Moonshadow-management.exe`，桌面快捷方式无需随版本改路径。
 也可使用 `desktop:portable:display`、`desktop:portable:management` 分别构建。
-必须保留每个程序的完整目录；旧版本保留，新包拒绝同版本覆盖。
+使用和分发时保留每个程序的完整目录。源码版本通过项目内 Git 提交和 `vX.Y.Z` 标签管理，
+不再为每个版本在项目里保留整套运行环境。更新前关闭对应桌面程序；相同 Electron 版本复用现有运行文件，
+只替换程序代码，并把旧代码备份到项目所在盘的 `Reslib-backups/portable/`（本机为 `F:\Reslib-backups`）。
+只有升级 Electron 或更换架构时才备份整个旧程序；失败时恢复之前的程序。
+可用 `RESLIB_BACKUP_DIR` 指定其他项目外备份目录。
 
 程序自动寻找上级目录中的 `_归档脚本`，仍使用现有资源库与 Python 环境，不复制媒体或登录凭据。
 搬到其他位置时设置 `RESLIB_SCRIPT_DIR`，必要时设置 `RESLIB_PYTHON`。

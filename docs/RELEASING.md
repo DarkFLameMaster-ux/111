@@ -41,16 +41,16 @@ CI 使用临时测试数据，不连接开发者的媒体库；实际发布仍�
 ## 提交与标签
 
 检查暂存区内容后，提交本次版本涉及的源码、生成的前端、锁文件和文档。
-以下以 `0.2.0` 为例，后续替换成实际版本和当前工作分支：
+以下以 `0.3.2` 为例，后续替换成实际版本：
 
 ```powershell
-git commit -m "chore: release v0.2.0"
-npm run version:check -- --tag v0.2.0
-git tag -a v0.2.0 -m "月影黑猫资源库 v0.2.0"
-git push --atomic origin HEAD refs/tags/v0.2.0
+git commit -m "chore: release v0.3.2"
+npm run version:check -- --tag v0.3.2
+git tag -a v0.3.2 -m "月影黑猫资源库 v0.3.2"
 ```
 
-标签与发布提交对应；不移动或覆盖已经推送的版本标签，发现问题时发下一个修订版本。
+每次修改完成验证后提交到项目内 Git，发布标签对应提交。这里的命令只记录本地历史；
+外部推送和发布需另行授权。不移动或覆盖已有版本标签，发现问题时发下一个修订版本。
 分支推送、合并请求与 `v*` 标签都会触发 CI，标签版本不一致会失败。
 维护分支经审阅后再合入默认分支，避免把未核对内容直接混入主线。
 
@@ -61,8 +61,24 @@ npm ci
 npm run desktop:portable
 ```
 
-命令先执行发布检查，再生成 两个目录：`dist/v<版本>/Moonshadow-display-<版本>-win32-<架构>/` 与 `Moonshadow-management-<版本>-win32-<架构>/`。
+命令先执行发布检查，再更新两个固定目录：`dist/current/display/` 与 `dist/current/management/`。
 完整目录内包含程序及运行文件；分发时保留目录内容，不能只复制 `.exe`。
-已有同版本产物不会被覆盖。需要修订时先提升版本；旧包可保留用于回退。
+更新前必须关闭对应桌面程序，打包脚本拒绝替换运行中的程序。相同版本可重新构建，
+程序版本历史由 Git 提交和标签保存，不再为每个版本复制整套 Electron 到项目目录。
+
+Electron 版本和架构相同时，只替换 `resources/app` 与 `build-info.json`，保留现有运行环境。
+旧程序代码和元数据移到项目所在盘的 `Reslib-backups/portable/<时间与唯一标识>/<角色>/`，
+本机默认 `F:\Reslib-backups`。Electron 或架构变化时，整个旧目录移到该位置再安装新运行环境。
+替换出错会恢复该角色的旧程序；打包不提交源码，也不自动创建版本标签。
+
+可以通过 `RESLIB_BACKUP_DIR` 或直接传 `-BackupRoot` 指定项目外备份目录：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File desktop/package-portable.ps1 -BackupRoot F:\Reslib-backups
+```
+
+本机历史 `dist/v*` 与拆分前产物已迁至 F 盘备份；项目仅保留当前两个程序。
+本地 Git 历史可用 `git bundle create F:\Reslib-backups\source\reslib-app-v0.3.2.bundle --all` 另存备份
+（先创建目标目录），用 `git bundle verify` 校验；该文件不包含被忽略的媒体、配置或运行环境。
 个人资源管线与 Python 环境不包含在包内，移动到其他位置时通过 `RESLIB_SCRIPT_DIR` 和
 `RESLIB_PYTHON` 指定它们。打包不自动上传二进制或创建 GitHub Release。
