@@ -3,8 +3,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { EventEmitter } = require('node:events');
 
-function desktopFixture({ appRoot = 'C:\\fixture\\reslib-app', env = {}, files = [], role = 'display' } = {}) {
+function desktopFixture({ appRoot = 'C:\\fixture\\reslib-app', env = {}, files = [], role = 'display', http } = {}) {
   const handlers = new Map();
   const windows = [];
   const state = {};
@@ -22,10 +23,13 @@ function desktopFixture({ appRoot = 'C:\\fixture\\reslib-app', env = {}, files =
       this.options = options;
       this.events = new Map();
       this.webContents = { on() {}, setWindowOpenHandler() {} };
+      this.urls = [];
       windows.push(this);
     }
     on(name, callback) { this.events.set(name, callback); }
     setTitle(title) { this.title = title; }
+    isDestroyed() { return false; }
+    async loadURL(url) { this.urls.push(url); }
   }
   const electron = {
     app, BrowserWindow, dialog: {}, shell: {}, globalShortcut: {},
@@ -42,7 +46,8 @@ function desktopFixture({ appRoot = 'C:\\fixture\\reslib-app', env = {}, files =
       if (name === '../package.json') return { reslibRole: role };
       if (name === 'electron') return electron;
       if (name === 'path') return path.win32;
-      if (name === 'fs') return { existsSync: candidate => files.includes(candidate) };
+      if (name === 'fs') return { existsSync: candidate => files.includes(candidate), mkdirSync() {}, appendFileSync(_path, message) { state.log = message; } };
+      if (name === 'http' && http) return http;
       if (name === 'child_process') return { spawn() { throw new Error('Must not spawn in this test'); } };
       if (name === './reader-shortcuts') return { createReaderShortcuts: () => ({ sync() {}, reset() {} }) };
       return require(name);
@@ -119,4 +124,43 @@ test('each role starts only its own service and reuses only an identified compat
     vm.runInContext(`serviceIdentity = async () => ({status:200, role:'legacy'});`, fixture.context);
     await assert.rejects(vm.runInContext('bootServices()', fixture.context), /端口/);
   }
+});
+
+test('a responding port that times out is never treated as an absent service', async () => {
+  const fixture = desktopFixture({ http: {
+    get() {
+      const request = new EventEmitter();
+      request.destroy = error => request.emit('error', error);
+      setImmediate(() => request.emit('timeout'));
+      return request;
+    },
+  } });
+  vm.runInContext('globalThis.starts = 0; startService = () => { starts++; };', fixture.context);
+  await assert.rejects(vm.runInContext('bootServices()', fixture.context), /响应超时/);
+  assert.equal(vm.runInContext('starts', fixture.context), 0);
+});
+
+test('startup shows progress while refreshing and loads the resource page only after refresh', async () => {
+  const fixture = desktopFixture();
+  vm.runInContext(`
+    globalThis.events = [];
+    mainWindow = { isDestroyed: () => false, loadURL: async url => events.push(url) };
+    waitForDisplay = async () => true;
+    refreshDisplayIndex = async () => events.push('refresh');
+  `, fixture.context);
+  await vm.runInContext('loadDisplay()', fixture.context);
+  const events = vm.runInContext('events', fixture.context);
+  assert.match(decodeURIComponent(events[0]), /正在更新资源目录/);
+  assert.equal(events[1], 'refresh');
+  assert.equal(events[2], 'http://127.0.0.1:8777/');
+});
+
+test('a failed retry returns to an actionable error page and records the cause', async () => {
+  const fixture = desktopFixture({ role: 'management' });
+  vm.runInContext('bootServices = async () => {};', fixture.context);
+  await fixture.state.ready();
+  vm.runInContext('bootServices = async () => { throw Error("retry connection failed"); };', fixture.context);
+  assert.equal(await fixture.handlers.get('reslib:retry')(), false);
+  assert.match(decodeURIComponent(fixture.windows[0].urls.at(-1)), /retry connection failed/);
+  assert.match(fixture.state.log, /retry connection failed/);
 });

@@ -170,10 +170,10 @@ def install(lib, role, frontend, version):
             url = urlparse(self.path)
             route = url.path
             try:
-                catalog.sync(self.server)
                 if route == "/api/service":
                     self._json({"application": "moonshadow-reslib", "role": role, "version": version})
                     return
+                catalog.sync(self.server)
                 if route == "/version.json":
                     self._bytes((frontend.parent / "version.json").read_bytes(), "application/json")
                     return

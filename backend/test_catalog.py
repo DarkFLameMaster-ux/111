@@ -5,13 +5,15 @@ import tempfile
 import threading
 import types
 import unittest
+from collections import Counter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, quote, urlencode, urlparse
 from urllib.request import ProxyHandler, Request, build_opener
 
-from catalog import Catalog, KINDS, path_key, versions, work_id
+from catalog import Catalog, KINDS, cached_paths, path_key, versions, work_id
 from runtime import install
 
 
@@ -103,6 +105,90 @@ class Fixture(unittest.TestCase):
 
 
 class CatalogTests(Fixture):
+    def test_build_reuses_real_path_resolution_across_nested_operations(self):
+        original = Path.resolve
+        calls = Counter()
+
+        def resolve(path, *args, **kwargs):
+            calls[str(path)] += 1
+            return original(path, *args, **kwargs)
+
+        with patch.object(Path, "resolve", autospec=True, side_effect=resolve):
+            projected = Catalog(self.fake_lib(), "display").build()
+        self.assertEqual(projected["anime"][0]["dir"], str(self.first))
+        self.assertEqual(calls[str(self.video_a)], 1)
+        self.assertTrue(calls)
+        self.assertEqual(max(calls.values()), 1)
+
+    def test_allowed_rechecks_changed_resolution_on_next_operation(self):
+        c = self.catalog()
+        c.state["items"][path_key(self.video_a)] = {"status": "hidden"}
+        c.blocked_cache = []
+        alias = self.root / "changing-link"
+        targets = iter((self.video_a, self.video_b))
+        original = Path.resolve
+
+        def resolve(path, *args, **kwargs):
+            return next(targets) if path == alias else original(path, *args, **kwargs)
+
+        with patch.object(Path, "resolve", autospec=True, side_effect=resolve) as mocked:
+            self.assertFalse(c.allowed(alias))
+            self.assertTrue(c.allowed(alias))
+        self.assertEqual(mocked.call_count, 2)
+
+    def test_path_operation_cache_is_thread_local_and_cleans_up_after_errors(self):
+        barrier = threading.Barrier(2)
+        results, errors = [], []
+        original = Path.resolve
+
+        @cached_paths
+        def resolve_pair():
+            first = path_key(self.video_a)
+            barrier.wait(timeout=2)
+            self.assertEqual(first, path_key(self.video_a))
+            return first
+
+        def run():
+            try:
+                results.append(resolve_pair())
+            except Exception as exc:
+                errors.append(exc)
+
+        with patch.object(Path, "resolve", autospec=True, side_effect=original) as mocked:
+            threads = [threading.Thread(target=run) for _ in range(2)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=3)
+            self.assertFalse(errors)
+            self.assertEqual(len(results), 2)
+            self.assertEqual(mocked.call_count, 2)
+
+        @cached_paths
+        def failing_operation():
+            path_key(self.video_a)
+            raise ValueError("fixture failure")
+
+        expected = path_key(self.video_a)
+        with patch.object(Path, "resolve", autospec=True, side_effect=original) as mocked:
+            with self.assertRaisesRegex(ValueError, "fixture failure"):
+                failing_operation()
+            self.assertEqual(path_key(self.video_a), expected)
+            self.assertEqual(mocked.call_count, 2)
+
+    def test_path_operation_cache_has_a_fixed_entry_limit(self):
+        original = Path.resolve
+
+        @cached_paths
+        def bounded_operation():
+            for value in (self.video_a, self.video_b, self.audio, self.video_a, self.audio):
+                path_key(value)
+
+        with patch("catalog._PATH_CACHE_LIMIT", 2), patch.object(
+                Path, "resolve", autospec=True, side_effect=original) as mocked:
+            bounded_operation()
+        self.assertEqual(mocked.call_count, 4)
+
     def test_work_and_version_identity_survive_scan_order_and_title_edits(self):
         original_id = work_id("anime", self.anime)
         original_versions = {v["source_dir"]: v["id"] for v in versions(self.anime)}

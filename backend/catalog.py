@@ -7,15 +7,41 @@ import json
 import os
 import re
 import threading
+from functools import wraps
 from pathlib import Path
 
 KINDS = ("anime", "movie", "comic", "manhwa", "novel", "music", "game", "sleep", "av")
 STATUSES = {"visible", "hidden", "deleted"}
 ITEM_KEYS = ("episodes", "extras", "chapters", "tracks", "other", "books", "files", "subtitles")
+_PATH_CACHE = threading.local()
+_PATH_CACHE_LIMIT = 8192
+
+
+def cached_paths(operation):
+    """Reuse real path resolution within one operation, including nested calls."""
+    @wraps(operation)
+    def scoped(*args, **kwargs):
+        if getattr(_PATH_CACHE, "values", None) is not None:
+            return operation(*args, **kwargs)
+        _PATH_CACHE.values = {}
+        try:
+            return operation(*args, **kwargs)
+        finally:
+            del _PATH_CACHE.values
+    return scoped
 
 
 def path_key(value):
-    return os.path.normcase(str(Path(value).resolve())) if value else ""
+    if not value:
+        return ""
+    key = os.fspath(value)
+    cache = getattr(_PATH_CACHE, "values", None)
+    if cache is not None and key in cache:
+        return cache[key]
+    resolved = os.path.normcase(str(Path(value).resolve()))
+    if cache is not None and len(cache) < _PATH_CACHE_LIMIT:
+        cache[key] = resolved
+    return resolved
 
 
 def below(path, root):
@@ -100,6 +126,7 @@ class Catalog:
             self.blocked_cache = None
         return self.state
 
+    @cached_paths
     def build(self):
         with self.lock:
             self.raw = self.scan()
@@ -127,6 +154,7 @@ class Catalog:
             self.load()
             return self.project()
 
+    @cached_paths
     def sync(self, server):
         with self.lock:
             changed = self._stamp() != self.stamp
@@ -134,6 +162,7 @@ class Catalog:
             if changed and self.raw:
                 self.lib._set_server_index(server, self.project())
 
+    @cached_paths
     def find(self, kind=None, directory=None, uid=None):
         for category in KINDS:
             if kind and category != kind:
@@ -143,6 +172,7 @@ class Catalog:
                     return category, work
         raise ValueError("资源不存在，请重新扫描目录")
 
+    @cached_paths
     def work_edit(self, kind, work):
         # A first scrape can turn a directory identity into a merged Bangumi
         # identity while the other service still has an older index. Select
@@ -159,6 +189,7 @@ class Catalog:
             edit["status"] = "visible" if "visible" in statuses else "deleted" if set(statuses) == {"deleted"} else "hidden"
         return edit
 
+    @cached_paths
     def detail(self, kind=None, directory=None, uid=None):
         with self.lock:
             state = self.load()
@@ -200,6 +231,7 @@ class Catalog:
             elif key == "year" and value and not re.fullmatch(r"\d{4}", value):
                 raise ValueError("年份请填写四位数字或留空")
 
+    @cached_paths
     def update(self, body):
         with self.lock:
             if not isinstance(body, dict) or set(body) - {"id", "title", "summary", "year", "status", "versions", "items"}:
@@ -243,6 +275,7 @@ class Catalog:
             self.blocked_cache = None
             return self.detail(uid=detail["id"])
 
+    @cached_paths
     def blocked_roots(self):
         if self.blocked_cache is not None:
             return self.blocked_cache
@@ -264,16 +297,19 @@ class Catalog:
         self.blocked_cache = blocked
         return blocked
 
+    @cached_paths
     def path_visible(self, path, blocked=None):
         blocked = self.blocked_roots() if blocked is None else blocked
         return (self.state["items"].get(path_key(path), {}).get("status", "visible") == "visible"
                 and not any(below(path, root) for root in blocked))
 
+    @cached_paths
     def allowed(self, path):
         with self.lock:
             self.load()
             return self.path_visible(path)
 
+    @cached_paths
     def project(self):
         state = self.load()
         index = copy.deepcopy(self.raw)
@@ -363,6 +399,7 @@ class Catalog:
             stats["total_size"] = sum(w.get("size", 0) for kind in KINDS for w in index.get(kind, []))
         return index
 
+    @cached_paths
     def metadata(self, index):
         _, original = self.lib._load_meta_cached()
         result = copy.deepcopy(original)

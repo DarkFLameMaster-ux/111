@@ -111,7 +111,7 @@ function stopProcess(child) {
 }
 
 function serviceIdentity() {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const request = http.get(`${DISPLAY_URL}api/service`, { timeout: 1500 }, response => {
       let body = '';
       response.setEncoding('utf8');
@@ -120,9 +120,12 @@ function serviceIdentity() {
         try { resolve({ status: response.statusCode, ...JSON.parse(body) }); }
         catch { resolve({ status: response.statusCode }); }
       });
+      response.on('error', reject);
     });
-    request.on('error', () => resolve(null));
-    request.on('timeout', () => { request.destroy(); resolve(null); });
+    // Only a refused connection means there is no service to reuse. A slow
+    // listener must never cause us to launch a second backend on the same port.
+    request.on('error', error => error.code === 'ECONNREFUSED' ? resolve(null) : reject(error));
+    request.on('timeout', () => request.destroy(new Error('本地资源库服务响应超时，请稍后重试。')));
   });
 }
 
@@ -131,7 +134,7 @@ function compatibleService(identity) {
     identity.role === APP_ROLE && identity.version === APP_VERSION;
 }
 
-async function waitForDisplay(timeoutMs = 30000) {
+async function waitForDisplay(timeoutMs = 120000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const identity = await serviceIdentity();
@@ -145,19 +148,28 @@ async function waitForDisplay(timeoutMs = 30000) {
 
 async function refreshDisplayIndex() {
   return new Promise((resolve, reject) => {
-    const request = http.get(`${DISPLAY_URL}api/library?refresh=1`, { timeout: 60000 }, response => {
+    const request = http.get(`${DISPLAY_URL}api/library?refresh=1`, { timeout: 120000 }, response => {
       response.resume();
       response.on('end', () => response.statusCode === 200 ? resolve() : reject(new Error('读取最新资源目录失败')));
+      response.on('error', reject);
     });
     request.on('error', reject);
     request.on('timeout', () => request.destroy(new Error('读取最新资源目录超时')));
   });
 }
 
-function errorPage(message) {
+function statusPage(message, failed = false) {
   const escaped = String(message).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
-  const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#11111a;color:#eee;font:16px system-ui;padding:48px}main{max-width:720px;margin:auto;background:#1b1b2a;border:1px solid #36364d;border-radius:18px;padding:32px}h1{font-size:24px;margin:0 0 12px;color:#d8c9ff}p{color:#bbb;line-height:1.7}code{display:block;white-space:pre-wrap;background:#101017;border-radius:10px;padding:14px;color:#ffb4c0}button{margin-top:18px;border:0;border-radius:999px;background:#a98bff;color:#17131f;padding:10px 18px;font-weight:700;cursor:pointer}</style><main><h1>资源库没有启动成功</h1><p>桌面壳已经打开，但本地资源库服务没有在预期时间内响应。</p><code>${escaped}</code><button onclick="window.reslibDesktop.retry()">重新启动</button></main>`;
+  const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#11111a;color:#eee;font:16px system-ui;padding:48px}main{max-width:720px;margin:auto;background:#1b1b2a;border:1px solid #36364d;border-radius:18px;padding:32px}h1{font-size:24px;margin:0 0 12px;color:#d8c9ff}p{color:#bbb;line-height:1.7}code{display:block;white-space:pre-wrap;background:#101017;border-radius:10px;padding:14px;color:#ffb4c0}button{margin-top:18px;border:0;border-radius:999px;background:#a98bff;color:#17131f;padding:10px 18px;font-weight:700;cursor:pointer}</style><main><h1>${failed ? '资源库没有启动成功' : APP_NAME}</h1><p>${failed ? '启动遇到问题，可以查看原因后重试。' : '正在准备资源库，完成后会自动打开。'}</p>${failed ? `<code>${escaped}</code><button onclick="this.disabled=true;window.reslibDesktop.retry()">重新启动</button>` : `<p role="status">${escaped}</p>`}</main>`;
   return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+}
+
+function errorPage(message) { return statusPage(message, true); }
+
+async function showBootError(error) {
+  const message = error.stack || error.message || String(error);
+  fs.appendFileSync(logPath(APP_ROLE), `\n[desktop] ${message}\n`);
+  if (mainWindow && !mainWindow.isDestroyed()) await mainWindow.loadURL(errorPage(error.message || String(error)));
 }
 
 async function loadDisplay() {
@@ -165,10 +177,11 @@ async function loadDisplay() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (ready) {
     // Read the current directory before rendering, including reused services.
+    await mainWindow.loadURL(statusPage('正在更新资源目录；资源较多时请稍候。'));
     await refreshDisplayIndex();
-    await mainWindow.loadURL(DISPLAY_URL);
+    if (mainWindow && !mainWindow.isDestroyed()) await mainWindow.loadURL(DISPLAY_URL);
   } else {
-    await mainWindow.loadURL(errorPage(`程序服务地址：${DISPLAY_URL}\n日志目录：${path.dirname(logPath("display"))}`));
+    throw new Error(`本地资源库未能在两分钟内启动。\n程序服务地址：${DISPLAY_URL}\n日志目录：${path.dirname(logPath(APP_ROLE))}`);
   }
 }
 
@@ -216,6 +229,7 @@ function createWindow() {
   });
   mainWindow.webContents.on("render-process-gone", readerShortcuts.reset);
   mainWindow.on("closed", () => { readerShortcuts.reset(); mainWindow = null; });
+  return mainWindow.loadURL(statusPage('正在连接本地资源库…'));
 }
 
 async function shutdown() {
@@ -236,8 +250,14 @@ ipcMain.on("reslib:reader-active", (event, active) => {
 
 ipcMain.handle("reslib:retry", async () => {
   if (!mainWindow) return false;
-  await bootServices();
-  return true;
+  try {
+    await mainWindow.loadURL(statusPage('正在重新连接本地资源库…'));
+    await bootServices();
+    return true;
+  } catch (error) {
+    await showBootError(error);
+    return false;
+  }
 });
 
 ipcMain.handle("reslib:version", () => APP_VERSION);
@@ -265,11 +285,11 @@ if (hasLock) app.whenReady().then(async () => {
       { label: "退出", role: "quit" },
     ] },
   ]));
-  createWindow();
   try {
+    await createWindow();
     await bootServices();
   } catch (error) {
-    if (mainWindow) await mainWindow.loadURL(errorPage(error.stack || error.message || error));
+    await showBootError(error);
   }
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
@@ -278,5 +298,5 @@ app.on("before-quit", shutdown);
 app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
 
 app.on('second-instance', () => {
-  if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.focus(); }
+  if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.show(); mainWindow.focus(); }
 });

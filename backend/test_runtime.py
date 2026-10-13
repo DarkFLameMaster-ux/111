@@ -75,11 +75,11 @@ class BoundaryTests(unittest.TestCase):
         self.addCleanup(server.shutdown)
         self.url = f'http://127.0.0.1:{server.server_port}'
 
-    def request(self, route, body=None, headers=None, method=None):
+    def request(self, route, body=None, headers=None, method=None, timeout=None):
         data = json.dumps(body).encode() if body is not None else None
         req = Request(self.url + route, data=data, headers=headers or {}, method=method)
         try:
-            response = self.opener.open(req)
+            response = self.opener.open(req, timeout=timeout)
         except HTTPError as exc:
             response = exc
         with response:
@@ -117,6 +117,34 @@ class BoundaryTests(unittest.TestCase):
         self.assertEqual(len(self.scans), 1)
         self.request('/api/library?refresh=1')
         self.assertEqual(len(self.scans), 2)
+
+    def test_service_identity_remains_responsive_during_a_blocked_scan(self):
+        for role in ('display', 'management'):
+            with self.subTest(role=role):
+                started, release = threading.Event(), threading.Event()
+
+                def blocked_scan():
+                    started.set()
+                    if not release.wait(5):
+                        raise RuntimeError('test scan was not released')
+                    return {'generation': 1}
+
+                self.lib.build_index = blocked_scan
+                self.serve(role)
+                results = []
+                refresh = threading.Thread(target=lambda: results.append(self.request('/api/library?refresh=1')))
+                refresh.start()
+                try:
+                    self.assertTrue(started.wait(2), 'refresh must be scanning')
+                    code, identity = self.request('/api/service', timeout=0.5)
+                    self.assertEqual(code, 200)
+                    self.assertEqual(identity, {'application': 'moonshadow-reslib', 'role': role, 'version': '9.0.0'})
+                    self.assertEqual(self.request('/api/service', headers={'X-Deny': 'true'}, timeout=0.5)[0], 401)
+                finally:
+                    release.set()
+                    refresh.join(2)
+                self.assertFalse(refresh.is_alive())
+                self.assertEqual(results[0][0], 200)
 
     def test_management_preserves_gate_and_owns_scheduler(self):
         self.serve('management')
