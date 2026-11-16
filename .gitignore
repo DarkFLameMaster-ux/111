@@ -1,9 +1,40 @@
-# 本地构建和缓存
+# Frontend dependencies and generated caches
 frontend/*/node_modules/
-*.log
+node_modules/
+desktop/logs/
+/dist/
 __pycache__/
+*.py[cod]
+.cache/
 
-# 资源库本地数据 / 凭据（绝不能提交）
+# Local configuration and credentials (keep only the documented template)
+.env
+.env.*
+!.env.example
+*secret*
+*token*
+*credential*
+*cookie*
+*.pem
+*.key
+*.p12
+*.pfx
+tls/
+
+# Runtime data, downloads, and media never belong in the source repository
+*.log
+*.db
+*.sqlite
+*.sqlite3
+*.bak
+*.tmp
+*.part
+*.aria2
+*.crdownload
+*.xltd
+*.torrent
+
+# Local resource-library content
 _归档脚本/.venv/
 _归档脚本/*.txt
 _归档脚本/*.json
@@ -16,3 +47,4 @@ _归档日志/
 小说/
 音乐/
 游戏/
+AV/
