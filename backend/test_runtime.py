@@ -118,6 +118,13 @@ class BoundaryTests(unittest.TestCase):
         self.request('/api/library?refresh=1')
         self.assertEqual(len(self.scans), 2)
 
+    def test_first_index_read_on_a_fresh_process_scans_immediately(self):
+        """A freshly started process reports a small monotonic clock and must still build the index."""
+        self.serve('display')
+        with patch('runtime.time.monotonic', return_value=3.0):
+            self.request('/api/library')
+        self.assertEqual(len(self.scans), 1)
+
     def test_service_identity_remains_responsive_during_a_blocked_scan(self):
         for role in ('display', 'management'):
             with self.subTest(role=role):

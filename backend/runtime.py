@@ -196,8 +196,8 @@ def install(lib, role, frontend, version):
                             raise PermissionError("该资源已隐藏或从目录删除")
                 if route in {"/api/library", "/api/categories"}:
                     with index_lock:
-                        last = getattr(self.server, "reslib_index_at", 0)
-                        if time.monotonic() - last > 30 or "refresh" in parse_qs(url.query):
+                        last = getattr(self.server, "reslib_index_at", None)
+                        if last is None or time.monotonic() - last > 30 or "refresh" in parse_qs(url.query):
                             lib._set_server_index(self.server, lib.build_index())
                             self.server.reslib_index_at = time.monotonic()
                 if role == "management":
